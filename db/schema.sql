@@ -33,7 +33,7 @@ CREATE TABLE users (
     password_hash      CHAR(60)     NOT NULL                  COMMENT 'BCrypt 해시 60자. 비밀번호 원문 저장 금지',
     nickname           VARCHAR(20)  NOT NULL,
     avatar             VARCHAR(20)  NOT NULL DEFAULT 'seagull' COMMENT 'seagull, lighthouse, lotus, reed, sogeumi, wave, dog, cat',
-    age_group          VARCHAR(5)   NOT NULL                  COMMENT '10s, 20s, 30s, 40s, 50s, 60s+',
+    age_group          VARCHAR(5)   NOT NULL                  COMMENT '20s, 30s, 40s, 50s+ (Figma A4: 20대 · 30대 · 40대 · 50대 이상)',
     mbti               CHAR(4)      NULL                      COMMENT '선택 (ENFP 같은 4글자)',
     role               VARCHAR(10)  NOT NULL DEFAULT 'USER'   COMMENT 'USER, ADMIN',
     status             VARCHAR(10)  NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE, SUSPENDED(정지), WITHDRAWN(탈퇴)',
@@ -46,7 +46,7 @@ CREATE TABLE users (
     PRIMARY KEY (user_id),
     UNIQUE KEY uk_users_login_id (login_id),
     CONSTRAINT chk_users_avatar    CHECK (avatar IN ('seagull','lighthouse','lotus','reed','sogeumi','wave','dog','cat')),
-    CONSTRAINT chk_users_age_group CHECK (age_group IN ('10s','20s','30s','40s','50s','60s+')),
+    CONSTRAINT chk_users_age_group CHECK (age_group IN ('20s','30s','40s','50s+')),
     CONSTRAINT chk_users_role      CHECK (role IN ('USER','ADMIN')),
     CONSTRAINT chk_users_status    CHECK (status IN ('ACTIVE','SUSPENDED','WITHDRAWN'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
@@ -56,16 +56,21 @@ CREATE TABLE users (
 -- ---------------------------------------------------------------------
 -- 회원의 산책 스타일 · 언어 (담당: 정란)
 -- 값 하나당 한 줄. 예) 민서가 언어 2개면 LANGUAGE 행이 2개
--- tag_value 는 Figma 칩 문구를 그대로 저장 (예: 천천히 걷기, 中文)
+-- tag_value 는 영어 코드로 저장합니다. 화면 문구(🐢 천천히, 中文 …)는 프론트가 코드에 맞춰 표시.
+--   STYLE    : SLOW 천천히, FAST 빠르게, QUIET 조용히, CHAT 수다, PHOTO 사진 찍으며,
+--              SUNRISE_SUNSET 일출·일몰, DOG 반려견과
+--   LANGUAGE : KO 한국어, ZH 中文, EN English, VI Tiếng Việt, RU Русский
 -- ---------------------------------------------------------------------
 CREATE TABLE user_tags (
     user_id    BIGINT       NOT NULL,
     tag_type   VARCHAR(10)  NOT NULL COMMENT 'STYLE(산책 스타일, 최대 3개), LANGUAGE(언어)',
-    tag_value  VARCHAR(30)  NOT NULL COMMENT 'Figma 칩 문구 그대로',
+    tag_value  VARCHAR(30)  NOT NULL COMMENT '영어 코드 (위 목록)',
     PRIMARY KEY (user_id, tag_type, tag_value),
     KEY idx_user_tags_value (tag_type, tag_value),
     CONSTRAINT fk_user_tags_user FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
-    CONSTRAINT chk_user_tags_type CHECK (tag_type IN ('STYLE','LANGUAGE'))
+    CONSTRAINT chk_user_tags_value CHECK (
+        (tag_type = 'STYLE'    AND tag_value IN ('SLOW','FAST','QUIET','CHAT','PHOTO','SUNRISE_SUNSET','DOG'))
+     OR (tag_type = 'LANGUAGE' AND tag_value IN ('KO','ZH','EN','VI','RU')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='회원 스타일·언어 (담당: 정란)';
 
@@ -158,16 +163,20 @@ CREATE TABLE matches (
 
 -- ---------------------------------------------------------------------
 -- 동행이 원하는 스타일 · 언어 · 연령대 (담당: 민서)
--- 값 하나당 한 줄. "中文 가능한 동행만" 같은 필터에 씁니다.
+-- 값 하나당 한 줄. "中文(ZH) 가능한 동행만" 같은 필터에 씁니다.
+-- 코드는 user_tags 와 같고, 연령대는 users.age_group 과 같은 값 (20s, 30s, 40s, 50s+)
 -- ---------------------------------------------------------------------
 CREATE TABLE match_tags (
     match_id   BIGINT       NOT NULL,
     tag_type   VARCHAR(10)  NOT NULL COMMENT 'STYLE, LANGUAGE, AGE_GROUP',
-    tag_value  VARCHAR(30)  NOT NULL COMMENT 'Figma 칩 문구 그대로 / 연령대는 20s 같은 코드',
+    tag_value  VARCHAR(30)  NOT NULL COMMENT '영어 코드 (SLOW, KO, 20s …)',
     PRIMARY KEY (match_id, tag_type, tag_value),
     KEY idx_match_tags_value (tag_type, tag_value),
     CONSTRAINT fk_match_tags_match FOREIGN KEY (match_id) REFERENCES matches (match_id) ON DELETE CASCADE,
-    CONSTRAINT chk_match_tags_type CHECK (tag_type IN ('STYLE','LANGUAGE','AGE_GROUP'))
+    CONSTRAINT chk_match_tags_value CHECK (
+        (tag_type = 'STYLE'     AND tag_value IN ('SLOW','FAST','QUIET','CHAT','PHOTO','SUNRISE_SUNSET','DOG'))
+     OR (tag_type = 'LANGUAGE'  AND tag_value IN ('KO','ZH','EN','VI','RU'))
+     OR (tag_type = 'AGE_GROUP' AND tag_value IN ('20s','30s','40s','50s+')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='동행 태그 (담당: 민서)';
 

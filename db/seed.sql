@@ -34,24 +34,24 @@ INSERT INTO users (user_id, login_id, password_hash, nickname, avatar, age_group
     (6, 'seungmin', '$2a$10$k6NV2RTYoOYmfEu8ahHip.dGli821tb8VmwmcBxcL3Iq8/IwYjA56', '승민',   'cat',        '20s', 'ISFP', 'USER',  'ACTIVE',    @joined, @joined, FALSE, NULL,    @joined),
     (7, 'banned',   '$2a$10$Dv.A4PcihniiXZquFBc2xevnY29.EvDShkNzI5GZ3IIVX3ALNKAQO', '정지회원', 'reed',     '30s', NULL,   'USER',  'SUSPENDED', @joined, @joined, FALSE, NULL,    @joined);
 
--- 회원 스타일 · 언어 (Figma 칩 문구 그대로)
+-- 회원 스타일 · 언어 (영어 코드. SLOW 천천히, CHAT 수다, FAST 빠르게 / KO 한국어, EN English, ZH 中文)
 INSERT INTO user_tags (user_id, tag_type, tag_value) VALUES
-    (1, 'LANGUAGE', '한국어'),
-    (2, 'STYLE', '천천히 걷기'),
-    (2, 'STYLE', '대화하며'),
-    (2, 'LANGUAGE', '한국어'),
-    (2, 'LANGUAGE', 'English'),
-    (3, 'STYLE', '대화하며'),
-    (3, 'LANGUAGE', '한국어'),
-    (4, 'STYLE', '빠르게 걷기'),
-    (4, 'LANGUAGE', '한국어'),
-    (5, 'STYLE', '대화하며'),
-    (5, 'LANGUAGE', '한국어'),
-    (5, 'LANGUAGE', '中文'),
-    (6, 'STYLE', '천천히 걷기'),
-    (6, 'LANGUAGE', '한국어'),
-    (6, 'LANGUAGE', 'English'),
-    (7, 'LANGUAGE', '한국어');
+    (1, 'LANGUAGE', 'KO'),
+    (2, 'STYLE', 'SLOW'),
+    (2, 'STYLE', 'CHAT'),
+    (2, 'LANGUAGE', 'KO'),
+    (2, 'LANGUAGE', 'EN'),
+    (3, 'STYLE', 'CHAT'),
+    (3, 'LANGUAGE', 'KO'),
+    (4, 'STYLE', 'FAST'),
+    (4, 'LANGUAGE', 'KO'),
+    (5, 'STYLE', 'CHAT'),
+    (5, 'LANGUAGE', 'KO'),
+    (5, 'LANGUAGE', 'ZH'),
+    (6, 'STYLE', 'SLOW'),
+    (6, 'LANGUAGE', 'KO'),
+    (6, 'LANGUAGE', 'EN'),
+    (7, 'LANGUAGE', 'KO');
 
 -- ---------------------------------------------------------------------
 -- 코스 4개 (지역별 1개) — 거리·시간은 경로로 계산한 값 (시속 4km 기준)
@@ -109,7 +109,7 @@ INSERT INTO course_facilities (course_id, facility) VALUES
 -- ---------------------------------------------------------------------
 INSERT INTO matches (match_id, host_id, course_id, title, content, meet_at, meet_place,
                      capacity, target, mbti, path_json, status, created_at) VALUES
-    (1, 2, 1, '퇴근 후 옥구공원 한 바퀴 같이 걸어요', '퇴근하고 가볍게 걸을 분 구해요! 천천히 이야기하면서 걸어요.',
+    (1, 2, 1, '퇴근 후 옥구공원 한 바퀴 같이 걸어요', '퇴근하고 가볍게 걸을 분 구해요! 천천히 이야기하면서 걸어요. 欢迎说中文的朋友！',
      TIMESTAMP(@today + INTERVAL 5 DAY, '19:00:00'), '옥구공원 정문 주차장 앞',
      4, 'EXCHANGE', NULL,
      '[[37.351642,126.709915],[37.351629,126.711071],[37.352102,126.711998],[37.352362,126.713134],[37.353051,126.713709],[37.35381,126.713856],[37.354517,126.714339],[37.35532,126.714395],[37.355925,126.71356],[37.356427,126.71277],[37.357031,126.712084],[37.357432,126.711083],[37.357363,126.709915]]',
@@ -130,24 +130,24 @@ INSERT INTO matches (match_id, host_id, course_id, title, content, meet_at, meet
      TIMESTAMP(@today - INTERVAL 4 DAY, '10:00:00'), '배곧생명공원 주차장 입구',
      4, 'ANYONE', NULL, NULL, 'OPEN', NOW() - INTERVAL 7 DAY);
 
--- 동행 태그 (원하는 스타일 · 언어 · 연령대)
+-- 동행 태그 (원하는 스타일 · 언어 · 연령대, 영어 코드)
 INSERT INTO match_tags (match_id, tag_type, tag_value) VALUES
-    (1, 'STYLE', '천천히 걷기'),
-    (1, 'LANGUAGE', '한국어'),
-    (1, 'LANGUAGE', '中文'),
+    (1, 'STYLE', 'SLOW'),
+    (1, 'LANGUAGE', 'KO'),
+    (1, 'LANGUAGE', 'ZH'),
     (1, 'AGE_GROUP', '20s'),
     (1, 'AGE_GROUP', '30s'),
-    (2, 'STYLE', '대화하며'),
-    (2, 'LANGUAGE', '한국어'),
-    (3, 'STYLE', '천천히 걷기'),
-    (3, 'LANGUAGE', '한국어'),
+    (2, 'STYLE', 'CHAT'),
+    (2, 'LANGUAGE', 'KO'),
+    (3, 'STYLE', 'SLOW'),
+    (3, 'LANGUAGE', 'KO'),
     (3, 'AGE_GROUP', '20s'),
-    (4, 'LANGUAGE', '한국어'),
-    (5, 'STYLE', '빠르게 걷기'),
-    (5, 'LANGUAGE', '한국어'),
-    (5, 'LANGUAGE', '中文'),
-    (6, 'STYLE', '대화하며'),
-    (6, 'LANGUAGE', '한국어');
+    (4, 'LANGUAGE', 'KO'),
+    (5, 'STYLE', 'FAST'),
+    (5, 'LANGUAGE', 'KO'),
+    (5, 'LANGUAGE', 'ZH'),
+    (6, 'STYLE', 'CHAT'),
+    (6, 'LANGUAGE', 'KO');
 
 -- 동행 참여자 (각 글의 첫 줄이 모집자)
 INSERT INTO match_participants (match_id, user_id, status, leave_reason, joined_at) VALUES

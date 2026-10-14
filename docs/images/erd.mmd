@@ -14,7 +14,7 @@ erDiagram
         char password_hash "BCrypt 60자"
         varchar nickname
         varchar avatar "seagull 등 8종"
-        varchar age_group "10s ~ 60s+"
+        varchar age_group "20s, 30s, 40s, 50s+"
         char mbti "선택"
         varchar role "USER, ADMIN"
         varchar status "ACTIVE, SUSPENDED, WITHDRAWN"
@@ -27,7 +27,7 @@ erDiagram
     user_tags {
         bigint user_id PK, FK
         varchar tag_type PK "STYLE, LANGUAGE"
-        varchar tag_value PK "칩 문구 그대로"
+        varchar tag_value PK "SLOW, KO 같은 코드"
     }
     courses {
         bigint course_id PK
@@ -69,7 +69,7 @@ erDiagram
     match_tags {
         bigint match_id PK, FK
         varchar tag_type PK "STYLE, LANGUAGE, AGE_GROUP"
-        varchar tag_value PK
+        varchar tag_value PK "SLOW, ZH, 20s 같은 코드"
     }
     match_participants {
         bigint match_id PK, FK

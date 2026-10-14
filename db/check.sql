@@ -23,7 +23,7 @@ SELECT 'match status (OPEN,OPEN,FULL,CLOSED,CANCELED,DONE)',
 UNION ALL
 SELECT 'korean / chinese text saved',
        IF((SELECT HEX(nickname) FROM users WHERE user_id = 2) = 'EBAFBCEC849C'
-          AND (SELECT COUNT(*) FROM user_tags WHERE HEX(tag_value) = 'E4B8ADE69687') = 1, 'OK', 'FAIL')
+          AND (SELECT INSTR(HEX(content), 'E4B8ADE69687') FROM matches WHERE match_id = 1) > 0, 'OK', 'FAIL')
 UNION ALL
 SELECT 'database charset utf8mb4',
        IF((SELECT default_character_set_name FROM information_schema.schemata

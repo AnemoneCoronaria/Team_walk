@@ -57,8 +57,18 @@
 ### 1. 이름과 값
 
 - **DB는 `snake_case`, JSON은 `camelCase`**: `age_group` ↔ `ageGroup`, `distance_km` ↔ `distanceKm`
-- 코드값은 **API 명세의 "값 약속"과 똑같은 영어 대문자**입니다 (`OKGU`, `EASY`, `EXCHANGE` …).
+- 코드값은 **API 명세의 "값 약속"과 똑같은 영어 코드**입니다 (`OKGU`, `EASY`, `EXCHANGE`, `SLOW`, `KO`, `20s` …).
+- **화면에 보이는 글자(이모지 포함)는 DB에 저장하지 않습니다.** DB와 API는 코드만 주고받고, 프론트가 코드에 맞는 문구를 붙여 보여 줍니다. 그래서 피그마 문구를 바꿔도 DB는 그대로입니다.
 - 약속에 없는 값을 넣으면 DB가 막습니다: `Check constraint 'chk_…' is violated`. 서블릿에서 먼저 검사해서 `400 INVALID_INPUT`으로 돌려주세요.
+
+**회원가입(A4) · 동행 모집에서 고르는 값** (피그마 A4 칩 기준)
+
+| 종류 | 코드 → 화면 문구 |
+| --- | --- |
+| 연령대 `age_group` / `AGE_GROUP` | `20s` 20대, `30s` 30대, `40s` 40대, `50s+` 50대 이상 |
+| 산책 스타일 `STYLE` (최대 3개) | `SLOW` 🐢 천천히, `FAST` 🏃 빠르게, `QUIET` 🤫 조용히, `CHAT` 💬 수다, `PHOTO` 📸 사진 찍으며, `SUNRISE_SUNSET` 🌅 일출 · 일몰, `DOG` 🐶 반려견과 |
+| 언어 `LANGUAGE` | `KO` 한국어, `ZH` 中文, `EN` English, `VI` Tiếng Việt, `RU` Русский |
+| MBTI `mbti` | `ENFP` 같은 4글자, 선택 안 함이면 `NULL` |
 
 ### 2. 여러 개 고르는 값은 태그 테이블
 
@@ -66,7 +76,7 @@
 
 - 저장: 그 회원(동행, 코스)의 태그를 **전부 지우고 다시 넣기**가 가장 간단합니다.
   `DELETE FROM user_tags WHERE user_id = ? AND tag_type = 'STYLE'` → 고른 개수만큼 `INSERT`
-- 필터 ("中文 가능한 동행만"): `EXISTS`로 찾습니다 → [쿼리 예시](#1주차-쿼리-예시)
+- 필터 ("中文(`ZH`) 가능한 동행만"): `EXISTS`로 찾습니다 → [쿼리 예시](#1주차-쿼리-예시)
 - 응답에서 배열로 만들 때: `GROUP_CONCAT(tag_value)` 결과를 쉼표로 나누거나, 태그만 따로 조회해서 자바에서 `List`로 묶기
 
 ### 3. 지우지 않습니다
@@ -230,7 +240,7 @@ FROM matches m JOIN v_match_status s ON s.match_id = m.match_id;
 
 | 번호 | 화면 상태 | 이걸로 확인할 것 |
 | --- | --- | --- |
-| 1 | OPEN 2/4 | GPX 첨부(`hasGpx: true`), 언어 `中文` 필터, 저녁 시간대 |
+| 1 | OPEN 2/4 | GPX 첨부(`hasGpx: true`), 언어 `ZH`(中文) 필터, 저녁 시간대, 내용에 中文 문장 |
 | 2 | OPEN 1/6 | 승민이 내보내짐(`KICKED`) → 다시 참여하면 `403` |
 | 3 | FULL 3/3 | 참여하면 `409 FULL` |
 | 4 | CLOSED 2/4 | MBTI(ISFP) 모집, 참여하면 `409 CLOSED` |
