@@ -113,6 +113,7 @@ source ~/.zshrc
 | --- | --- | --- |
 | Import에서 Finish를 눌러도 반응 없음, 엉뚱한 `src` 프로젝트가 생김 | 워크스페이스가 `backend`(또는 저장소) 안에 있음 | 0번처럼 분리. `backend` 안의 `.metadata .project .classpath .settings target` 삭제 후 다시 4번 |
 | `Unable to locate a Java Runtime` | Homebrew Java가 macOS에 미등록 | 1번 |
+| JDK 추가할 때 `The home directory does not exist` | JRE home에 `…/bin/java`까지 넣었거나, 붙여넣을 때 공백이 섞임 | JRE home은 **`…/Contents/Home` 폴더**까지만. **Directory…** → ⌘⇧G로 경로 입력 → 열기 |
 | `Bootstrap을(를) 찾거나 로드할 수 없습니다` | 이클립스의 Tomcat/JRE 등록이 꼬임 | 서버·Runtime 삭제 후 3번부터 다시 |
 | `Could not transfer artifact … repo.maven.apache.org` | 라이브러리 다운로드 실패가 캐시됨 | `find ~/.m2/repository -name "*.lastUpdated" -delete` → 이클립스 재시작 → Maven → Update Project (**Force Update** 체크) |
 | `jakarta … cannot be resolved` | 라이브러리 미반영 | Maven → Update Project |
