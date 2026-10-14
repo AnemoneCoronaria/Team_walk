@@ -1,0 +1,13 @@
+flowchart LR
+    K["카카오맵 API"]
+    B["사용자 브라우저<br/><b>localhost:5173</b>"]
+    AD["관리자 브라우저<br/><b>localhost:8080/admin</b>"]
+    V["<b>Vite 개발 서버</b> :5173<br/>React 화면<br/><i>프론트: 동훈 · 승민</i>"]
+    T["<b>Tomcat</b> :8080 (이클립스)<br/>Servlet API · 관리자 JSP<br/><i>백엔드: 민서 · 정란 · 동언</i>"]
+    D["<b>DAO</b><br/>SQL 실행"]
+    M[("<b>MySQL</b> :3306<br/>DB sanchaek")]
+    K -. "지도 불러오기" .-> B
+    B --> V
+    V -- "/api/… 요청만 넘김 (프록시)" --> T
+    AD --> T
+    T --> D --> M

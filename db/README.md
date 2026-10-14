@@ -1,5 +1,7 @@
 # DB 안내 (MySQL)
 
+[← README](../README.md) · [세팅 가이드](../docs/setup.md) · [개발 규칙](../docs/development.md) · [막혔을 때](../docs/troubleshooting.md)
+
 1주차(계정 · 코스 · 동행)에 쓰는 **테이블 7개**와 동행 상태를 계산하는 **뷰 1개**가 있습니다.
 2주차 테이블(후기 · 신고 · 랜드마크 · 스탬프 · 댓글)은 2주차 시작 전에 추가합니다.
 
@@ -7,6 +9,7 @@
 | --- | --- |
 | `schema.sql` | 테이블 만들기. **실행하면 기존 테이블과 데이터가 전부 지워지고 새로 만들어집니다** |
 | `seed.sql` | 테스트 데이터 (회원 7명, 코스 4개, 동행 6개). `schema.sql` 다음에 실행 |
+| `check.sql` | 세팅 확인. 5줄 모두 `OK`면 성공 |
 
 ## 목차
 
@@ -24,92 +27,13 @@
 
 ## ERD (테이블 관계도)
 
-```mermaid
-erDiagram
-    users ||--o{ user_tags : "스타일·언어"
-    users ||--o{ courses : "코스를 올림"
-    courses ||--o{ course_facilities : "편의시설"
-    users ||--o{ matches : "모집함"
-    courses ||--o{ matches : "이 코스로 모임"
-    matches ||--o{ match_tags : "원하는 조건"
-    matches ||--o{ match_participants : "참여자"
-    users ||--o{ match_participants : "참여함"
+![1주차 ERD: users, user_tags, courses, course_facilities, matches, match_tags, match_participants](../docs/images/erd.png)
 
-    users {
-        bigint user_id PK
-        varchar login_id UK "로그인 아이디"
-        char password_hash "BCrypt 60자"
-        varchar nickname
-        varchar avatar "seagull 등 8종"
-        varchar age_group "10s ~ 60s+"
-        char mbti "선택"
-        varchar role "USER, ADMIN"
-        varchar status "ACTIVE, SUSPENDED, WITHDRAWN"
-        datetime agree_terms_at "이용약관 동의"
-        datetime agree_privacy_at "개인정보 동의"
-        boolean agree_location "위치정보 동의"
-        datetime agree_location_at
-        datetime created_at
-    }
-    user_tags {
-        bigint user_id PK, FK
-        varchar tag_type PK "STYLE, LANGUAGE"
-        varchar tag_value PK "칩 문구 그대로"
-    }
-    courses {
-        bigint course_id PK
-        bigint author_id FK "올린 사람"
-        varchar name
-        text description
-        varchar area "OKGU, JEONGWANG, BAEGOT, SIHWA"
-        varchar level "EASY, NORMAL, HARD"
-        decimal distance_km
-        int duration_min "거리 / 시속 4km"
-        decimal start_lat "목록 마커용 시작점"
-        decimal start_lng
-        json path_json "전체 경로 좌표 배열"
-        varchar visibility "PUBLIC, PRIVATE"
-        boolean hide_ends "출발·도착 200m 숨기기"
-        boolean is_deleted
-        datetime created_at
-    }
-    course_facilities {
-        bigint course_id PK, FK
-        varchar facility PK "TOILET, BENCH, PARKING, SEA_VIEW"
-    }
-    matches {
-        bigint match_id PK
-        bigint host_id FK "모집자"
-        bigint course_id FK
-        varchar title "40자 이내"
-        text content
-        datetime meet_at "만나는 일시"
-        varchar meet_place "만남 장소 설명"
-        tinyint capacity "2~10, 모집자 포함"
-        varchar target "ANYONE, SAME_AGE, EXCHANGE, MBTI"
-        char mbti "target이 MBTI일 때만"
-        json path_json "첨부 GPX 경로, 없으면 NULL"
-        varchar status "OPEN, CLOSED, CANCELED"
-        boolean is_hidden "관리자 숨김"
-        datetime created_at
-    }
-    match_tags {
-        bigint match_id PK, FK
-        varchar tag_type PK "STYLE, LANGUAGE, AGE_GROUP"
-        varchar tag_value PK
-    }
-    match_participants {
-        bigint match_id PK, FK
-        bigint user_id PK, FK
-        varchar status "JOINED, LEFT, KICKED"
-        varchar leave_reason "참여 취소 사유"
-        datetime joined_at
-    }
-```
-
-- **선 읽는 법:** `users ||--o{ courses` = 회원 1명이 코스를 0개 이상 올림 (1 : N)
+- 깃허브에서 **그림을 누르면 크게** 볼 수 있습니다.
+- **선 읽는 법:** `||` 쪽이 1, `o{` 쪽이 0개 이상(N). 예) 회원 1명이 코스를 0개 이상 올림 (1 : N)
 - 그림에 없는 것: **`v_match_status` 뷰**. `matches` + `match_participants`로 동행의 현재 인원과 화면 상태(OPEN/FULL/CLOSED/CANCELED/DONE)를 계산합니다.
 - 모든 테이블에 `created_at`, `updated_at`이 있습니다 (그림에서는 일부 생략).
+- 그림 원본은 [`docs/images/erd.mmd`](../docs/images/erd.mmd)입니다. 테이블이 바뀌면 원본을 고치고 [mermaid.live](https://mermaid.live)에 붙여 넣어 PNG로 다시 저장합니다 (민서).
 
 ---
 
@@ -251,16 +175,39 @@ source C:/dev/jspTeam/Team_walk/db/schema.sql
 source C:/dev/jspTeam/Team_walk/db/seed.sql
 ```
 
-> ⚠️ 경로는 역슬래시(`\`)가 아니라 **슬래시(`/`)** 로 씁니다. 저장소를 다른 곳에 받았다면 경로만 바꾸세요.
+> ⚠️ **한 줄에 `source` 하나씩** 입력합니다 (두 줄을 한 번에 붙여 넣어도 됩니다).
+> 경로는 역슬래시(`\`)가 아니라 **슬래시(`/`)** 로 씁니다. 저장소를 다른 곳에 받았다면 경로만 바꾸세요.
 
 ### 4) 확인
+
+같은 `mysql>`에서:
+
+```sql
+source C:/dev/jspTeam/Team_walk/db/check.sql
+```
+
+아래처럼 **5줄 모두 `OK`** 면 성공입니다. **캡처해서 디스코드에 올려 주세요.**
+
+```
++----------------------------------------------------+--------+
+| check_item                                         | result |
++----------------------------------------------------+--------+
+| tables 7 + view 1                                  | OK     |
+| seed rows (users 7, courses 4, matches 6)          | OK     |
+| match status (OPEN,OPEN,FULL,CLOSED,CANCELED,DONE) | OK     |
+| korean / chinese text saved                        | OK     |
+| database charset utf8mb4                           | OK     |
++----------------------------------------------------+--------+
+```
+
+> 💡 동행 날짜는 `seed.sql`을 **실행한 날** 기준입니다. 실행하고 5일쯤 지나면 1번 동행도 날짜가 지나 `match status`가 `FAIL`로 바뀝니다. 그때는 3)을 다시 실행하세요.
+
+직접 눈으로 보고 싶으면:
 
 ```sql
 SELECT m.match_id, m.title, s.current_count, m.capacity, s.status
 FROM matches m JOIN v_match_status s ON s.match_id = m.match_id;
 ```
-
-6줄이 나오고 `status`가 **OPEN, OPEN, FULL, CLOSED, CANCELED, DONE** 순서면 성공입니다. **캡처해서 디스코드에 올려 주세요.**
 
 ### 화면으로 보고 싶다면 (선택)
 
@@ -378,6 +325,9 @@ COMMIT;
 | `ERROR 1062: Duplicate entry` | 중복 (아이디 등). 아이디는 대소문자를 구분하지 않음 | 서블릿에서 `409 DUPLICATE`로 응답 |
 | `ERROR 3140: Invalid JSON text` | `path_json`에 JSON이 아닌 문자열 | Gson으로 만든 문자열을 넣기 |
 | `ERROR 1451: Cannot delete or update a parent row` | 다른 테이블이 참조하는 행을 지우려 함 | 지우지 말고 상태 변경 ([설계 약속 3](#3-지우지-않습니다)) |
+| 자바에서 **`Illegal mix of collations (utf8mb4_0900_ai_ci …) and (utf8mb4_unicode_ci …)`** | DB 드라이버의 글자 비교 기준이 MySQL 기본값과 다름. 뷰의 상태 값과 비교할 때 생김 (실제 테스트에서 발견) | 최신 `schema.sql`로 다시 실행 (뷰에 `COLLATE utf8mb4_0900_ai_ci`가 들어가 있어야 함). **뷰의 `COLLATE` 줄은 지우지 않기** |
+| `check.sql`에서 `match status`만 `FAIL` | `seed.sql`을 실행한 지 며칠 지나 동행 날짜가 지남 | [3)](#3-테이블과-테스트-데이터-넣기-테이블이-바뀔-때마다-다시) 다시 실행 |
+| `check.sql`에서 `tables`나 `seed rows`가 `FAIL` | `schema.sql`이나 `seed.sql` 실행 중 오류가 남 | 3)을 다시 실행하면서 빨간 `ERROR` 줄을 캡처해 디스코드에 |
 
 ---
 
