@@ -1,0 +1,17 @@
+# 맥(LF)과 윈도우(CRLF)의 줄바꿈 차이 때문에
+# "아무것도 안 고쳤는데 파일 전체가 바뀐 것"으로 나오는 문제를 막습니다.
+* text=auto
+
+# 실행 스크립트는 OS에 맞는 줄바꿈 고정
+*.sh   text eol=lf
+*.bat  text eol=crlf
+*.cmd  text eol=crlf
+
+# 바이너리 파일은 건드리지 않음
+*.png  binary
+*.jpg  binary
+*.jpeg binary
+*.gif  binary
+*.ico  binary
+*.jar  binary
+*.war  binary
