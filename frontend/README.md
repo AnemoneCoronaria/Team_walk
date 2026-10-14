@@ -1,16 +1,13 @@
-# React + Vite
+# frontend — 산책시루 화면 (React + Vite)
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+설치, 실행, 개발 방법은 **저장소 맨 위의 [README](../README.md)** 를 보세요.
 
-Currently, two official plugins are available:
+```bash
+npm install     # 처음 한 번, 또는 package.json이 바뀌었을 때
+npm run dev     # 개발 서버 → http://localhost:5173
+npm run lint    # 코드 검사 (ESLint)
+npm run build   # 배포용 빌드 → dist/
+```
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- `/api/…` 요청은 `vite.config.js`의 프록시 설정으로 이클립스 Tomcat(`localhost:8080`)에 전달됩니다.
+- 지금 `src/App.jsx`는 **환경 확인용 테스트 화면**입니다 (React 동작 + 백엔드 `/api/hello` 연결 확인). 지우지 마세요.
