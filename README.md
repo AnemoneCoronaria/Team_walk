@@ -104,8 +104,18 @@ source ~/.zshrc
 ### 5. 실행
 
 - Servers 탭 → 새 서버 → Tomcat v10.1 Server → `sanchaek` Add → Finish
-- `sanchaek` 우클릭 → Properties → Web Project Settings → Context root가 **`/`** 인지 확인
-- 서버 우클릭 → Start → `http://localhost:8080/`, `http://localhost:8080/api/hello`
+- **Context root를 `/`로 맞추기 (중요, 두 곳)**
+  1. `sanchaek` 우클릭 → Properties → **Web Project Settings** → Context root: **`/`** → Apply and Close
+  2. Servers 탭의 Tomcat **더블클릭** → 아래 **Modules** 탭 → `sanchaek`의 Path가 `/sanchaek`이면 **Edit…** → **`/`** → ⌘S 저장
+  3. Tomcat 우클릭 → **Clean…** → **Restart**
+- `http://localhost:8080/`, `http://localhost:8080/api/hello` 확인
+
+> **왜 `/`여야 하나?** 이클립스는 기본으로 주소를 `localhost:8080/sanchaek/…` 처럼 프로젝트 이름 아래에 둡니다.
+> 그런데 React는 `/api/hello` 처럼 **주소 맨 앞(루트)** 으로 요청하고, Vite가 그 요청을 `localhost:8080/api/hello` 로 그대로 넘깁니다.
+> 주소가 `/sanchaek` 아래에 있으면 React 요청이 전부 **404**가 됩니다. 배포할 때도 루트(`/`)에 올릴 예정이라 개발 때부터 맞춰 둡니다.
+>
+> 참고: 이클립스에서 실행하면 `localhost:8080/` 에 Tomcat 기본 고양이 화면 대신 우리 프로젝트가 뜹니다.
+> 터미널에서 Tomcat을 직접 켜면(`catalina.sh run`) 기본 고양이 화면이 그대로 나옵니다. 둘을 동시에 켜면 8080 포트가 겹치니 하나만 켜세요.
 
 ### 막혔을 때
 
@@ -117,7 +127,10 @@ source ~/.zshrc
 | `Bootstrap을(를) 찾거나 로드할 수 없습니다` | 이클립스의 Tomcat/JRE 등록이 꼬임 | 서버·Runtime 삭제 후 3번부터 다시 |
 | `Could not transfer artifact … repo.maven.apache.org` | 라이브러리 다운로드 실패가 캐시됨 | `find ~/.m2/repository -name "*.lastUpdated" -delete` → 이클립스 재시작 → Maven → Update Project (**Force Update** 체크) |
 | `jakarta … cannot be resolved` | 라이브러리 미반영 | Maven → Update Project |
-| `8080/`에서 404 | Context root가 `/`가 아님 | 5번의 Context root 확인 후 서버에서 Remove → 다시 Add |
+| `8080/`에서 404, 또는 `8080/sanchaek/`에서만 뜸 | Context root가 `/sanchaek` (프로젝트를 마법사로 만들면 기본값) | 5번의 Context root 두 곳을 `/`로 → Clean → Restart |
+| JSP는 뜨는데 React에서 `❌ 연결 실패 (HTTP 404)` | 위와 같음. React는 `/api/…`(루트)로 요청함 | 위와 같음 |
+| 브랜치를 바꿨더니 이클립스에서 파일이 사라짐 | 아직 develop에 합쳐지지 않은 PR의 파일은, develop 기반 브랜치에선 안 보임 (지워진 게 아님) | PR을 develop에 합친 뒤 `git pull origin develop` → 이클립스에서 Refresh(F5) |
+| 파일은 돌아왔는데 `/api/…`만 404 | Servlet 컴파일 결과가 Tomcat에 반영 안 됨 | Project → Clean… → Servers의 Tomcat → Clean… → Restart |
 | pom.xml의 `cvc-elt.1.a`, `Downloading external resources is disabled` | XML 검사기 경고 | 무시해도 됨 |
 
 > 이클립스 설정 파일(`.project`, `.classpath`, `.settings`, `.metadata`)과 `target/`은 `.gitignore`에 들어 있어서 커밋되지 않습니다. 커밋 전에 `git status`로 한 번 확인하세요.
@@ -151,6 +164,9 @@ git checkout develop
 ```
 
 ### 기능 하나 작업할 때마다
+
+> ⚠️ **새 브랜치를 만들기 전에, 내가 올린 이전 PR이 develop에 합쳐졌는지 먼저 확인하세요.**
+> 안 합쳐진 상태에서 develop 기반으로 새 브랜치를 만들면, 이전 PR의 파일이 작업 폴더에서 사라진 것처럼 보입니다.
 
 ```bash
 # 1. 최신 develop 받기
