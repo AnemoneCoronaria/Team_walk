@@ -10,7 +10,7 @@
 Team_walk/
 ├─ frontend/                     React 화면 (동훈, 승민)
 ├─ backend/src/main/
-│  ├─ java/kr/sansaek/
+│  ├─ java/kr/sanchaek/
 │  │  ├─ common/                 공통 코드: DB 연결, 로그인 필터, 응답 형식 (민서)
 │  │  ├─ match/                  동행 (민서)
 │  │  ├─ user/                   계정, 후기, 신고 (정란)
