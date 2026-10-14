@@ -13,9 +13,14 @@ node_modules/
 .metadata/
 bin/
 
+# 이클립스 워크스페이스를 실수로 저장소 안에 만들었을 때 생기는 폴더
+Servers/
+RemoteSystemsTempFiles/
+
 # OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
 # 비밀 정보 (절대 커밋 금지)
 .env
