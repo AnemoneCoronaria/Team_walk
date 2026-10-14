@@ -201,17 +201,19 @@ CREATE TABLE match_participants (
 --   우선순위: CANCELED > DONE(일시 지남) > CLOSED > FULL(정원 참) > OPEN
 -- 사용 예) SELECT m.*, s.current_count, s.status AS display_status
 --          FROM matches m JOIN v_match_status s ON s.match_id = m.match_id
+-- 끝의 COLLATE 는 지우지 마세요. 자바 드라이버 설정에 따라 s.status = 'DONE' 비교에서
+-- "Illegal mix of collations" 오류가 나는 것을 막습니다.
 -- ---------------------------------------------------------------------
 CREATE VIEW v_match_status AS
 SELECT m.match_id,
        COUNT(p.user_id) AS current_count,
-       CASE
+       (CASE
            WHEN m.status = 'CANCELED'          THEN 'CANCELED'
            WHEN m.meet_at <= NOW()             THEN 'DONE'
            WHEN m.status = 'CLOSED'            THEN 'CLOSED'
            WHEN COUNT(p.user_id) >= m.capacity THEN 'FULL'
            ELSE 'OPEN'
-       END AS status
+       END) COLLATE utf8mb4_0900_ai_ci AS status
 FROM matches m
 LEFT JOIN match_participants p
        ON p.match_id = m.match_id AND p.status = 'JOINED'
