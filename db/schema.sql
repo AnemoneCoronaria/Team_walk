@@ -140,7 +140,7 @@ CREATE TABLE matches (
     meet_at     DATETIME      NOT NULL                 COMMENT '만나는 일시 (시간대 MORNING/AFTERNOON/EVENING 은 이 값으로 계산)',
     meet_place  VARCHAR(100)  NOT NULL                 COMMENT '만남 장소 설명 (예: 옥구공원 정문 주차장 앞)',
     capacity    TINYINT       NOT NULL                 COMMENT '정원 2~10 (모집자 포함)',
-    target      VARCHAR(20)   NOT NULL                 COMMENT 'ANYONE, SAME_AGE, EXCHANGE, MBTI',
+    target      VARCHAR(20)   NOT NULL                 COMMENT 'ANYONE 누구나, EXCHANGE 내·외국인 교류, SAME_LANGUAGE 같은 언어끼리, MBTI MBTI 맞춤 (Figma W3)',
     mbti        CHAR(4)       NULL                     COMMENT 'target 이 MBTI 일 때만 (그 외에는 NULL)',
     path_json   JSON          NULL                     COMMENT '첨부한 GPX의 경로. NULL 이면 코스 경로를 씀 (GPX 파일은 저장 안 함)',
     status      VARCHAR(10)   NOT NULL DEFAULT 'OPEN'  COMMENT 'OPEN, CLOSED 마감, CANCELED 모집 취소 (화면에 보낼 상태는 v_match_status)',
@@ -154,7 +154,7 @@ CREATE TABLE matches (
     CONSTRAINT fk_matches_host   FOREIGN KEY (host_id)   REFERENCES users (user_id),
     CONSTRAINT fk_matches_course FOREIGN KEY (course_id) REFERENCES courses (course_id),
     CONSTRAINT chk_matches_capacity CHECK (capacity BETWEEN 2 AND 10),
-    CONSTRAINT chk_matches_target   CHECK (target IN ('ANYONE','SAME_AGE','EXCHANGE','MBTI')),
+    CONSTRAINT chk_matches_target   CHECK (target IN ('ANYONE','EXCHANGE','SAME_LANGUAGE','MBTI')),
     CONSTRAINT chk_matches_mbti     CHECK ((target = 'MBTI' AND mbti IS NOT NULL) OR (target <> 'MBTI' AND mbti IS NULL)),
     CONSTRAINT chk_matches_status   CHECK (status IN ('OPEN','CLOSED','CANCELED'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci

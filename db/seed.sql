@@ -119,7 +119,7 @@ INSERT INTO matches (match_id, host_id, course_id, title, content, meet_at, meet
      6, 'ANYONE', NULL, NULL, 'OPEN', NOW() - INTERVAL 1 DAY),
     (3, 4, 4, '오이도 노을 보러 같이 가요', '해 질 무렵 빨강등대 앞에서 만나요. 사진도 같이 찍어요.',
      TIMESTAMP(@today + INTERVAL 9 DAY, '16:30:00'), '오이도 빨강등대 앞',
-     3, 'SAME_AGE', NULL, NULL, 'OPEN', NOW() - INTERVAL 1 DAY),
+     3, 'SAME_LANGUAGE', NULL, NULL, 'OPEN', NOW() - INTERVAL 1 DAY),
     (4, 6, 2, '정왕역 저녁 산책 (ISFP 모여라)', '조용히 걷는 걸 좋아하는 분이면 좋겠어요.',
      TIMESTAMP(@today + INTERVAL 6 DAY, '20:00:00'), '정왕역 앞',
      4, 'MBTI', 'ISFP', NULL, 'CLOSED', NOW() - INTERVAL 2 HOUR),
