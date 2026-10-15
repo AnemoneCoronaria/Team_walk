@@ -59,6 +59,13 @@
       <artifactId>mysql-connector-j</artifactId>
       <version>8.4.0</version>
     </dependency>
+
+    <!-- 비밀번호 암호화 · 확인 (BCrypt). common/PasswordUtil 에서 사용 -->
+    <dependency>
+      <groupId>org.mindrot</groupId>
+      <artifactId>jbcrypt</artifactId>
+      <version>0.4</version>
+    </dependency>
   </dependencies>
 
   <build>
