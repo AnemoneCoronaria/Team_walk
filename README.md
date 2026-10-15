@@ -41,7 +41,7 @@
 | `http://localhost:8080/` | **산책시루 서버가 동작합니다** / JSP: 정상 동작 / JSTL: JSTL 정상 동작 | 이클립스 + Tomcat + JSP |
 | `http://localhost:8080/api/hello` | `{"success":true,"data":{"message":"안녕하세요, 산책시루 서버입니다", …}}` | Servlet + JSON |
 | `http://localhost:5173/` | **산책시루 프론트가 동작합니다** + **✅ 연결 성공** | React + Vite + 백엔드 연결 |
-| (백엔드) `source …/db/check.sql` | 5줄 모두 **OK** | MySQL + 테이블 + 테스트 데이터 ([DB 안내](db/README.md#4-확인)) |
+| (백엔드) `source …/db/check.sql` | 7줄 모두 **OK** | MySQL + 테이블 + 테스트 데이터 ([DB 안내](db/README.md#4-확인)) |
 
 ---
 
@@ -56,7 +56,7 @@
 | 프론트 | **React 19 + Vite 8**, ESLint | |
 | Node.js | **22.12 이상** (LTS) | Vite 8의 최소 요구 버전 |
 | 프론트 IDE | VS Code 또는 WebStorm | |
-| DB | **MySQL 8.4** (8.0도 가능) | ERD · 세팅 방법 · 테스트 계정은 [db/README.md](db/README.md) |
+| DB | **MySQL 8.4** (8.0도 가능), 각자 PC에 설치 | ERD · 세팅 방법 · 테스트 계정은 [db/README.md](db/README.md). 배포 서버는 아직 계획 없음 |
 | 지도 | 카카오맵 JavaScript API (예정) | |
 | 협업 | GitHub, 디스코드 | |
 
@@ -79,8 +79,9 @@ Team_walk/
 ├─ db/                               DB (민서가 관리, 바꿀 때는 PR)
 │  ├─ README.md                      ERD, 설계 약속, MySQL 세팅, 테스트 계정
 │  ├─ schema.sql                     테이블 만들기 (실행하면 데이터 초기화)
-│  ├─ seed.sql                       테스트 데이터
-│  └─ check.sql                      세팅 확인 (5줄 모두 OK 면 성공)
+│  ├─ seed.sql                       테스트 데이터 (1·2주차)
+│  ├─ check.sql                      세팅 확인 (7줄 모두 OK 면 성공)
+│  └─ sample-uploads/                테스트용 후기 사진 (각자 PC 업로드 폴더로 복사)
 ├─ backend/                          백엔드 (이클립스로 여는 폴더)
 │  ├─ pom.xml                        라이브러리 목록, 빌드 설정
 │  └─ src/main/

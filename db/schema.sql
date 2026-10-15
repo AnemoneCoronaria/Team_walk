@@ -1,6 +1,9 @@
 -- =====================================================================
 -- 산책시루 DB 스키마
--- 범위: 1주차 (계정 · 코스 · 동행) 테이블 7개 + 동행 상태 계산 뷰 1개
+-- 범위: 1주차 (계정 · 코스 · 동행) 테이블 7개
+--       2주차 (후기 · 신고 · 랜드마크 · 스탬프 · 댓글) 테이블 6개
+--       계산용 뷰 2개 (동행 상태, 코스 별점)
+-- DB 위치: 각자 PC의 MySQL (배포 서버는 아직 계획 없음)
 -- 기준: MySQL 8.4 / 문자셋 utf8mb4 (한글 · 中文 · 이모지 모두 저장)
 --
 -- 실행 순서: schema.sql → seed.sql  (방법은 db/README.md)
@@ -12,7 +15,14 @@ SET NAMES utf8mb4;
 USE sanchaek;
 
 -- 지울 때는 만든 순서의 반대로 (다른 테이블이 참조하는 것부터 지우면 오류)
+DROP VIEW  IF EXISTS v_course_rating;
 DROP VIEW  IF EXISTS v_match_status;
+DROP TABLE IF EXISTS match_comments;
+DROP TABLE IF EXISTS reports;
+DROP TABLE IF EXISTS review_photos;
+DROP TABLE IF EXISTS reviews;
+DROP TABLE IF EXISTS user_stamps;
+DROP TABLE IF EXISTS landmarks;
 DROP TABLE IF EXISTS match_participants;
 DROP TABLE IF EXISTS match_tags;
 DROP TABLE IF EXISTS matches;
@@ -81,6 +91,7 @@ CREATE TABLE user_tags (
 -- 목록 화면 지도 마커용으로 시작점만 start_lat / start_lng 에 따로 둡니다.
 -- GPX 파일은 저장하지 않습니다. 다운로드할 때 path_json 으로 GPX를 만들어 보냅니다.
 -- 삭제해도 행을 지우지 않고 is_deleted = TRUE (그 코스로 잡힌 동행 · 후기는 남김)
+-- 관리자가 숨기면 is_hidden = TRUE (AD4 코스 관리, AD1 신고 처리)
 -- ---------------------------------------------------------------------
 CREATE TABLE courses (
     course_id     BIGINT        NOT NULL AUTO_INCREMENT,
@@ -96,7 +107,8 @@ CREATE TABLE courses (
     path_json     JSON          NOT NULL                  COMMENT '[[위도, 경도], ...] 전체 경로',
     visibility    VARCHAR(10)   NOT NULL DEFAULT 'PUBLIC' COMMENT 'PUBLIC 전체 공개, PRIVATE 나만 보기',
     hide_ends     BOOLEAN       NOT NULL DEFAULT FALSE    COMMENT '출발·도착 200m 숨기기',
-    is_deleted    BOOLEAN       NOT NULL DEFAULT FALSE    COMMENT '삭제된 코스 (목록·상세에서 제외)',
+    is_deleted    BOOLEAN       NOT NULL DEFAULT FALSE    COMMENT '작성자가 삭제한 코스 (목록·상세에서 제외)',
+    is_hidden     BOOLEAN       NOT NULL DEFAULT FALSE    COMMENT '관리자가 숨긴 코스 (목록에서 제외, 상세 404)',
     created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (course_id),
@@ -229,9 +241,169 @@ LEFT JOIN match_participants p
 GROUP BY m.match_id;
 
 
+-- =====================================================================
+-- 2주차 테이블
+-- =====================================================================
+
 -- ---------------------------------------------------------------------
--- 2주차에 추가할 테이블 (지금은 만들지 않음)
---   reviews, review_photos, reports   (정란)
---   landmarks, user_stamps            (동언)
---   match_comments                    (민서)
+-- 랜드마크 (담당: 동언)
+-- 관리자 화면 없이 seed.sql 로 미리 넣어 둡니다 (8곳, 한국관광공사 관광정보 좌표).
+-- 코스 상세의 landmarks 는 저장하지 않고 계산합니다: 코스 경로가 radius_m 안을 지나는 랜드마크.
 -- ---------------------------------------------------------------------
+CREATE TABLE landmarks (
+    landmark_id  BIGINT        NOT NULL AUTO_INCREMENT,
+    name         VARCHAR(50)   NOT NULL,
+    area         VARCHAR(20)   NOT NULL                 COMMENT 'OKGU, JEONGWANG, BAEGOT, SIHWA (코스 지역과 같은 코드)',
+    lat          DECIMAL(9,6)  NOT NULL                 COMMENT '위도',
+    lng          DECIMAL(9,6)  NOT NULL                 COMMENT '경도',
+    radius_m     INT           NOT NULL DEFAULT 300     COMMENT '인증 반경 (m). 경로의 한 점이라도 이 안이면 스탬프',
+    description  VARCHAR(200)  NULL                     COMMENT '짧은 소개',
+    sort_order   INT           NOT NULL DEFAULT 0       COMMENT '목록에 보일 순서',
+    created_at   DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (landmark_id),
+    UNIQUE KEY uk_landmarks_name (name),
+    CONSTRAINT chk_landmarks_area   CHECK (area IN ('OKGU','JEONGWANG','BAEGOT','SIHWA')),
+    CONSTRAINT chk_landmarks_radius CHECK (radius_m BETWEEN 50 AND 1000)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='랜드마크 (담당: 동언)';
+
+
+-- ---------------------------------------------------------------------
+-- 회원이 받은 스탬프 (담당: 동언)
+-- 랜드마크 하나당 한 번만 (같은 곳을 또 걸어도 alreadyStamped 로 응답).
+-- 배지는 저장하지 않고 스탬프 개수로 계산합니다:
+--   FIRST_STAMP 1개, WALKER 3개, SIHEUNG_MASTER 랜드마크 전부
+-- ---------------------------------------------------------------------
+CREATE TABLE user_stamps (
+    user_id      BIGINT    NOT NULL,
+    landmark_id  BIGINT    NOT NULL,
+    stamped_at   DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, landmark_id),
+    KEY idx_user_stamps_landmark (landmark_id),
+    CONSTRAINT fk_user_stamps_user     FOREIGN KEY (user_id)     REFERENCES users (user_id),
+    CONSTRAINT fk_user_stamps_landmark FOREIGN KEY (landmark_id) REFERENCES landmarks (landmark_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='회원 스탬프 (담당: 동언)';
+
+
+-- ---------------------------------------------------------------------
+-- 후기 (담당: 정란)
+-- 동행으로 걸었으면 match_id 를 넣습니다 (withMatch, 내 동행 past 의 reviewed 판단).
+-- 같은 동행에는 후기 1개만 (uk_reviews_user_match). 동행 없이 쓴 후기(match_id NULL)는 제한 없음.
+-- 작성자가 지우면 실제로 삭제합니다 (사진 행도 같이 삭제됨). 관리자가 숨기면 is_hidden = TRUE.
+-- 별점 평균 · 후기 수는 저장하지 않고 v_course_rating 뷰에서 계산합니다.
+-- ---------------------------------------------------------------------
+CREATE TABLE reviews (
+    review_id   BIGINT    NOT NULL AUTO_INCREMENT,
+    user_id     BIGINT    NOT NULL                  COMMENT '작성자',
+    course_id   BIGINT    NOT NULL,
+    match_id    BIGINT    NULL                      COMMENT '동행으로 걸었을 때만',
+    rating      TINYINT   NOT NULL                  COMMENT '별점 1~5',
+    content     TEXT      NOT NULL                  COMMENT '10자 이상',
+    is_hidden   BOOLEAN   NOT NULL DEFAULT FALSE    COMMENT '관리자가 숨긴 후기 (신고 처리 HIDE) → 목록·별점에서 제외',
+    created_at  DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at  DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (review_id),
+    UNIQUE KEY uk_reviews_user_match (user_id, match_id),
+    KEY idx_reviews_course (course_id, created_at),
+    CONSTRAINT fk_reviews_user   FOREIGN KEY (user_id)   REFERENCES users (user_id),
+    CONSTRAINT fk_reviews_course FOREIGN KEY (course_id) REFERENCES courses (course_id),
+    CONSTRAINT fk_reviews_match  FOREIGN KEY (match_id)  REFERENCES matches (match_id),
+    CONSTRAINT chk_reviews_rating  CHECK (rating BETWEEN 1 AND 5),
+    CONSTRAINT chk_reviews_content CHECK (CHAR_LENGTH(content) >= 10)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='후기 (담당: 정란)';
+
+
+-- ---------------------------------------------------------------------
+-- 후기 사진 (담당: 정란)
+-- 사진 파일은 각자 PC의 업로드 폴더(예: C:/dev/jspTeam/uploads)에 저장하고,
+-- DB에는 그 폴더 기준 상대 경로만 저장합니다. 예) reviews/88-1.jpg
+-- 화면 주소는 /files/ + file_path → /files/reviews/88-1.jpg
+-- 후기 1개당 최대 5장 (sort_order 1~5)
+-- ---------------------------------------------------------------------
+CREATE TABLE review_photos (
+    photo_id    BIGINT        NOT NULL AUTO_INCREMENT,
+    review_id   BIGINT        NOT NULL,
+    file_path   VARCHAR(255)  NOT NULL                 COMMENT '업로드 폴더 기준 상대 경로',
+    sort_order  TINYINT       NOT NULL DEFAULT 1       COMMENT '사진 순서 1~5',
+    created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (photo_id),
+    UNIQUE KEY uk_review_photos_order (review_id, sort_order),
+    CONSTRAINT fk_review_photos_review FOREIGN KEY (review_id) REFERENCES reviews (review_id) ON DELETE CASCADE,
+    CONSTRAINT chk_review_photos_order CHECK (sort_order BETWEEN 1 AND 5)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='후기 사진 (담당: 정란)';
+
+
+-- ---------------------------------------------------------------------
+-- 신고 (담당: 정란 · 관리자 AD1)
+-- 신고 대상이 4종류라 외래키 대신 target_type + target_id 로 가리킵니다.
+--   MATCH → matches.match_id, USER → users.user_id, COURSE → courses.course_id, REVIEW → reviews.review_id
+-- 같은 사람이 같은 대상을 두 번 신고할 수 없습니다 (uk_reports_once → 409 DUPLICATE).
+-- 관리자 처리: status 를 DONE 으로, action 에 결과 기록
+--   HIDE    대상 숨김 (matches/courses/reviews 의 is_hidden = TRUE)
+--   SUSPEND 회원 정지 (users.status = 'SUSPENDED', 대상이 글이면 그 작성자)
+--   REJECT  기각 (아무것도 바꾸지 않음)
+-- ---------------------------------------------------------------------
+CREATE TABLE reports (
+    report_id     BIGINT        NOT NULL AUTO_INCREMENT,
+    reporter_id   BIGINT        NOT NULL                  COMMENT '신고한 사람',
+    target_type   VARCHAR(10)   NOT NULL                  COMMENT 'MATCH, USER, COURSE, REVIEW',
+    target_id     BIGINT        NOT NULL                  COMMENT 'target_type 에 맞는 테이블의 id',
+    reason        VARCHAR(20)   NOT NULL                  COMMENT 'SPAM 광고, ABUSE 욕설·비방, INAPPROPRIATE 부적절, FAKE 사실과 다름, ETC 기타',
+    detail        VARCHAR(300)  NULL                      COMMENT '자세한 내용 (선택)',
+    status        VARCHAR(10)   NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING 대기, DONE 처리 완료',
+    action        VARCHAR(10)   NULL                      COMMENT 'HIDE, SUSPEND, REJECT (처리 완료일 때만)',
+    admin_memo    VARCHAR(500)  NULL                      COMMENT '관리자 메모',
+    processed_by  BIGINT        NULL                      COMMENT '처리한 관리자',
+    processed_at  DATETIME      NULL,
+    created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (report_id),
+    UNIQUE KEY uk_reports_once (reporter_id, target_type, target_id),
+    KEY idx_reports_status (status, created_at),
+    CONSTRAINT fk_reports_reporter  FOREIGN KEY (reporter_id)  REFERENCES users (user_id),
+    CONSTRAINT fk_reports_processor FOREIGN KEY (processed_by) REFERENCES users (user_id),
+    CONSTRAINT chk_reports_target CHECK (target_type IN ('MATCH','USER','COURSE','REVIEW')),
+    CONSTRAINT chk_reports_reason CHECK (reason IN ('SPAM','ABUSE','INAPPROPRIATE','FAKE','ETC')),
+    -- 주의: MySQL 검사 규칙은 결과가 NULL 이면 통과로 칩니다. 그래서 action IS NOT NULL 을 꼭 같이 씁니다.
+    CONSTRAINT chk_reports_status CHECK ((status = 'PENDING' AND action IS NULL)
+                                      OR (status = 'DONE' AND action IS NOT NULL AND action IN ('HIDE','SUSPEND','REJECT')))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='신고 (담당: 정란)';
+
+
+-- ---------------------------------------------------------------------
+-- 동행 댓글 (담당: 민서)
+-- 참여자와 모집자만 읽고 씁니다 (서블릿에서 검사). 모집자가 is_notice = TRUE 로 쓰면 W4 상단 공지.
+-- ---------------------------------------------------------------------
+CREATE TABLE match_comments (
+    comment_id  BIGINT        NOT NULL AUTO_INCREMENT,
+    match_id    BIGINT        NOT NULL,
+    user_id     BIGINT        NOT NULL                 COMMENT '작성자',
+    content     VARCHAR(500)  NOT NULL,
+    is_notice   BOOLEAN       NOT NULL DEFAULT FALSE   COMMENT '모집자 공지',
+    created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (comment_id),
+    KEY idx_match_comments_match (match_id, created_at),
+    CONSTRAINT fk_match_comments_match FOREIGN KEY (match_id) REFERENCES matches (match_id) ON DELETE CASCADE,
+    CONSTRAINT fk_match_comments_user  FOREIGN KEY (user_id)  REFERENCES users (user_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='동행 댓글 (담당: 민서)';
+
+
+-- ---------------------------------------------------------------------
+-- 코스 별점 계산 뷰 (담당: 정란 · 동언)
+-- 코스 목록 · 상세의 rating, reviewCount 와 후기 목록의 avgRating 은 이 뷰에서 꺼냅니다.
+-- 관리자가 숨긴 후기는 빼고 계산합니다. 후기가 없으면 0.
+-- 사용 예) SELECT c.*, r.avg_rating, r.review_count
+--          FROM courses c JOIN v_course_rating r ON r.course_id = c.course_id
+-- ---------------------------------------------------------------------
+CREATE VIEW v_course_rating AS
+SELECT c.course_id,
+       COUNT(r.review_id)                 AS review_count,
+       IFNULL(ROUND(AVG(r.rating), 1), 0) AS avg_rating
+FROM courses c
+LEFT JOIN reviews r
+       ON r.course_id = c.course_id AND r.is_hidden = FALSE
+GROUP BY c.course_id;

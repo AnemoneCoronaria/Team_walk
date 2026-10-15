@@ -1,0 +1,72 @@
+erDiagram
+    matches |o--o{ reviews : "동행 후기 (선택)"
+    courses ||--o{ reviews : "코스 후기"
+    users ||--o{ reviews : "후기 씀"
+    reviews ||--o{ review_photos : "사진"
+    matches ||--o{ match_comments : "댓글"
+    users ||--o{ match_comments : "댓글 씀"
+    users ||--o{ reports : "신고함"
+    users ||--o{ user_stamps : "스탬프"
+    landmarks ||--o{ user_stamps : "인증된 곳"
+
+users {
+        bigint user_id PK "1주차 테이블"
+    }
+    courses {
+        bigint course_id PK "1주차 테이블"
+    }
+    matches {
+        bigint match_id PK "1주차 테이블"
+    }
+    reviews {
+        bigint review_id PK
+        bigint user_id FK "작성자"
+        bigint course_id FK
+        bigint match_id FK "동행으로 걸었을 때만, 같은 동행엔 1개"
+        tinyint rating "1~5"
+        text content "10자 이상"
+        boolean is_hidden "관리자 숨김"
+        datetime created_at
+    }
+    review_photos {
+        bigint photo_id PK
+        bigint review_id FK
+        varchar file_path "reviews/88-1.jpg 같은 상대 경로"
+        tinyint sort_order "1~5"
+    }
+    match_comments {
+        bigint comment_id PK
+        bigint match_id FK
+        bigint user_id FK "작성자"
+        varchar content "500자 이내"
+        boolean is_notice "모집자 공지"
+        datetime created_at
+    }
+    reports {
+        bigint report_id PK
+        bigint reporter_id FK "신고한 사람"
+        varchar target_type "MATCH, USER, COURSE, REVIEW"
+        bigint target_id "대상 id (외래키 없음)"
+        varchar reason "SPAM, ABUSE, INAPPROPRIATE, FAKE, ETC"
+        varchar detail "300자 이내"
+        varchar status "PENDING, DONE"
+        varchar action "HIDE, SUSPEND, REJECT"
+        varchar admin_memo
+        bigint processed_by FK "처리한 관리자"
+        datetime processed_at
+    }
+    user_stamps {
+        bigint user_id PK, FK
+        bigint landmark_id PK, FK
+        datetime stamped_at
+    }
+    landmarks {
+        bigint landmark_id PK
+        varchar name
+        varchar area "OKGU, JEONGWANG, BAEGOT, SIHWA"
+        decimal lat
+        decimal lng
+        int radius_m "인증 반경 300"
+        varchar description
+        int sort_order
+    }

@@ -43,7 +43,8 @@ erDiagram
         json path_json "전체 경로 좌표 배열"
         varchar visibility "PUBLIC, PRIVATE"
         boolean hide_ends "출발·도착 200m 숨기기"
-        boolean is_deleted
+        boolean is_deleted "작성자 삭제"
+        boolean is_hidden "관리자 숨김 (2주차)"
         datetime created_at
     }
     course_facilities {

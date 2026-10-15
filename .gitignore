@@ -22,6 +22,9 @@ RemoteSystemsTempFiles/
 Thumbs.db
 desktop.ini
 
+# 후기 사진 업로드 폴더 (각자 PC에만. 실수로 저장소 안에 만들었을 때 대비)
+uploads/
+
 # 비밀 정보 (절대 커밋 금지)
 .env
 .env.local

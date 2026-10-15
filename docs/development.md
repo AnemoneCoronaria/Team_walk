@@ -59,10 +59,10 @@
 
 자세한 내용은 **[db/README.md](../db/README.md)** 에 있습니다. 여기서는 핵심만 적습니다.
 
-- 1주차 테이블 7개(회원 · 코스 · 동행)와 동행 상태 계산 뷰 1개가 있습니다. 2주차 테이블은 2주차 전에 추가합니다.
-- **세팅:** MySQL 8.4 설치 → DB `sanchaek`, 계정 `sanchaek` 만들기 → `schema.sql` → `seed.sql` 실행 → `check.sql`로 확인 (5줄 모두 OK). 팀 비밀번호는 디스코드 공지.
+- 1주차 테이블 7개(회원 · 코스 · 동행), 2주차 테이블 6개(후기 · 신고 · 랜드마크 · 스탬프 · 댓글), 계산용 뷰 2개(동행 상태, 코스 별점)가 있습니다. DB는 각자 PC의 MySQL입니다.
+- **세팅:** MySQL 8.4 설치 → DB `sanchaek`, 계정 `sanchaek` 만들기 → `schema.sql` → `seed.sql` 실행 → `check.sql`로 확인 (7줄 모두 OK). 후기 사진을 다룰 때는 `C:\dev\jspTeam\uploads` 폴더도 만듭니다. 팀 비밀번호는 디스코드 공지.
 - **테스트 계정:** `admin`, `minseo`, `jeongran`, `dongeon`, `donghun`, `seungmin`, 정지 테스트용 `banned` (비밀번호 전부 `test1234!`)
-- **꼭 지킬 약속:** 지우지 않고 상태를 바꾸기, 동행 인원 · 상태는 `v_match_status` 뷰에서 꺼내기, GPX 파일은 저장하지 않고 좌표만 저장 → [설계 약속](../db/README.md#설계-약속-꼭-읽기)
+- **꼭 지킬 약속:** 지우지 않고 상태를 바꾸기 (후기만 예외), 동행 인원 · 상태는 `v_match_status`, 별점은 `v_course_rating` 뷰에서 꺼내기, GPX 파일은 저장하지 않고 좌표만, 후기 사진은 업로드 폴더에 두고 DB엔 경로만 → [설계 약속](../db/README.md#설계-약속-꼭-읽기)
 - **테이블을 바꿀 때:** 디스코드에 먼저 알리고 → `schema.sql` 수정 → PR(리뷰어 민서) → 합쳐지면 모두 `schema.sql` · `seed.sql` 다시 실행. 자기 PC에서만 `ALTER TABLE` 하지 않기.
 
 ---
