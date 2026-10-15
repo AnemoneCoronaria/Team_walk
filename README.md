@@ -3,7 +3,8 @@
 7팀 산책크루의 정왕동 산책 동행 서비스 **산책시루** 저장소입니다.
 
 > **처음 왔다면:** [빠른 시작](#빠른-시작)의 세 화면이 목표입니다. [세팅 가이드](docs/setup.md)를 순서대로 따라 하세요.
-> **백엔드 담당**은 이어서 [DB 세팅](db/README.md#처음-세팅-윈도우-한-번만)까지 합니다 (프론트는 2주차에).
+> **백엔드 담당**은 이어서 [DB 세팅](db/README.md#처음-세팅-윈도우-한-번만)과 [설정 파일 `db.properties`](db/README.md#6-백엔드-설정-파일-만들기-dbproperties)까지 합니다 (프론트는 2주차에).
+> **깃허브가 처음이면** 아래 [깃허브로 작업하는 법](#깃허브로-작업하는-법)부터 보세요.
 > 막히면 [막혔을 때](docs/troubleshooting.md)를 먼저 보세요. 지금까지 겪은 문제와 해결법이 모두 있습니다.
 
 ![산책시루 개발 구조: 브라우저 → Vite(5173) → Tomcat(8080) → DAO → MySQL(3306)](docs/images/architecture.png)
@@ -19,7 +20,7 @@
 | --- | --- | --- |
 | **[세팅 가이드](docs/setup.md)** | 처음 한 번 | 설치, 폴더 배치, 이클립스 · Tomcat, 프론트, 환경 확인용 테스트 코드, 맥 사용자 부록 |
 | **[DB 안내](db/README.md)** | 백엔드 1주차 시작 전, 테이블이 바뀔 때 | ERD, 설계 약속, MySQL 세팅, 테스트 계정, 쿼리 예시, DB 오류 |
-| **[개발 규칙](docs/development.md)** | 작업할 때마다 | API · 화면 만드는 법, 브랜치 · PR 규칙, Git 명령어, 커밋 메시지 |
+| **[개발 규칙](docs/development.md)** | 작업할 때마다 | API · 화면 만드는 법, **백엔드 공통 코드 쓰는 법**, 브랜치 · PR 규칙, **깃허브 사용법**(명령어 · PR 올리기 · 리뷰하고 합치기 · 실수 되돌리기), 커밋 메시지 |
 | **[막혔을 때](docs/troubleshooting.md)** | 오류가 났을 때 | 설치 · 이클립스 · Maven · 포트 · 프론트 · Git 문제와 해결법 |
 
 ## 관련 문서 (저장소 밖)
@@ -42,6 +43,30 @@
 | `http://localhost:8080/api/hello` | `{"success":true,"data":{"message":"안녕하세요, 산책시루 서버입니다", …}}` | Servlet + JSON |
 | `http://localhost:5173/` | **산책시루 프론트가 동작합니다** + **✅ 연결 성공** | React + Vite + 백엔드 연결 |
 | (백엔드) `source …/db/check.sql` | 7줄 모두 **OK** | MySQL + 테이블 + 테스트 데이터 ([DB 안내](db/README.md#4-확인)) |
+
+---
+
+## 깃허브로 작업하는 법
+
+**기능 하나 = 브랜치 하나 = PR 하나.** main · develop에는 직접 올리지 않고, 항상 내 브랜치 → PR → 리뷰 → 합치기 순서입니다.
+
+![깃허브 작업 흐름: ① develop 받기 → ② 브랜치 만들기 → ③ 커밋 → ④ develop 반영 → ⑤ push → ⑥ PR 만들기 → ⑦ 리뷰 → ⑧ 합치기](docs/images/git-workflow.png)
+
+```bash
+git checkout develop && git pull                 # ① 최신 develop 받기
+git checkout -b feature/W2-match-detail          # ② 내 브랜치 (feature/화면ID-기능)
+git add backend && git commit -m "feat: 동행 상세 API 추가"   # ③ 작게, 자주
+git pull origin develop                          # ④ 그사이 바뀐 develop 반영
+git push -u origin feature/W2-match-detail       # ⑤ 올리기 → 깃허브에서 PR (base: develop)
+```
+
+| 처음이라면 | 자세히 |
+| --- | --- |
+| 이름 · 이메일 설정 (처음 한 번) | [3-1. 처음 한 번](docs/development.md#3-1-처음-한-번) |
+| PR 만드는 화면, 리뷰어 지정 | [3-3. PR 올리는 법](docs/development.md#3-3-pr-올리는-법-깃허브-화면) |
+| 리뷰어가 할 일 (Approve → Merge → Delete branch) | [3-4. 리뷰하고 합치는 법](docs/development.md#3-4-리뷰하고-합치는-법-리뷰어) |
+| `CONFLICT`가 났다 | [3-5. 충돌이 났을 때](docs/development.md#3-5-충돌이-났을-때) |
+| develop에서 바로 작업했다, 커밋 메시지를 틀렸다 등 | [3-6. 자주 하는 실수와 되돌리기](docs/development.md#3-6-자주-하는-실수와-되돌리기) |
 
 ---
 
@@ -86,12 +111,22 @@ Team_walk/
 │  ├─ pom.xml                        라이브러리 목록, 빌드 설정
 │  └─ src/main/
 │     ├─ java/kr/sanchaek/
-│     │  ├─ common/                  공통 코드: DB 연결, 로그인 필터, 응답 형식 (민서)
+│     │  ├─ common/                  공통 코드 (민서) → 쓰는 법은 개발 규칙 1번
+│     │  │  ├─ DBUtil.java           DB 연결
+│     │  │  ├─ ApiResponse.java      응답 형식 { success, data } · JSON 읽기
+│     │  │  ├─ ApiFilter.java        /api 오류를 JSON으로 (자동)
+│     │  │  ├─ SessionUtil.java      로그인 세션 · 로그인 확인
+│     │  │  ├─ PasswordUtil.java     비밀번호 해시 · 확인
+│     │  │  ├─ FileStore.java        후기 사진 저장 · 주소
+│     │  │  ├─ FileServlet.java      /files/… 사진 보내기
+│     │  │  ├─ AppConfig.java        설정 파일 읽기
 │     │  │  └─ HelloServlet.java     ★ 환경 확인용 테스트 API (/api/hello)
 │     │  ├─ match/        (예정)      동행 (민서)
 │     │  ├─ user/         (예정)      계정, 후기, 신고 (정란)
 │     │  └─ course/       (예정)      코스, GPX, 랜드마크 (동언)
-│     ├─ resources/       (예정)      설정 파일 (DB 접속 정보 등)
+│     ├─ resources/
+│     │  ├─ db.properties.example    설정 파일 예시 (복사해서 db.properties 로)
+│     │  └─ db.properties            DB 비밀번호 · 업로드 폴더 (각자 만듦, 깃허브에 안 올라감)
 │     └─ webapp/
 │        ├─ index.jsp                ★ 환경 확인용 테스트 페이지
 │        ├─ WEB-INF/views/admin/ (예정)  관리자 JSP
@@ -116,7 +151,7 @@ Team_walk/
 
 ## 꼭 지킬 것
 
-- **비밀번호, API 키는 절대 커밋하지 않기** (DB 비밀번호, 카카오 키 등). 디스코드 비공개 채널로 공유합니다. 한 번이라도 커밋되면 기록에 남으니 키를 새로 발급받아야 합니다.
+- **비밀번호, API 키는 절대 커밋하지 않기** (DB 비밀번호, 카카오 키 등). 디스코드 비공개 채널로 공유합니다. 한 번이라도 커밋되면 기록에 남으니 키를 새로 발급받아야 합니다. DB 비밀번호는 `db.properties`(깃허브에 안 올라감)에만 넣습니다.
 - **main, develop에 직접 push 금지.** 항상 feature 브랜치 → PR ([개발 규칙](docs/development.md#2-브랜치pr-규칙))
 - **같이 쓰는 파일은 고치기 전에 디스코드에 알리기:** `db/schema.sql`, `backend/pom.xml`, `frontend/package.json`, 프론트 라우터
 - **작업 시작 전에 항상 `git pull`**

@@ -3,7 +3,7 @@
 [← README](../README.md) · [세팅 가이드](../docs/setup.md) · [개발 규칙](../docs/development.md) · [막혔을 때](../docs/troubleshooting.md)
 
 1주차(계정 · 코스 · 동행) **테이블 7개**, 2주차(후기 · 신고 · 랜드마크 · 스탬프 · 댓글) **테이블 6개**, 계산용 **뷰 2개**가 있습니다.
-DB는 **각자 PC의 MySQL**을 씁니다. 배포 서버는 아직 계획이 없습니다.
+DB는 **각자 PC의 MySQL**을 씁니다. 배포 서버는 아직 정해지지 않았습니다.
 
 | 파일 | 내용 |
 | --- | --- |
@@ -170,7 +170,9 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포 서버는 아직 계획이 없
 ### 6. 비밀번호
 
 - `password_hash`에는 **BCrypt 해시(60자)** 만 저장합니다. 원문 저장 금지.
-- 테스트 계정 해시는 `$2a$10$…` 형식이라 자바 BCrypt 라이브러리(jBCrypt 등)로 바로 검사할 수 있습니다.
+- 공통 코드 **`PasswordUtil`** 로 만들고 확인합니다: 가입 · 비밀번호 변경은 `PasswordUtil.hash(pw)`, 로그인은 `PasswordUtil.matches(pw, hash)`.
+- 같은 비밀번호도 해시가 매번 달라서 **SQL의 `WHERE password_hash = ?`로는 비교할 수 없습니다.** 아이디로 행을 꺼낸 다음 `matches`로 확인합니다.
+- 테스트 계정 해시(`$2a$10$…`)도 `PasswordUtil.matches("test1234!", hash)`로 확인됩니다 (실제 테스트 완료).
 
 ### 7. 참여하기는 트랜잭션으로
 
@@ -188,7 +190,9 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포 서버는 아직 계획이 없
 - 사진 파일은 **각자 PC의 업로드 폴더**에 저장합니다. 윈도우 기준 `C:\dev\jspTeam\uploads` (저장소 밖이라 깃허브에 안 올라감).
 - DB의 `review_photos.file_path`에는 업로드 폴더 기준 **상대 경로**만 넣습니다. 이름 규칙: `reviews/{후기번호}-{순서}.jpg` → 예) `reviews/88-1.jpg`
 - API 응답에는 앞에 `/files/`를 붙여서 `/files/reviews/88-1.jpg`로 보냅니다. 브라우저가 이 주소를 부르면, **파일을 보내 주는 서블릿**이 업로드 폴더에서 읽어 응답합니다.
-- 업로드 폴더 위치 설정과 `/files/…` 서블릿은 백엔드 공통 코드(민서)에 같이 넣을 예정입니다. 폴더 위치는 설정 파일에 두어서, 맥 사용자나 나중에 서버로 옮길 때는 설정만 바꿉니다.
+- 공통 코드로 만들어 두었습니다: 저장은 `FileStore.save(part, "reviews/88-1.jpg")`, 응답 주소는 `FileStore.url(path)`, `/files/…` 주소는 `FileServlet`이 처리합니다.
+- 폴더 위치는 설정 파일(`db.properties`의 `upload.dir`)에 있어서, 맥 사용자나 나중에 서버로 옮길 때는 설정만 바꿉니다. → [6)](#6-백엔드-설정-파일-만들기-dbproperties)
+- React 화면(5173)에서도 사진이 보이도록 `frontend/vite.config.js`가 `/files`를 Tomcat으로 넘깁니다.
 - 한 후기에 최대 5장 (`sort_order` 1~5, 6번째는 DB가 막음). 장당 5MB · jpg/png 검사는 서블릿에서.
 
 ### 10. 신고와 관리자 처리 (2주차)
@@ -337,6 +341,26 @@ C:\dev\jspTeam\
 └─ uploads\       후기 사진 (각자 PC에만, 깃허브에 안 올라감)
    └─ reviews\1-1.jpg, 1-2.jpg
 ```
+
+### 6) 백엔드 설정 파일 만들기 (db.properties)
+
+**백엔드 3명은 1주차에 바로** 합니다. 자바 코드가 DB에 접속할 때 이 파일의 주소 · 계정 · 비밀번호를 씁니다.
+
+1. `C:\dev\jspTeam\Team_walk\backend\src\main\resources\` 폴더를 엽니다.
+2. `db.properties.example`을 **같은 폴더에 복사**하고 이름을 **`db.properties`** 로 바꿉니다.
+   Git Bash로 하려면: `cp backend/src/main/resources/db.properties.example backend/src/main/resources/db.properties`
+3. `db.properties`를 메모장(또는 이클립스)으로 열어 `db.password=` 뒤를 **디스코드 팀 비밀번호**로 바꾸고 저장합니다.
+4. 업로드 폴더를 5)와 다른 곳에 만들었다면 `upload.dir`도 바꿉니다. 경로는 **슬래시(`/`)** 로 씁니다.
+5. 이클립스에서 `sanchaek` 우클릭 → **Refresh**(F5) → Tomcat 재시작.
+
+```properties
+db.url=jdbc:mysql://localhost:3306/sanchaek?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+db.user=sanchaek
+db.password=디스코드_공지_비밀번호
+upload.dir=C:/dev/jspTeam/uploads
+```
+
+> ⚠️ **`db.properties`는 깃허브에 올라가지 않습니다** (`.gitignore`). `git status`에 `db.properties`가 보이면 안 됩니다. 예시 파일(`db.properties.example`)에는 비밀번호를 넣지 마세요.
 
 ### 화면으로 보고 싶다면 (선택)
 
@@ -559,7 +583,12 @@ LIMIT ? OFFSET ?;
 | `ERROR 3140: Invalid JSON text` | `path_json`에 JSON이 아닌 문자열 | Gson으로 만든 문자열을 넣기 |
 | `ERROR 1451: Cannot delete or update a parent row` | 다른 테이블이 참조하는 행을 지우려 함 | 지우지 말고 상태 변경 ([설계 약속 3](#3-지우지-않습니다-후기만-예외)) |
 | 자바에서 **`Illegal mix of collations (utf8mb4_0900_ai_ci …) and (utf8mb4_unicode_ci …)`** | DB 드라이버의 글자 비교 기준이 MySQL 기본값과 다름. 뷰의 상태 값과 비교할 때 생김 (실제 테스트에서 발견) | 최신 `schema.sql`로 다시 실행 (뷰에 `COLLATE utf8mb4_0900_ai_ci`가 들어가 있어야 함). **뷰의 `COLLATE` 줄은 지우지 않기** |
-| 후기 사진이 화면에 안 나옴 (엑스박스) | 업로드 폴더에 파일이 없음 | [5)](#5-후기-사진-폴더-만들기-2주차)대로 `uploads\reviews\`에 복사했는지 확인 |
+| 후기 사진이 화면에 안 나옴 (엑스박스) | 업로드 폴더에 파일이 없거나 `upload.dir`이 다른 곳 | [5)](#5-후기-사진-폴더-만들기-2주차)대로 복사했는지, [6)](#6-백엔드-설정-파일-만들기-dbproperties)의 `upload.dir` 확인. `localhost:8080/files/reviews/1-1.jpg`가 열리는지 먼저 보기 |
+| 이클립스 Console에 **`db.properties 파일이 없습니다`** | 설정 파일을 안 만들었거나 이름이 다름 (`db.properties.txt` 등) | [6)](#6-백엔드-설정-파일-만들기-dbproperties). 윈도우 탐색기 **보기 → 파일 확장명** 켜고 이름 확인 |
+| 자바에서 **`No suitable driver found for jdbc:mysql…`** | Tomcat 안에서는 드라이버가 자동 등록되지 않음 (실제 테스트에서 발견) | `DBUtil.getConnection()`으로 연결하기 (직접 `DriverManager` 쓰지 않기). 그래도 나면 Maven → Update Project |
+| 자바에서 **`Public Key Retrieval is not allowed`** | MySQL 보안 연결이 꺼진 PC에서 생김 | `db.url` 끝에 `&allowPublicKeyRetrieval=true&useSSL=false` 추가 |
+| 자바에서 `Access denied for user 'sanchaek'` | `db.properties`의 비밀번호가 틀림 | 디스코드 비밀번호로 다시 저장 → Tomcat 재시작 |
+| `upload.dir`에 `C:\dev\…` 를 넣었더니 폴더를 못 찾음 | 설정 파일에서 역슬래시(`\`)는 특수 문자 | 슬래시(`/`)로: `C:/dev/jspTeam/uploads` |
 | `check.sql`에서 `match status`만 `FAIL` | `seed.sql`을 실행한 지 며칠 지나 동행 날짜가 지남 | [3)](#3-테이블과-테스트-데이터-넣기-테이블이-바뀔-때마다-다시) 다시 실행 |
 | `check.sql`에서 `tables`나 `rows`, `rating`이 `FAIL` | `schema.sql`이나 `seed.sql` 실행 중 오류가 남 (예전 `schema.sql`로 만든 경우 포함) | `git pull` 후 3)을 다시 실행하면서 빨간 `ERROR` 줄을 캡처해 디스코드에 |
 
@@ -577,3 +606,5 @@ brew services start mysql@8.4
 예: `source /Users/이름/Downloads/Team_walk/db/schema.sql`
 
 후기 사진 폴더는 저장소 옆에 만듭니다. 예: `cp -R db/sample-uploads/ ../uploads/` → `../uploads/reviews/1-1.jpg`
+
+`db.properties`의 `upload.dir`은 그 폴더의 전체 경로로 씁니다. 예: `upload.dir=/Users/이름/dev/jspTeam/uploads`

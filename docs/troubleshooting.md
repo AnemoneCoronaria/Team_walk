@@ -67,6 +67,8 @@
 | `npm run dev` 에서 버전 오류 | Node가 22.12보다 낮음 | `node -v` 확인 → nodejs.org에서 LTS 다시 설치 |
 | PowerShell에서 **`npm.ps1 … 이 시스템에서 스크립트를 실행할 수 없으므로`** | 윈도우 PowerShell 보안 정책 | **Git Bash**나 명령 프롬프트(cmd)에서 실행. 또는 PowerShell에서 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | 처음 실행할 때 **윈도우 방화벽 경고** | Node·Java가 네트워크를 쓰려고 함 | "개인 네트워크" 허용 |
+| 콘솔에 **`Unexpected token '<'`** / `is not valid JSON` | 백엔드가 JSON 대신 HTML 오류 페이지를 보냄. 주소가 틀렸거나(`/api` 빠짐, 오타) `ApiFilter`가 없는 옛 브랜치 | 개발자 도구 **Network** 탭에서 그 요청의 응답을 확인. 최신 develop에서는 `/api` 오류가 항상 `{ success: false, error }` JSON |
+| 후기 사진 자리에 **엑스박스** (5173에서만, 8080에서는 보임) | `vite.config.js`에 `/files` 프록시가 없는 옛 버전 | `git pull` 후 **`npm run dev`를 껐다 켜기** (설정 파일은 다시 켜야 반영) |
 
 ## Git
 
@@ -76,3 +78,5 @@
 | 올라갈 목록에 **`.metadata`, `Servers`, `.project`, `target`, `node_modules`** 가 보임 | 워크스페이스가 저장소 안에 있거나 `.gitignore`가 없는 브랜치 | **커밋하지 말고** 워크스페이스 위치부터 고치기 ([이클립스 표](#이클립스-워크스페이스--프로젝트) 참고). 이미 커밋했다면 팀장에게 |
 | 아무것도 안 고쳤는데 **파일 전체가 바뀐 것**으로 나옴 | 맥(LF)과 윈도우(CRLF)의 줄바꿈 차이 | `.gitattributes`로 자동 처리됨. 계속 나오면 팀장에게 |
 | `git push` 가 **`rejected … (fetch first)`** | 그사이 원격에 다른 커밋이 올라옴 | `git pull` 후 다시 `git push` |
+| develop에서 바로 작업했음, 커밋 메시지를 잘못 씀, 실수로 main에 push 등 | | [개발 규칙 3-6 자주 하는 실수와 되돌리기](development.md#3-6-자주-하는-실수와-되돌리기) |
+| `git status`에 **`db.properties`** 가 보임 | `.gitignore`가 없는 옛 브랜치이거나 이름이 다름 | **절대 add 하지 않기.** `git pull origin develop`으로 최신 `.gitignore` 받기 |
