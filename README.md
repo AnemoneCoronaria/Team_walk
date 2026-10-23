@@ -47,7 +47,7 @@
 | 항목 | 사용 |
 | --- | --- |
 | 프론트 | React 19 + Vite 8, ESLint |
-| 백엔드 | 스프링부트 4.1, Gradle |
+| 백엔드 | 스프링부트 3.5, Gradle |
 | Java | JDK 21 |
 | Node.js | 22.12 이상 (LTS) |
 | DB | MySQL 8.4 (8.0도 가능), 각자 PC에 설치 |
