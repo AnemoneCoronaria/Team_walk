@@ -1,5 +1,5 @@
 flowchart LR
-    F["R1 후기 작성<br/>사진 최대 5장"] --> SV["서블릿이 파일 저장<br/>업로드폴더/reviews/88-1.jpg"]
+    F["R1 후기 작성<br/>사진 최대 5장"] --> SV["백엔드가 파일 저장<br/>업로드폴더/reviews/88-1.jpg"]
     SV --> DB[("review_photos<br/>file_path = reviews/88-1.jpg")]
     DB --> API["후기 목록 API 응답<br/>photos 에 주소로 담음<br/>/files/reviews/88-1.jpg"]
-    API --> IMG["브라우저가 /files/… 요청<br/>→ 파일 보내 주는 서블릿이<br/>업로드 폴더에서 읽어 응답"]
+    API --> IMG["브라우저가 /files/… 요청<br/>→ 백엔드가 업로드 폴더에서<br/>읽어 응답"]

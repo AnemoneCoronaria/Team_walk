@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="산책시루 테스트 데이터" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>퇴근 후 옥구공원 한 바퀴 같이 걸어요</name>
+    <trkseg>
+      <trkpt lat="37.35272" lon="126.709915"><time>2026-10-03T09:00:00Z</time></trkpt>
+      <trkpt lat="37.352712" lon="126.710646"><time>2026-10-03T09:01:00Z</time></trkpt>
+      <trkpt lat="37.353007" lon="126.711231"><time>2026-10-03T09:02:00Z</time></trkpt>
+      <trkpt lat="37.35317" lon="126.711948"><time>2026-10-03T09:03:00Z</time></trkpt>
+      <trkpt lat="37.3536" lon="126.712311"><time>2026-10-03T09:04:00Z</time></trkpt>
+      <trkpt lat="37.354075" lon="126.712404"><time>2026-10-03T09:05:00Z</time></trkpt>
+      <trkpt lat="37.354517" lon="126.712709"><time>2026-10-03T09:06:00Z</time></trkpt>
+      <trkpt lat="37.355019" lon="126.712745"><time>2026-10-03T09:07:00Z</time></trkpt>
+      <trkpt lat="37.355397" lon="126.712217"><time>2026-10-03T09:08:00Z</time></trkpt>
+      <trkpt lat="37.355711" lon="126.711718"><time>2026-10-03T09:09:00Z</time></trkpt>
+      <trkpt lat="37.356088" lon="126.711285"><time>2026-10-03T09:10:00Z</time></trkpt>
+      <trkpt lat="37.356339" lon="126.710653"><time>2026-10-03T09:11:00Z</time></trkpt>
+      <trkpt lat="37.356295" lon="126.709915"><time>2026-10-03T09:12:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

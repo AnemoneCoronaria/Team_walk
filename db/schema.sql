@@ -3,12 +3,12 @@
 -- 범위: 1주차 (계정 · 코스 · 동행) 테이블 7개
 --       2주차 (후기 · 신고 · 랜드마크 · 스탬프 · 댓글) 테이블 6개
 --       계산용 뷰 2개 (동행 상태, 코스 별점)
--- DB 위치: 각자 PC의 MySQL (배포 서버는 아직 계획 없음)
+-- DB 위치: 각자 PC의 MySQL (배포하지 않음, 시연은 로컬)
 -- 기준: MySQL 8.4 / 문자셋 utf8mb4 (한글 · 中文 · 이모지 모두 저장)
 --
 -- 실행 순서: schema.sql → seed.sql  (방법은 db/README.md)
 -- 주의: 실행하면 아래 테이블이 전부 지워지고 새로 만들어집니다. (데이터도 사라짐)
---       테이블을 바꿀 때는 이 파일을 고쳐서 PR을 올리고 디스코드에 알립니다.
+--       테이블을 바꿀 때는 팀에 먼저 알리고, 이 파일을 고쳐서 PR을 올립니다.
 -- =====================================================================
 
 SET NAMES utf8mb4;
@@ -47,6 +47,8 @@ CREATE TABLE users (
     mbti               CHAR(4)      NULL                      COMMENT '선택 (ENFP 같은 4글자)',
     role               VARCHAR(10)  NOT NULL DEFAULT 'USER'   COMMENT 'USER, ADMIN',
     status             VARCHAR(10)  NOT NULL DEFAULT 'ACTIVE' COMMENT 'ACTIVE, SUSPENDED(정지), WITHDRAWN(탈퇴)',
+    suspended_until    DATETIME     NULL                      COMMENT '정지 끝나는 시각 (관리자 7일 정지). 지나면 로그인할 때 ACTIVE 로 되돌림',
+    warning_count      INT          NOT NULL DEFAULT 0        COMMENT '관리자 경고 받은 횟수 (AD1 경고, AD2 "경고 N회")',
     agree_terms_at     DATETIME     NOT NULL                  COMMENT '이용약관 동의 시각 (필수)',
     agree_privacy_at   DATETIME     NOT NULL                  COMMENT '개인정보 수집 동의 시각 (필수)',
     agree_location     BOOLEAN      NOT NULL DEFAULT FALSE    COMMENT '위치정보 동의 (랜드마크 인증에 필요)',
@@ -89,16 +91,18 @@ CREATE TABLE user_tags (
 -- 코스 (담당: 동언)
 -- 경로는 [[위도, 경도], ...] 배열을 path_json 한 칸에 통째로 저장합니다.
 -- 목록 화면 지도 마커용으로 시작점만 start_lat / start_lng 에 따로 둡니다.
--- GPX 파일은 저장하지 않습니다. 다운로드할 때 path_json 으로 GPX를 만들어 보냅니다.
+-- 올린 GPX 파일은 업로드 폴더에 그대로 저장하고(gpx_path), 다운로드는 그 파일을 그대로 보냅니다.
+-- 거리 · 출발점 · 경로 좌표는 올릴 때 한 번 계산해서 저장합니다 (목록 · 지도용).
+-- 지역(area)은 입력받지 않고 출발점과 가장 가까운 지역으로 자동으로 정합니다.
 -- 삭제해도 행을 지우지 않고 is_deleted = TRUE (그 코스로 잡힌 동행 · 후기는 남김)
 -- 관리자가 숨기면 is_hidden = TRUE (AD4 코스 관리, AD1 신고 처리)
 -- ---------------------------------------------------------------------
 CREATE TABLE courses (
     course_id     BIGINT        NOT NULL AUTO_INCREMENT,
     author_id     BIGINT        NOT NULL                  COMMENT '올린 사람',
-    name          VARCHAR(50)   NOT NULL,
+    name          VARCHAR(20)   NOT NULL                  COMMENT '코스 이름 (최대 20자, Figma C3-3)',
     description   TEXT          NULL,
-    area          VARCHAR(20)   NOT NULL                  COMMENT 'OKGU 옥구공원, JEONGWANG 정왕동, BAEGOT 배곧, SIHWA 시화호·서해',
+    area          VARCHAR(20)   NOT NULL                  COMMENT 'OKGU 옥구공원, JEONGWANG 정왕동, BAEGOT 배곧, SIHWA 시화호·서해 (출발점으로 자동)',
     level         VARCHAR(10)   NOT NULL                  COMMENT 'EASY, NORMAL, HARD',
     distance_km   DECIMAL(5,2)  NOT NULL                  COMMENT 'GPX 경로로 계산한 거리',
     duration_min  INT           NOT NULL                  COMMENT '예상 소요시간. 거리 ÷ 시속 4km 로 계산해서 저장',
@@ -106,7 +110,8 @@ CREATE TABLE courses (
     start_lng     DECIMAL(9,6)  NOT NULL                  COMMENT '시작점 경도',
     path_json     JSON          NOT NULL                  COMMENT '[[위도, 경도], ...] 전체 경로',
     visibility    VARCHAR(10)   NOT NULL DEFAULT 'PUBLIC' COMMENT 'PUBLIC 전체 공개, PRIVATE 나만 보기',
-    hide_ends     BOOLEAN       NOT NULL DEFAULT FALSE    COMMENT '출발·도착 200m 숨기기',
+    gpx_path      VARCHAR(100)  NULL                      COMMENT '업로드 폴더 기준 GPX 파일 경로 (예: gpx/course-13.gpx)',
+    download_count INT          NOT NULL DEFAULT 0        COMMENT 'GPX 다운로드 수 (AD4)',
     is_deleted    BOOLEAN       NOT NULL DEFAULT FALSE    COMMENT '작성자가 삭제한 코스 (목록·상세에서 제외)',
     is_hidden     BOOLEAN       NOT NULL DEFAULT FALSE    COMMENT '관리자가 숨긴 코스 (목록에서 제외, 상세 404)',
     created_at    DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -147,14 +152,15 @@ CREATE TABLE matches (
     match_id    BIGINT        NOT NULL AUTO_INCREMENT,
     host_id     BIGINT        NOT NULL                 COMMENT '모집자',
     course_id   BIGINT        NOT NULL,
-    title       VARCHAR(40)   NOT NULL,
+    title       VARCHAR(30)   NOT NULL                 COMMENT '제목 (최대 30자, Figma W3)',
     content     TEXT          NOT NULL,
-    meet_at     DATETIME      NOT NULL                 COMMENT '만나는 일시 (시간대 MORNING/AFTERNOON/EVENING 은 이 값으로 계산)',
+    meet_at     DATETIME      NOT NULL                 COMMENT '만나는 일시 (시간대 MORNING · AFTERNOON · EVENING · NIGHT 는 이 값으로 계산)',
     meet_place  VARCHAR(100)  NOT NULL                 COMMENT '만남 장소 설명 (예: 옥구공원 정문 주차장 앞)',
-    capacity    TINYINT       NOT NULL                 COMMENT '정원 2~10 (모집자 포함)',
+    capacity    TINYINT       NOT NULL                 COMMENT '정원 2~6 (모집자 포함, Figma W3)',
     target      VARCHAR(20)   NOT NULL                 COMMENT 'ANYONE 누구나, EXCHANGE 내·외국인 교류, SAME_LANGUAGE 같은 언어끼리, MBTI MBTI 맞춤 (Figma W3)',
     mbti        CHAR(4)       NULL                     COMMENT 'target 이 MBTI 일 때만 (그 외에는 NULL)',
-    path_json   JSON          NULL                     COMMENT '첨부한 GPX의 경로. NULL 이면 코스 경로를 씀 (GPX 파일은 저장 안 함)',
+    path_json   JSON          NULL                     COMMENT '첨부한 GPX의 경로 좌표. NULL 이면 코스 경로를 씀',
+    gpx_path    VARCHAR(100)  NULL                     COMMENT '첨부한 GPX 파일 경로 (예: gpx/match-1.gpx). 없으면 코스 GPX',
     status      VARCHAR(10)   NOT NULL DEFAULT 'OPEN'  COMMENT 'OPEN, CLOSED 마감, CANCELED 모집 취소 (화면에 보낼 상태는 v_match_status)',
     is_hidden   BOOLEAN       NOT NULL DEFAULT FALSE   COMMENT '관리자가 숨긴 글 → 목록 제외, 상세 404',
     created_at  DATETIME      NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -165,7 +171,7 @@ CREATE TABLE matches (
     KEY idx_matches_host (host_id),
     CONSTRAINT fk_matches_host   FOREIGN KEY (host_id)   REFERENCES users (user_id),
     CONSTRAINT fk_matches_course FOREIGN KEY (course_id) REFERENCES courses (course_id),
-    CONSTRAINT chk_matches_capacity CHECK (capacity BETWEEN 2 AND 10),
+    CONSTRAINT chk_matches_capacity CHECK (capacity BETWEEN 2 AND 6),
     CONSTRAINT chk_matches_target   CHECK (target IN ('ANYONE','EXCHANGE','SAME_LANGUAGE','MBTI')),
     CONSTRAINT chk_matches_mbti     CHECK ((target = 'MBTI' AND mbti IS NOT NULL) OR (target <> 'MBTI' AND mbti IS NULL)),
     CONSTRAINT chk_matches_status   CHECK (status IN ('OPEN','CLOSED','CANCELED'))
@@ -287,7 +293,7 @@ CREATE TABLE user_stamps (
 
 
 -- ---------------------------------------------------------------------
--- 후기 (담당: 정란)
+-- 후기 (담당: 동언)
 -- 동행으로 걸었으면 match_id 를 넣습니다 (withMatch, 내 동행 past 의 reviewed 판단).
 -- 같은 동행에는 후기 1개만 (uk_reviews_user_match). 동행 없이 쓴 후기(match_id NULL)는 제한 없음.
 -- 작성자가 지우면 실제로 삭제합니다 (사진 행도 같이 삭제됨). 관리자가 숨기면 is_hidden = TRUE.
@@ -312,11 +318,11 @@ CREATE TABLE reviews (
     CONSTRAINT chk_reviews_rating  CHECK (rating BETWEEN 1 AND 5),
     CONSTRAINT chk_reviews_content CHECK (CHAR_LENGTH(content) >= 10)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-  COMMENT='후기 (담당: 정란)';
+  COMMENT='후기 (담당: 동언)';
 
 
 -- ---------------------------------------------------------------------
--- 후기 사진 (담당: 정란)
+-- 후기 사진 (담당: 동언)
 -- 사진 파일은 각자 PC의 업로드 폴더(예: C:/dev/jspTeam/uploads)에 저장하고,
 -- DB에는 그 폴더 기준 상대 경로만 저장합니다. 예) reviews/88-1.jpg
 -- 화면 주소는 /files/ + file_path → /files/reviews/88-1.jpg
@@ -333,7 +339,7 @@ CREATE TABLE review_photos (
     CONSTRAINT fk_review_photos_review FOREIGN KEY (review_id) REFERENCES reviews (review_id) ON DELETE CASCADE,
     CONSTRAINT chk_review_photos_order CHECK (sort_order BETWEEN 1 AND 5)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
-  COMMENT='후기 사진 (담당: 정란)';
+  COMMENT='후기 사진 (담당: 동언)';
 
 
 -- ---------------------------------------------------------------------
@@ -341,20 +347,26 @@ CREATE TABLE review_photos (
 -- 신고 대상이 4종류라 외래키 대신 target_type + target_id 로 가리킵니다.
 --   MATCH → matches.match_id, USER → users.user_id, COURSE → courses.course_id, REVIEW → reviews.review_id
 -- 같은 사람이 같은 대상을 두 번 신고할 수 없습니다 (uk_reports_once → 409 DUPLICATE).
--- 관리자 처리: status 를 DONE 으로, action 에 결과 기록
---   HIDE    대상 숨김 (matches/courses/reviews 의 is_hidden = TRUE)
---   SUSPEND 회원 정지 (users.status = 'SUSPENDED', 대상이 글이면 그 작성자)
---   REJECT  기각 (아무것도 바꾸지 않음)
+-- 신고 사유는 Figma 화면의 선택지 그대로 (대상이 코스인지에 따라 다름)
+--   동행 글 · 사용자 · 후기 (W6): NO_SHOW 노쇼, RUDE 불쾌한 언행, INAPPROPRIATE 부적절한 글 · 사진,
+--                               SPAM 광고 · 홍보, SAFETY 안전 위협, ETC 기타
+--   코스 (C2-1): PRIVATE_AREA 사유지 · 출입 금지 구역, DANGER 위험한 구간, WRONG_INFO 경로 정보가 실제와 다름,
+--               HOME_EXPOSED 개인 주거지 노출, ETC 기타
+-- 관리자 처리 (AD1 버튼): status 를 DONE 으로, action 에 결과 기록. '보류'는 처리하지 않고 PENDING 으로 둠
+--   WARN    경고 (작성자의 users.warning_count + 1)
+--   SUSPEND 7일 이용 정지 (users.status = 'SUSPENDED', suspended_until = 지금 + 7일, 대상이 글이면 그 작성자)
+--   HIDE    게시물 숨김 (matches/courses/reviews 의 is_hidden = TRUE)
+--   REJECT  문제 없음 (아무것도 바꾸지 않음)
 -- ---------------------------------------------------------------------
 CREATE TABLE reports (
     report_id     BIGINT        NOT NULL AUTO_INCREMENT,
     reporter_id   BIGINT        NOT NULL                  COMMENT '신고한 사람',
     target_type   VARCHAR(10)   NOT NULL                  COMMENT 'MATCH, USER, COURSE, REVIEW',
     target_id     BIGINT        NOT NULL                  COMMENT 'target_type 에 맞는 테이블의 id',
-    reason        VARCHAR(20)   NOT NULL                  COMMENT 'SPAM 광고, ABUSE 욕설·비방, INAPPROPRIATE 부적절, FAKE 사실과 다름, ETC 기타',
+    reason        VARCHAR(20)   NOT NULL                  COMMENT '신고 사유 코드 (위 목록, 코스와 그 외가 다름)',
     detail        VARCHAR(300)  NULL                      COMMENT '자세한 내용 (선택)',
     status        VARCHAR(10)   NOT NULL DEFAULT 'PENDING' COMMENT 'PENDING 대기, DONE 처리 완료',
-    action        VARCHAR(10)   NULL                      COMMENT 'HIDE, SUSPEND, REJECT (처리 완료일 때만)',
+    action        VARCHAR(10)   NULL                      COMMENT 'WARN, SUSPEND, HIDE, REJECT (처리 완료일 때만)',
     admin_memo    VARCHAR(500)  NULL                      COMMENT '관리자 메모',
     processed_by  BIGINT        NULL                      COMMENT '처리한 관리자',
     processed_at  DATETIME      NULL,
@@ -365,17 +377,19 @@ CREATE TABLE reports (
     CONSTRAINT fk_reports_reporter  FOREIGN KEY (reporter_id)  REFERENCES users (user_id),
     CONSTRAINT fk_reports_processor FOREIGN KEY (processed_by) REFERENCES users (user_id),
     CONSTRAINT chk_reports_target CHECK (target_type IN ('MATCH','USER','COURSE','REVIEW')),
-    CONSTRAINT chk_reports_reason CHECK (reason IN ('SPAM','ABUSE','INAPPROPRIATE','FAKE','ETC')),
+    CONSTRAINT chk_reports_reason CHECK (
+        (target_type = 'COURSE'  AND reason IN ('PRIVATE_AREA','DANGER','WRONG_INFO','HOME_EXPOSED','ETC'))
+     OR (target_type <> 'COURSE' AND reason IN ('NO_SHOW','RUDE','INAPPROPRIATE','SPAM','SAFETY','ETC'))),
     -- 주의: MySQL 검사 규칙은 결과가 NULL 이면 통과로 칩니다. 그래서 action IS NOT NULL 을 꼭 같이 씁니다.
     CONSTRAINT chk_reports_status CHECK ((status = 'PENDING' AND action IS NULL)
-                                      OR (status = 'DONE' AND action IS NOT NULL AND action IN ('HIDE','SUSPEND','REJECT')))
+                                      OR (status = 'DONE' AND action IS NOT NULL AND action IN ('WARN','SUSPEND','HIDE','REJECT')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='신고 (담당: 정란)';
 
 
 -- ---------------------------------------------------------------------
 -- 동행 댓글 (담당: 민서)
--- 참여자와 모집자만 읽고 씁니다 (서블릿에서 검사). 모집자가 is_notice = TRUE 로 쓰면 W4 상단 공지.
+-- 참여자와 모집자만 읽고 씁니다 (백엔드에서 검사). 모집자가 is_notice = TRUE 로 쓰면 W4 상단 공지.
 -- ---------------------------------------------------------------------
 CREATE TABLE match_comments (
     comment_id  BIGINT        NOT NULL AUTO_INCREMENT,
@@ -393,7 +407,7 @@ CREATE TABLE match_comments (
 
 
 -- ---------------------------------------------------------------------
--- 코스 별점 계산 뷰 (담당: 정란 · 동언)
+-- 코스 별점 계산 뷰 (담당: 동언)
 -- 코스 목록 · 상세의 rating, reviewCount 와 후기 목록의 avgRating 은 이 뷰에서 꺼냅니다.
 -- 관리자가 숨긴 후기는 빼고 계산합니다. 후기가 없으면 0.
 -- 사용 예) SELECT c.*, r.avg_rating, r.review_count

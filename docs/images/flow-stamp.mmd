@@ -7,5 +7,5 @@ flowchart TD
     M -- "있음" --> E{"이미 받은 곳?<br/>user_stamps"}
     E -- "전부 이미 받음" --> F2["FAIL · ALREADY_ALL"]
     E -- "새로 받은 곳 있음" --> I[("user_stamps 에 저장")]
-    I --> B["배지 다시 계산 (저장 안 함)<br/>1개 → FIRST_STAMP<br/>3개 → WALKER<br/>전부 → SIHEUNG_MASTER"]
+    I --> B["배지 다시 계산 (저장 안 함)<br/>1곳 → 첫 산책<br/>3곳 → 랜드마크 3곳<br/>8곳 전부 → 시흥 산책 마스터"]
     B --> OK["SUCCESS<br/>newStamps · newBadges → R2-1 모달"]

@@ -18,6 +18,8 @@ erDiagram
         char mbti "선택"
         varchar role "USER, ADMIN"
         varchar status "ACTIVE, SUSPENDED, WITHDRAWN"
+        datetime suspended_until "정지 끝 (7일 정지)"
+        int warning_count "경고 횟수"
         datetime agree_terms_at "이용약관 동의"
         datetime agree_privacy_at "개인정보 동의"
         boolean agree_location "위치정보 동의"
@@ -32,9 +34,9 @@ erDiagram
     courses {
         bigint course_id PK
         bigint author_id FK "올린 사람"
-        varchar name
+        varchar name "20자 이내"
         text description
-        varchar area "OKGU, JEONGWANG, BAEGOT, SIHWA"
+        varchar area "출발점으로 자동 (OKGU 등 4개)"
         varchar level "EASY, NORMAL, HARD"
         decimal distance_km
         int duration_min "거리 / 시속 4km"
@@ -42,7 +44,8 @@ erDiagram
         decimal start_lng
         json path_json "전체 경로 좌표 배열"
         varchar visibility "PUBLIC, PRIVATE"
-        boolean hide_ends "출발·도착 200m 숨기기"
+        varchar gpx_path "GPX 파일 경로 (업로드 폴더)"
+        int download_count "GPX 다운로드 수"
         boolean is_deleted "작성자 삭제"
         boolean is_hidden "관리자 숨김 (2주차)"
         datetime created_at
@@ -55,14 +58,15 @@ erDiagram
         bigint match_id PK
         bigint host_id FK "모집자"
         bigint course_id FK
-        varchar title "40자 이내"
+        varchar title "30자 이내"
         text content
         datetime meet_at "만나는 일시"
         varchar meet_place "만남 장소 설명"
-        tinyint capacity "2~10, 모집자 포함"
+        tinyint capacity "2~6, 모집자 포함"
         varchar target "ANYONE, EXCHANGE, SAME_LANGUAGE, MBTI"
         char mbti "target이 MBTI일 때만"
-        json path_json "첨부 GPX 경로, 없으면 NULL"
+        json path_json "첨부 GPX 경로 좌표, 없으면 NULL"
+        varchar gpx_path "첨부 GPX 파일 경로"
         varchar status "OPEN, CLOSED, CANCELED"
         boolean is_hidden "관리자 숨김"
         datetime created_at

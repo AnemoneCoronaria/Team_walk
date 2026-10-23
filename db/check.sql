@@ -17,9 +17,9 @@ SELECT 'week1 rows (users 7, courses 4, matches 6)',
        IF((SELECT COUNT(*) FROM users) = 7 AND (SELECT COUNT(*) FROM courses) = 4
           AND (SELECT COUNT(*) FROM matches) = 6, 'OK', 'FAIL')
 UNION ALL
-SELECT 'week2 rows (landmarks 8, reviews 6, reports 3)',
+SELECT 'week2 rows (landmarks 8, reviews 6, reports 4)',
        IF((SELECT COUNT(*) FROM landmarks) = 8 AND (SELECT COUNT(*) FROM reviews) = 6
-          AND (SELECT COUNT(*) FROM reports) = 3, 'OK', 'FAIL')
+          AND (SELECT COUNT(*) FROM reports) = 4, 'OK', 'FAIL')
 UNION ALL
 SELECT 'match status (OPEN,OPEN,FULL,CLOSED,CANCELED,DONE)',
        IF((SELECT GROUP_CONCAT(status ORDER BY match_id) FROM v_match_status)

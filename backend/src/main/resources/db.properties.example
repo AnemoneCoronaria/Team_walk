@@ -7,7 +7,7 @@
 # DB (db/README.md "처음 세팅" 2)에서 만든 DB · 계정)
 db.url=jdbc:mysql://localhost:3306/sanchaek?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
 db.user=sanchaek
-db.password=디스코드_공지_비밀번호
+db.password=내가_정한_비밀번호
 
 # 후기 사진 폴더 (db/README.md "처음 세팅" 5)에서 만든 폴더). 역슬래시 대신 슬래시(/)
 upload.dir=C:/dev/jspTeam/uploads

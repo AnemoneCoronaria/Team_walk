@@ -47,10 +47,10 @@ users {
         bigint reporter_id FK "신고한 사람"
         varchar target_type "MATCH, USER, COURSE, REVIEW"
         bigint target_id "대상 id (외래키 없음)"
-        varchar reason "SPAM, ABUSE, INAPPROPRIATE, FAKE, ETC"
+        varchar reason "코스용 5개 · 그 외 6개 (설계 약속 1)"
         varchar detail "300자 이내"
         varchar status "PENDING, DONE"
-        varchar action "HIDE, SUSPEND, REJECT"
+        varchar action "WARN, SUSPEND, HIDE, REJECT"
         varchar admin_memo
         bigint processed_by FK "처리한 관리자"
         datetime processed_at
