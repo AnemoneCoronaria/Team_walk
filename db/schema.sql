@@ -39,9 +39,9 @@ DROP TABLE IF EXISTS users;
 -- ---------------------------------------------------------------------
 CREATE TABLE users (
     user_id            BIGINT       NOT NULL AUTO_INCREMENT,
-    login_id           VARCHAR(20)  NOT NULL                  COMMENT '로그인 아이디 (중복 불가, 대소문자 구분 안 함)',
+    login_id           VARCHAR(20)  NOT NULL                  COMMENT '로그인 아이디 (영문·숫자 4~16자, 중복 불가, 대소문자 구분 안 함)',
     password_hash      CHAR(60)     NOT NULL                  COMMENT 'BCrypt 해시 60자. 비밀번호 원문 저장 금지',
-    nickname           VARCHAR(20)  NOT NULL,
+    nickname           VARCHAR(20)  NOT NULL                  COMMENT '닉네임 2~10자 (Figma A4)',
     avatar             VARCHAR(20)  NOT NULL DEFAULT 'seagull' COMMENT 'seagull, lighthouse, lotus, reed, sogeumi, wave, dog, cat',
     age_group          VARCHAR(5)   NOT NULL                  COMMENT '20s, 30s, 40s, 50s+ (Figma A4: 20대 · 30대 · 40대 · 50대 이상)',
     mbti               CHAR(4)      NULL                      COMMENT '선택 (ENFP 같은 4글자)',
@@ -57,6 +57,8 @@ CREATE TABLE users (
     updated_at         DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id),
     UNIQUE KEY uk_users_login_id (login_id),
+    CONSTRAINT chk_users_login_id  CHECK (CHAR_LENGTH(login_id) BETWEEN 4 AND 16),
+    CONSTRAINT chk_users_nickname  CHECK (CHAR_LENGTH(nickname) BETWEEN 2 AND 10),
     CONSTRAINT chk_users_avatar    CHECK (avatar IN ('seagull','lighthouse','lotus','reed','sogeumi','wave','dog','cat')),
     CONSTRAINT chk_users_age_group CHECK (age_group IN ('20s','30s','40s','50s+')),
     CONSTRAINT chk_users_role      CHECK (role IN ('USER','ADMIN')),
@@ -96,6 +98,7 @@ CREATE TABLE user_tags (
 -- 지역(area)은 입력받지 않고 출발점과 가장 가까운 지역으로 자동으로 정합니다.
 -- 삭제해도 행을 지우지 않고 is_deleted = TRUE (그 코스로 잡힌 동행 · 후기는 남김)
 -- 관리자가 숨기면 is_hidden = TRUE (AD4 코스 관리, AD1 신고 처리)
+-- 공개 범위: PUBLIC 은 누구나, MATCH_ONLY 는 작성자 + 이 코스로 잡힌 동행의 참여자, PRIVATE 는 작성자만 (목록에는 PUBLIC 만)
 -- ---------------------------------------------------------------------
 CREATE TABLE courses (
     course_id     BIGINT        NOT NULL AUTO_INCREMENT,
@@ -109,7 +112,7 @@ CREATE TABLE courses (
     start_lat     DECIMAL(9,6)  NOT NULL                  COMMENT '시작점 위도 (목록 지도 마커용)',
     start_lng     DECIMAL(9,6)  NOT NULL                  COMMENT '시작점 경도',
     path_json     JSON          NOT NULL                  COMMENT '[[위도, 경도], ...] 전체 경로',
-    visibility    VARCHAR(10)   NOT NULL DEFAULT 'PUBLIC' COMMENT 'PUBLIC 전체 공개, PRIVATE 나만 보기',
+    visibility    VARCHAR(10)   NOT NULL DEFAULT 'PUBLIC' COMMENT 'PUBLIC 전체 공개, MATCH_ONLY 동행 참여자에게만, PRIVATE 나만 보기 (Figma C3-3)',
     gpx_path      VARCHAR(100)  NULL                      COMMENT '업로드 폴더 기준 GPX 파일 경로 (예: gpx/course-13.gpx)',
     download_count INT          NOT NULL DEFAULT 0        COMMENT 'GPX 다운로드 수 (AD4)',
     is_deleted    BOOLEAN       NOT NULL DEFAULT FALSE    COMMENT '작성자가 삭제한 코스 (목록·상세에서 제외)',
@@ -122,7 +125,7 @@ CREATE TABLE courses (
     CONSTRAINT fk_courses_author FOREIGN KEY (author_id) REFERENCES users (user_id),
     CONSTRAINT chk_courses_area       CHECK (area IN ('OKGU','JEONGWANG','BAEGOT','SIHWA')),
     CONSTRAINT chk_courses_level      CHECK (level IN ('EASY','NORMAL','HARD')),
-    CONSTRAINT chk_courses_visibility CHECK (visibility IN ('PUBLIC','PRIVATE'))
+    CONSTRAINT chk_courses_visibility CHECK (visibility IN ('PUBLIC','MATCH_ONLY','PRIVATE'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='코스 (담당: 동언)';
 
@@ -153,7 +156,7 @@ CREATE TABLE matches (
     host_id     BIGINT        NOT NULL                 COMMENT '모집자',
     course_id   BIGINT        NOT NULL,
     title       VARCHAR(30)   NOT NULL                 COMMENT '제목 (최대 30자, Figma W3)',
-    content     TEXT          NOT NULL,
+    content     TEXT          NULL                     COMMENT '소개글 (선택, Figma W3)',
     meet_at     DATETIME      NOT NULL                 COMMENT '만나는 일시 (시간대 MORNING · AFTERNOON · EVENING · NIGHT 는 이 값으로 계산)',
     meet_place  VARCHAR(100)  NOT NULL                 COMMENT '만남 장소 설명 (예: 옥구공원 정문 주차장 앞)',
     capacity    TINYINT       NOT NULL                 COMMENT '정원 2~6 (모집자 포함, Figma W3)',
@@ -277,8 +280,9 @@ CREATE TABLE landmarks (
 -- ---------------------------------------------------------------------
 -- 회원이 받은 스탬프 (담당: 동언)
 -- 랜드마크 하나당 한 번만 (같은 곳을 또 걸어도 alreadyStamped 로 응답).
--- 배지는 저장하지 않고 스탬프 개수로 계산합니다:
---   FIRST_STAMP 1개, WALKER 3개, SIHEUNG_MASTER 랜드마크 전부
+-- 배지는 저장하지 않고 계산합니다 (Figma R2 배지 5개):
+--   스탬프 수로   FIRST_WALK 첫 산책 1곳, LANDMARK_3 랜드마크 3곳, SIHEUNG_MASTER 시흥 산책 마스터 8곳 전부
+--   끝난 동행으로 FIRST_MATCH 첫 동행 1번, EXCHANGE_3 내·외국인 교류(EXCHANGE) 동행 3번
 -- ---------------------------------------------------------------------
 CREATE TABLE user_stamps (
     user_id      BIGINT    NOT NULL,

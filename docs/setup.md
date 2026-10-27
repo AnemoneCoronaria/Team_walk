@@ -2,17 +2,22 @@
 
 [← README](../README.md) · [DB 안내](../db/README.md) · [개발 규칙](development.md) · [막혔을 때](troubleshooting.md)
 
-새로 온 사람이 개발 환경을 갖추는 순서입니다. 끝나면 [README의 빠른 시작](../README.md#-빠른-시작) 세 가지가 모두 보여야 합니다.
-**백엔드 담당**은 이어서 [DB 세팅](../db/README.md#처음-세팅-윈도우-한-번만)까지 합니다 (프론트는 2주차에).
+새로 온 사람이 개발 환경을 갖추는 순서입니다.<br>
+끝나면 [README의 빠른 시작](../README.md#-빠른-시작) 세 가지가 모두 보여야 합니다.
+
+> [!NOTE]
+> **백엔드는 스프링부트로 바꾸는 중입니다.**<br>
+> 스프링부트 프로젝트는 민서가 만들어 올릴 예정이고, 올라오면 [3번](#3-백엔드-스프링부트-준비-중)을 실제 화면 기준으로 채웁니다.<br>
+> 그 전까지는 **1 · 2 · 4번**과 [DB 세팅 1) ~ 5)](../db/README.md#처음-세팅-윈도우-한-번만)를 해 두면 됩니다.
 
 ## 목차
 
-- [1. 설치 (처음 한 번)](#1-설치-처음-한-번)
-- [2. 저장소 받기와 폴더 배치](#2-저장소-받기와-폴더-배치)
-- [3. 백엔드: 이클립스 세팅 (처음 한 번)](#3-백엔드-이클립스-세팅-처음-한-번)
-- [4. 프론트 세팅 (처음 한 번)](#4-프론트-세팅-처음-한-번)
-- [5. 환경 확인용 테스트 코드](#5-환경-확인용-테스트-코드)
-- [부록: 맥 사용자](#부록-맥-사용자)
+1. [설치 (처음 한 번)](#1-설치-처음-한-번)
+2. [저장소 받기와 폴더 배치](#2-저장소-받기와-폴더-배치)
+3. [백엔드: 스프링부트 (준비 중)](#3-백엔드-스프링부트-준비-중)
+4. [프론트 세팅 (처음 한 번)](#4-프론트-세팅-처음-한-번)
+5. [환경 확인용 테스트 코드](#5-환경-확인용-테스트-코드)
+6. [부록: 맥 사용자](#부록-맥-사용자)
 
 ---
 
@@ -20,111 +25,82 @@
 
 > 팀원 대부분이 **윈도우**라 윈도우 기준으로 씁니다. 맥은 [부록](#부록-맥-사용자)을 보세요.
 >
-> 💡 **한글·공백이 없는 경로에 설치하세요.** 예: `C:\dev\…`
-> `C:\Users\김동언\바탕 화면\…` 같은 경로는 Maven, Tomcat, 이클립스에서 알 수 없는 오류를 일으키기 쉽습니다.
+> 💡 **한글 · 공백이 없는 경로에 설치하세요.** 예: `C:\dev\…`<br>
+> `C:\Users\김동언\바탕 화면\…` 같은 경로는 Gradle 같은 자바 도구에서 알 수 없는 오류를 일으키기 쉽습니다.
 
-| 순서 | 설치 | 방법 | 확인 |
-| --- | --- | --- | --- |
-| 1 | **Git** | [git-scm.com](https://git-scm.com) → Windows 설치 파일. 옵션은 기본값 그대로 (**Git Bash**가 같이 설치됨) | `git --version` |
-| 2 | **JDK 21** | [adoptium.net](https://adoptium.net) → **Temurin 21 (LTS)** → Windows x64 **.msi**. 설치 중 **"Set JAVA_HOME variable"** 항목을 클릭해서 **"Will be installed on local hard drive"** 로 바꾸기 (기본값은 꺼져 있음) | 새 터미널에서 `java -version` → `21…` |
-| 3 | **Tomcat 10.1** | [tomcat.apache.org](https://tomcat.apache.org) → Download의 **Tomcat 10** → 10.1.x의 **Binary Distributions → Core → "64-bit Windows zip"** → `C:\dev\`에 압축 풀기 | `C:\dev\apache-tomcat-10.1.xx\bin\bootstrap.jar` 가 있으면 정상 |
-| 4 | **이클립스** | [eclipse.org](https://www.eclipse.org/downloads/packages/) → **Eclipse IDE for Enterprise Java and Web Developers** | |
-| 5 | **Node.js** | [nodejs.org](https://nodejs.org) → **LTS** 설치 파일 | `node -v` → `v22.12` 이상 |
-| 6 | **VS Code** (프론트 담당) | [code.visualstudio.com](https://code.visualstudio.com) + 확장 프로그램 **ESLint** | |
+| # | 설치 | 누가 | 방법 | 확인 |
+| --- | --- | --- | --- | --- |
+| 1 | **Git** | 모두 | [git-scm.com](https://git-scm.com) → Windows 설치 파일. 옵션은 기본값 그대로 (**Git Bash**가 같이 설치됨) | `git --version` |
+| 2 | **Node.js** | 모두 | [nodejs.org](https://nodejs.org) → **LTS** 설치 파일 | `node -v` → `v22.12` 이상 |
+| 3 | **VS Code** | 모두 | [code.visualstudio.com](https://code.visualstudio.com) (프론트는 WebStorm도 가능) | |
+| 4 | **JDK 21** | 백엔드 | [adoptium.net](https://adoptium.net) → **Temurin 21 (LTS)** → Windows x64 **.msi**.<br>설치 중 **"Set JAVA_HOME variable"** 항목을 눌러 **"Will be installed on local hard drive"** 로 바꾸기 (기본값은 꺼져 있음) | 새 터미널에서 `java -version` → `21…` |
+| 5 | **MySQL 8.4** | 백엔드 (프론트는 2주차) | [DB 안내 1)](../db/README.md#1-mysql-84-설치) | |
 
-> ⚠️ **Tomcat은 반드시 zip으로.** "Windows Service Installer"(.exe)나 이름에 `-src`가 붙은 파일(소스 코드)을 받으면 이클립스에서 `Bootstrap을 찾을 수 없습니다` 오류가 납니다.
->
-> 💡 **터미널은 Git Bash를 쓰세요.** 이 README의 명령어(`rm -rf`, `find` 등)가 그대로 동작합니다. 시작 메뉴 → "Git Bash".
+**VS Code 확장 프로그램**
+
+왼쪽의 네모 4개 아이콘(Extensions) → 이름 검색 → **Install**
+
+| 확장 | 누가 | 쓰임 |
+| --- | --- | --- |
+| **ESLint** | 프론트 | 코드 검사 (`npm run lint`와 같은 규칙) |
+| **Extension Pack for Java** (Microsoft) | 백엔드 | 자바 실행 · 디버그 · 자동 완성 |
+| **Spring Boot Extension Pack** (VMware) | 백엔드 | 스프링부트 실행 버튼 (Spring Boot Dashboard) |
+| **Gradle for Java** (Microsoft) | 백엔드 | Gradle 작업 목록 |
+
+> 💡 **터미널은 Git Bash를 쓰세요.** 문서의 명령어(`cp`, `rm -rf` 등)가 그대로 동작합니다.<br>
+> 시작 메뉴 → "Git Bash". VS Code 안에서는 **터미널 → 새 터미널** → 오른쪽 위 **∨** → **Git Bash**.
 
 ---
 
 ## 2. 저장소 받기와 폴더 배치
 
-**이클립스 워크스페이스와 저장소를 반드시 나란히, 분리해서 둡니다.**
-
 ```
 C:\dev\jspTeam\
-├─ workspace\     ← 이클립스 워크스페이스 (이클립스 개인 설정만 들어감, GitHub에 안 올라감)
-└─ Team_walk\     ← 이 저장소 (팀 코드)
+├─ Team_walk\     ← 이 저장소 (팀 코드)
+└─ uploads\       ← 업로드 폴더 (후기 사진 · GPX, 각자 PC에만) → DB 안내 5)
 ```
 
 Git Bash에서:
 
 ```bash
-mkdir -p /c/dev/jspTeam/workspace
+mkdir -p /c/dev/jspTeam
 cd /c/dev/jspTeam
 git clone https://github.com/AnemoneCoronaria/Team_walk.git
 cd Team_walk
 git checkout develop
 ```
 
-> ⚠️ **워크스페이스를 `Team_walk` 안이나 `backend` 안에 만들면 안 됩니다.**
-> 프로젝트 불러오기가 아무 반응 없이 실패하거나, 엉뚱한 `src` 프로젝트가 생기고, 이클립스 설정 파일이 GitHub에 섞여 올라갈 수 있습니다. (실제로 겪은 문제)
+VS Code에서는 **File → Open Folder…** 로 엽니다.<br>
+프론트 담당은 `Team_walk\frontend`, 백엔드 담당은 `Team_walk\backend` 폴더를 열면 됩니다. (저장소 전체를 열어도 됩니다)
 
 ---
 
-## 3. 백엔드: 이클립스 세팅 (처음 한 번)
+## 3. 백엔드: 스프링부트 (준비 중)
 
-> 메뉴 이름은 윈도우 기준입니다. 맥은 `Window → Preferences` 대신 `Eclipse → Settings`.
+> 이 절은 스프링부트 프로젝트가 올라오면 실제 화면 기준으로 다시 씁니다 (민서).<br>
+> 지금 `backend` 폴더에 있는 Servlet 코드(`pom.xml`, `HelloServlet.java` 등)는 예전 방식이라 실행하지 않아도 됩니다.
 
-### 3-1. 워크스페이스 열기
+**정해진 것**
 
-- 이클립스 실행 → Workspace: `C:\dev\jspTeam\workspace` → **Launch**
-- 이미 다른 워크스페이스로 열려 있다면: **File → Switch Workspace → Other…**
-- ✅ **창 맨 위 제목이 `workspace - Eclipse IDE`** 인지 확인 (제목에는 워크스페이스 폴더 이름이 나옵니다)
+| 항목 | 값 |
+| --- | --- |
+| 스프링부트 | **3.5** (start.spring.io에 4.x만 보이면 만든 뒤 `build.gradle`의 버전을 3.5.x로 바꿈) |
+| 빌드 | Gradle |
+| Java | 21 |
+| 라이브러리 | Spring Web, JDBC API(JdbcTemplate), MySQL Driver, 비밀번호용 `spring-security-crypto` |
+| 포트 | **8080** (프론트가 `/api` · `/files` 요청을 여기로 보냄) |
+| 설정 파일 | DB 비밀번호 · 업로드 폴더 위치는 각자 PC의 파일에만 (깃허브에 안 올라감) → [DB 안내 6)](../db/README.md#6-백엔드-설정-파일-만들기) |
 
-### 3-2. JDK 등록
+> ⚠️ **Spring Security(`spring-boot-starter-security`)는 넣지 않습니다.**<br>
+> 넣으면 모든 API에 기본 로그인 화면이 걸려서 React 요청이 전부 막힙니다. 로그인은 세션으로 직접 처리합니다 ([API 명세](../README.md#-문서-안내) "공통 규칙").
 
-> JDK, Tomcat 등록은 **워크스페이스마다 따로 저장**됩니다. 워크스페이스를 새로 만들면 다시 해야 합니다.
+**실행 순서 (예정)**
 
-- **Window → Preferences → Java → Installed JREs** → **Add…** → **Standard VM** → Next
-- **JRE home:** **Directory…** 버튼으로 JDK **폴더**를 선택
-  - 윈도우 예: `C:\Program Files\Eclipse Adoptium\jdk-21.0.x.x-hotspot`
-  - ⚠️ `…\bin\java.exe` 까지 넣으면 안 됩니다. **`bin`이 들어 있는 상위 폴더**까지만
-- 아래 JRE system libraries 목록이 자동으로 채워지면 정상 → **Finish**
-- 목록에서 방금 추가한 JDK에 **체크** → **Apply and Close**
-
-### 3-3. Tomcat 등록
-
-- **Window → Preferences → Server → Runtime Environments** → **Add…**
-- **Apache → Apache Tomcat v10.1** → Next
-- **Tomcat installation directory:** `C:\dev\apache-tomcat-10.1.xx` (**`bin`, `conf`, `lib`가 바로 보이는 폴더**)
-- **JRE:** 3-2에서 등록한 JDK → **Finish** → **Apply and Close**
-
-### 3-4. 프로젝트 불러오기
-
-- 왼쪽 Project Explorer의 **Import projects…** 링크 (또는 **File → Import…**)
-- **Maven → Existing Maven Projects** → Next
-- **Root Directory:** `C:\dev\jspTeam\Team_walk\backend` → `/pom.xml` 이 체크되어 있는지 확인 → **Finish**
-- 오른쪽 아래 진행 표시가 끝날 때까지 기다리기 (처음엔 라이브러리를 내려받느라 1~2분)
-- ✅ 왼쪽에 **`sanchaek`** 프로젝트가 보이면 성공 → 우클릭 → **Maven → Update Project** (Alt+F5) → OK
-
-> Problems 창에 **`cvc-elt.1.a`**, **`Downloading external resources is disabled`** 두 개만 남으면 정상입니다 (XML 검사기 경고, 무시).
-
-### 3-5. 서버 만들고 실행
-
-1. 아래쪽 **Servers** 탭 (없으면 **Window → Show View → Servers**) → "No servers are available. Click this link…" 클릭
-2. **Apache → Tomcat v10.1 Server** → Next → 왼쪽 **`sanchaek`** 를 **Add >** → **Finish**
-3. **Context root를 `/`로 맞추기 (중요, 두 곳 모두 확인)**
-   1. `sanchaek` 우클릭 → **Properties → Web Project Settings** → Context root: **`/`** → Apply and Close
-   2. Servers 탭의 Tomcat **더블클릭** → 아래쪽 **Modules** 탭 → `sanchaek`의 Path가 `/sanchaek`이면 **Edit…** → **`/`** → OK → **Ctrl+S**
-4. Tomcat 우클릭 → **Start** → 아래 Console에 `Server startup in […] milliseconds` 가 나오면 켜진 것
-5. 브라우저에서 확인:
-   - `http://localhost:8080/` → **산책시루 서버가 동작합니다**
-   - `http://localhost:8080/api/hello` → JSON 응답
-
-> **❓ 왜 Context root가 `/`여야 하나?**
-> 이클립스는 기본으로 주소를 `localhost:8080/sanchaek/…` 처럼 **프로젝트 이름 아래**에 둡니다.
-> 그런데 React는 `/api/hello` 처럼 **주소 맨 앞(루트)** 으로 요청하고, Vite가 그 요청을 `localhost:8080/api/hello` 로 그대로 넘깁니다.
-> 주소가 `/sanchaek` 아래에 있으면 **JSP 페이지는 뜨는데 React에서는 전부 404**가 납니다. 그래서 개발 때부터 루트(`/`)로 맞춰 둡니다.
-
-> **❓ `localhost:8080/`에 원래 나오던 Tomcat 고양이 화면은?**
-> 이클립스는 Tomcat을 실행할 때 Tomcat 설치 폴더를 그대로 쓰지 않고, 워크스페이스 안에 따로 실행 공간을 만들어 우리 프로젝트만 올립니다.
-> 그래서 이클립스로 켜면 `/`에 우리 프로젝트가 나오고, Tomcat 폴더의 `bin\startup.bat`(맥은 `bin/catalina.sh run`)으로 직접 켜면 원래 고양이 화면이 나옵니다.
-> **둘 다 8080 포트를 쓰니 동시에 켜지 마세요.**
-
-> **백엔드 담당은 여기까지 한 뒤** [DB 세팅](../db/README.md#처음-세팅-윈도우-한-번만) 1) ~ 6)을 이어서 합니다.
-> 마지막 6)에서 만드는 설정 파일 **`db.properties`** 가 있어야 자바 코드가 DB에 접속합니다 (깃허브에 안 올라가는 파일이라 각자 만듦).
+1. VS Code에서 `backend` 폴더 열기 → 오른쪽 아래 Java 준비 표시가 끝날 때까지 기다리기<br>
+   (처음엔 라이브러리를 내려받느라 몇 분 걸립니다)
+2. 설정 파일 만들기 → [DB 안내 6)](../db/README.md#6-백엔드-설정-파일-만들기)
+3. 왼쪽 **Spring Boot Dashboard**에서 ▶ 실행 (또는 Git Bash에서 `./gradlew bootRun`)
+4. 브라우저에서 `http://localhost:8080/api/hello` → JSON 응답이 보이면 성공
 
 ---
 
@@ -137,22 +113,23 @@ npm run dev        # 개발 서버 시작 → http://localhost:5173
 ```
 
 - 끌 때는 터미널에서 **Ctrl+C**
-- **이클립스 Tomcat이 켜져 있어야** 화면에 ✅ 연결 성공이 뜹니다. Tomcat이 꺼져 있으면 ❌ 연결 실패가 정상입니다.
+- 화면에 ✅ 연결 성공이 뜨려면 **백엔드(8080)가 켜져 있어야** 합니다.<br>
+  지금은 스프링부트 전환 중이라 ❌ 연결 실패가 나오는 게 정상입니다.
 
 | 명령 | 하는 일 |
 | --- | --- |
-| `npm install` | `package.json`에 적힌 라이브러리를 `node_modules/`에 설치 (GitHub엔 안 올라감) |
+| `npm install` | `package.json`에 적힌 라이브러리를 `node_modules/`에 설치 (깃허브엔 안 올라감) |
 | `npm run dev` | 개발 서버. 파일을 저장하면 화면이 바로 바뀜 |
 | `npm run lint` | 코드 검사 (ESLint). PR 올리기 전에 한 번 |
-| `npm run build` | 배포용 파일 만들기 → `dist/` |
+| `npm run build` | 빌드가 되는지 확인 → `dist/` (배포는 하지 않음) |
 
 ### 프론트와 백엔드는 이렇게 연결됩니다
 
 ```
-브라우저 → localhost:5173 (Vite, React 화면)
-              │  /api/… 로 시작하는 요청만
+브라우저 → localhost:5173 (Vite, React 화면 · 관리자 화면)
+              │  /api/… · /files/… 요청만
               ▼
-           localhost:8080 (이클립스 Tomcat, Servlet)
+           localhost:8080 (스프링부트)
 ```
 
 - 이 연결은 `frontend/vite.config.js`의 **`proxy`** 설정이 해 줍니다.
@@ -167,11 +144,11 @@ npm run dev        # 개발 서버 시작 → http://localhost:5173
 
 | 파일 | 주소 | 확인하는 것 |
 | --- | --- | --- |
-| `backend/src/main/webapp/index.jsp` | `localhost:8080/` | JSP, JSTL(`jakarta.tags.core`)이 동작하는지 |
-| `backend/src/main/java/kr/sanchaek/common/HelloServlet.java` | `localhost:8080/api/hello` | Servlet, Gson(JSON), 공통 응답 형식 `{ success, data }` |
+| 스프링부트의 hello API (예정, `kr.sanchaek.common`) | `localhost:8080/api/hello` | 서버 실행, 공통 응답 형식 `{ success, data }` |
 | `frontend/src/App.jsx` | `localhost:5173/` | React 동작 + 프록시를 거쳐 백엔드 `/api/hello`에 연결되는지 |
 
-> 나중에 실제 메인 화면을 만들 때 `App.jsx`가 바뀌게 되면, 이 테스트 화면은 `src/pages/HealthCheck.jsx` 같은 별도 화면으로 옮겨서 유지합니다.
+- 지금 `backend`의 `index.jsp`, `HelloServlet.java`는 예전 Servlet 버전 테스트 코드입니다. 스프링부트로 바꿀 때 같이 정리합니다.
+- 나중에 실제 메인 화면을 만들면서 `App.jsx`가 바뀌면, 이 테스트 화면은 `src/pages/HealthCheck.jsx` 같은 별도 화면으로 옮겨서 유지합니다.
 
 ---
 
@@ -179,14 +156,14 @@ npm run dev        # 개발 서버 시작 → http://localhost:5173
 
 | 윈도우 | 맥 |
 | --- | --- |
-| `Window → Preferences` | `Eclipse → Settings` (⌘,) |
-| Ctrl+S, Alt+F5 | ⌘S, ⌥F5 |
-| `C:\dev\jspTeam\…` | `~/programming/jspTeam/…` 등 원하는 곳 |
-| `bin\catalina.bat run` | `bin/catalina.sh run` |
+| `C:\dev\jspTeam\…` | `~/dev/jspTeam/…` 등 원하는 곳 |
+| Git Bash | 기본 터미널 (zsh) |
+| Ctrl+C (터미널), Ctrl+S | ⌃C (터미널), ⌘S |
 
 ### Homebrew로 Java를 설치한 경우 (중요)
 
-Homebrew의 `openjdk@21`은 설치해도 **macOS 시스템에 등록되지 않습니다.** 그래서 터미널의 `java -version`은 되는데, Tomcat은 `Unable to locate a Java Runtime`을 띄웁니다. 한 번만 등록하면 됩니다.
+Homebrew의 `openjdk@21`은 설치해도 **macOS 시스템에 등록되지 않습니다.**<br>
+그래서 터미널의 `java -version`은 되는데, VS Code나 Gradle이 JDK를 못 찾을 수 있습니다. 한 번만 등록하면 됩니다.
 
 ```bash
 # macOS에 JDK 등록
@@ -198,11 +175,4 @@ echo 'export JAVA_HOME=$(/usr/libexec/java_home -v 21)' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-이클립스의 JRE home에는 아래 둘 중 하나를 쓰면 됩니다 (같은 JDK).
-
-| 경로 | 특징 |
-| --- | --- |
-| `/Library/Java/JavaVirtualMachines/openjdk-21.jdk/Contents/Home` | **추천.** `brew upgrade`로 버전이 바뀌어도 경로가 그대로 |
-| `/opt/homebrew/Cellar/openjdk@21/21.0.x/libexec/openjdk.jdk/Contents/Home` | 실제 위치. 업데이트하면 버전 번호가 바뀌어 경로가 사라짐 |
-
-> 맥의 폴더 선택 창은 `/opt` 같은 숨김 폴더가 안 보이고 `.jdk`를 하나의 파일로 취급합니다. **Directory…** 를 누른 뒤 **⌘⇧G** 로 경로를 직접 입력하세요.
+설정한 뒤에는 **VS Code를 완전히 껐다 켜야** 새 `JAVA_HOME`을 읽습니다.

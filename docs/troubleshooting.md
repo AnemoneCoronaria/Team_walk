@@ -2,81 +2,61 @@
 
 [← README](../README.md) · [세팅 가이드](setup.md) · [DB 안내](../db/README.md) · [개발 규칙](development.md)
 
-지금까지 실제로 겪고 해결한 문제들입니다. 증상을 찾아서 해결 순서대로 해 보고, 그래도 안 되면 **화면 캡처와 함께 디스코드에** 올려 주세요.
+증상을 찾아서 해결 순서대로 해 보세요.<br>
+그래도 안 되면 **화면 캡처와 함께 팀 채팅방에** 올려 주세요.
 
-> MySQL 설치 · 접속 · SQL 오류는 [db/README.md의 막혔을 때](../db/README.md#막혔을-때)에 따로 정리되어 있습니다.
+> MySQL 설치 · 접속 · SQL 오류는 [DB 안내의 막혔을 때](../db/README.md#막혔을-때)에 따로 정리되어 있습니다.
 
 ## 목차
 
-- [설치 · Java · Tomcat](#설치--java--tomcat)
-- [이클립스 워크스페이스 · 프로젝트](#이클립스-워크스페이스--프로젝트)
-- [Maven · 라이브러리](#maven--라이브러리)
-- [실행 · 주소 · 포트](#실행--주소--포트)
+- [설치 · Java](#설치--java)
+- [백엔드 실행 (스프링부트)](#백엔드-실행-스프링부트)
 - [프론트](#프론트)
 - [Git](#git)
 
 ---
 
-## 설치 · Java · Tomcat
+## 설치 · Java
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
-| `java -version` 은 되는데 Tomcat이 **`Unable to locate a Java Runtime`** / `JAVA_HOME … is not defined` | 시스템이 JDK 위치를 모름 | **윈도우:** JDK 설치 때 "Set JAVA_HOME variable"을 켜고 다시 설치 (또는 시스템 환경 변수에 `JAVA_HOME` = JDK 폴더 추가) / **맥:** [부록](setup.md#부록-맥-사용자) |
-| JDK 추가 시 **`The home directory does not exist`** | JRE home에 `…\bin\java.exe`(맥 `…/bin/java`)까지 넣었거나, 붙여넣을 때 공백·줄바꿈이 섞임 | JRE home은 **`bin`의 상위 폴더**까지만. 직접 입력하지 말고 **Directory…** 버튼으로 선택 |
-| Tomcat 시작 시 **`기본 클래스 org.apache.catalina.startup.Bootstrap을(를) 찾거나 로드할 수 없습니다`** | ① Tomcat을 zip이 아닌 설치 파일(.exe)이나 `-src`(소스) 버전으로 받음 ② Tomcat 폴더를 한 단계 잘못 지정 ③ 이클립스의 JDK·Tomcat 등록이 꼬임 | ① `bin\bootstrap.jar`가 있는지 확인, 없으면 **Core zip**으로 다시 받기 ② `bin`, `conf`, `lib`가 바로 보이는 폴더로 지정 ③ Servers의 서버 Delete → **Run → Run Configurations…** 에서 Apache Tomcat 항목 Delete → Preferences의 Server Runtime Remove → [3-2](setup.md#3-2-jdk-등록)부터 다시 |
-| Tomcat이 이클립스에서 문제인지 Tomcat 자체 문제인지 모르겠음 | | 이클립스 서버를 끄고 터미널에서 Tomcat만 단독 실행: 윈도우 `C:\dev\apache-tomcat-10.1.xx\bin\catalina.bat run` (맥 `…/bin/catalina.sh run`) → `localhost:8080`에 고양이 화면이 뜨면 Tomcat·Java는 정상 → 이클립스 설정 문제. 확인 후 **Ctrl+C로 끄기** |
+| `java -version`이 **21이 아님** (17, 1.8 등) | 예전에 깐 다른 JDK가 먼저 잡힘 | JDK 21을 설치할 때 **"Set JAVA_HOME variable"** 을 켜고 다시 설치 → **새 터미널**에서 확인. 맥은 [부록](setup.md#부록-맥-사용자) |
+| VS Code 오른쪽 아래에 **JDK를 찾을 수 없다**는 알림 | VS Code가 `JAVA_HOME`을 못 읽음 | JDK 21 설치 후 **VS Code를 완전히 껐다 켜기**. 그래도 나면 알림의 버튼으로 JDK 폴더를 직접 지정 |
+| 설치 경로에 한글 · 공백이 있는데 이상한 오류가 남 | Gradle 같은 자바 도구가 경로를 잘못 읽음 | `C:\dev\…` 처럼 영문 경로로 옮기기 ([세팅 가이드 1번](setup.md#1-설치-처음-한-번)) |
 
-## 이클립스 워크스페이스 · 프로젝트
+## 백엔드 실행 (스프링부트)
 
-| 증상 | 원인 | 해결 |
-| --- | --- | --- |
-| 창 제목이 `workspace - Eclipse IDE` 가 아니라 **`backend - Eclipse IDE`** 등 | 워크스페이스가 저장소 안(`backend`)에 열려 있음 | **File → Switch Workspace → Other…** → `C:\dev\jspTeam\workspace`. 그다음 아래 행처럼 찌꺼기 정리 |
-| Import에서 **Finish를 눌러도 아무 반응 없음**, 또는 엉뚱한 **`src` 프로젝트**가 생김, Import 목록에 `Folder already imported as project` | 워크스페이스가 `backend`(또는 저장소) 안에 있어서 이클립스가 폴더를 이미 프로젝트로 착각 | ① 워크스페이스를 [2번](setup.md#2-저장소-받기와-폴더-배치)처럼 분리 ② 잘못 생긴 프로젝트는 우클릭 → Delete (**"Delete project contents on disk" 체크 해제!**) ③ `backend` 안의 이클립스 파일 삭제: `cd backend && rm -rf .metadata Servers RemoteSystemsTempFiles .project .classpath .settings target src/bin src/.project src/.classpath` ④ [3-4](setup.md#3-4-프로젝트-불러오기)부터 다시 |
-| 탐색기(파인더)엔 파일이 있는데 **Project Explorer가 비어 있음** | Project Explorer는 폴더가 아니라 **워크스페이스에 등록된 프로젝트**만 보여줌. 워크스페이스를 바꾸면 다시 불러와야 함 | [3-4](setup.md#3-4-프로젝트-불러오기)로 불러오기 |
-| **File 메뉴에 Import가 안 보임** | (맥) 화면 맨 위 메뉴가 다른 앱(Finder 등)의 메뉴 | 이클립스 창을 한 번 클릭한 뒤 메뉴 열기. 또는 Project Explorer의 **Import projects…** 링크 |
-| `Open Projects from File System`에서 **pom.xml이 선택 안 됨** | 그 창은 파일이 아니라 **폴더**를 고르는 창 | `backend` **폴더**를 고르면 이클립스가 pom.xml을 알아서 찾음. 목록에서 `backend` 줄만 체크 |
-| 브랜치를 바꿨더니 **이클립스에서 파일·폴더(webapp 등)가 사라짐** | 아직 develop에 합쳐지지 않은 PR의 파일은 develop 기반 브랜치에서 안 보임 (**지워진 게 아님**) | 그 PR을 develop에 합친 뒤 `git pull origin develop` → 이클립스에서 프로젝트 우클릭 → **Refresh (F5)** |
-| (참고) **새 Maven 프로젝트를 만들 때** Next 버튼이 안 눌림 | Location 칸에 붙여넣기만 해서 이클립스가 입력을 감지 못함 | 칸 끝에 스페이스를 쳤다 지우거나 Tab, 또는 Browse…로 선택 |
-| (참고) 새 Maven 프로젝트 화면이 **"Specify Archetype parameters"** 로 나옴 | "Create a simple project" 체크가 풀림 | Back → **Create a simple project** 체크 → Next → **Packaging: war** 가 보이는 화면이 맞음 |
-
-## Maven · 라이브러리
+> 스프링부트 프로젝트가 올라오기 전이라, 자주 나는 오류를 미리 정리해 둔 것입니다. 실제로 겪으면 여기에 추가해 주세요.
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
-| **`Could not transfer artifact … from/to central (https://repo.maven.apache.org/maven2)`**, `UnknownHostException`, `Missing artifact …` 가 잔뜩 | 이클립스가 라이브러리 서버에 접속 못 함 (처음 켤 때 네트워크 불안정 등). **한 번 실패하면 실패 기록이 남아 다시 시도하지 않음** (`This failure was cached`) | ① **Preferences → General → Network Connections** → Active Provider: **Direct** ② **Preferences → Maven** → **Offline 체크 해제** ③ 실패 기록 삭제: `find ~/.m2/repository -name "*.lastUpdated" -delete` ④ 이클립스 **File → Restart** ⑤ 프로젝트 우클릭 → Maven → Update Project → **"Force Update of Snapshots/Releases" 체크** |
-| 위 방법으로도 안 됨 | 이클립스만 인터넷이 막힘 | 터미널에서 직접 받기: Maven 설치 후 `cd backend && mvn -U package` → `BUILD SUCCESS` 후 이클립스에서 Force Update 한 번 더 (이클립스와 터미널이 같은 `~/.m2`를 씀) |
-| **`jakarta … cannot be resolved`** | 라이브러리가 프로젝트에 반영 안 됨 | 프로젝트 우클릭 → **Maven → Update Project** |
-| `index.jsp`에 **`jakarta.servlet.jsp.PageContext / JspException cannot be resolved`** | JSP 라이브러리 미반영 (`pom.xml`의 `jakarta.servlet.jsp-api`) | Maven → Update Project. 계속 나오면 Tomcat 서버를 만들고 프로젝트를 Add |
-| pom.xml에 **`cvc-elt.1.a`**, **`Downloading external resources is disabled`** | XML 검사기 경고 | **무시해도 됨.** 거슬리면 Preferences → XML (Wild Web Developer) → "Download external resources" 켜기 |
-
-## 실행 · 주소 · 포트
-
-| 증상 | 원인 | 해결 |
-| --- | --- | --- |
-| `localhost:8080/` 은 404인데 **`localhost:8080/sanchaek/` 에서는 뜸** | Context root가 `/sanchaek` (이클립스 기본값) | [3-5](setup.md#3-5-서버-만들고-실행)의 **Context root 두 곳**을 `/`로 → Tomcat 우클릭 **Clean…** → **Restart** |
-| JSP는 뜨는데 React 화면에서 **`❌ 연결 실패 (HTTP 404)`** | 위와 같음. React는 `/api/…`(루트)로 요청함 | 위와 같음 |
-| JSP는 뜨는데 **`/api/…` 만 404** (Git으로 파일이 바뀐 뒤 자주 생김) | Servlet 컴파일 결과가 Tomcat에 반영 안 됨 (JSP는 Tomcat이 직접 처리하지만 Servlet은 이클립스가 컴파일해서 넘겨야 함) | **Project → Build Automatically** 체크 확인 → **Project → Clean…** → Servers의 Tomcat 우클릭 **Clean…** → **Restart** |
-| **`Port 8080 required by Tomcat … is already in use`** | 다른 프로그램이 8080 사용 중. ① 터미널에서 켠 Tomcat ② **Oracle DB(XE 11g 등)** 가 8080을 씀 (수업에서 Oracle을 깔았다면 의심) | ① 그 터미널에서 Ctrl+C ② 누가 쓰는지 확인: `netstat -ano \| findstr :8080` → 마지막 숫자(PID)로 `tasklist /fi "PID eq 숫자"`. Oracle이면 SQL*Plus에서 `EXEC DBMS_XDB.SETHTTPPORT(9090);` 로 Oracle 쪽 포트를 옮기기 (Tomcat을 8081로 바꾸면 `vite.config.js`도 같이 바꿔야 해서 비추천) |
-| `localhost:8080/`에 **고양이 화면**이 나옴 | 이클립스가 아니라 터미널(`startup.bat`, `catalina.sh`)로 켠 Tomcat | 터미널 Tomcat 끄고 이클립스에서 Start |
+| **`Port 8080 was already in use`** | 다른 프로그램이 8080을 씀. 예전 Tomcat이 켜져 있거나, **Oracle DB(XE 11g 등)** 가 8080을 쓰는 경우가 많음 (수업에서 Oracle을 깔았다면 의심) | 누가 쓰는지 확인: `netstat -ano \| findstr :8080` → 마지막 숫자(PID)로 `tasklist /fi "PID eq 숫자"`. Oracle이면 SQL*Plus에서 `EXEC DBMS_XDB.SETHTTPPORT(9090);` 로 Oracle 쪽 포트를 옮기기 (백엔드를 8081로 바꾸면 `vite.config.js`도 같이 바꿔야 해서 비추천) |
+| **`Failed to configure a DataSource: 'url' attribute is not specified`** | DB 설정 파일이 없거나 이름 · 위치가 다름 | [DB 안내 6)](../db/README.md#6-백엔드-설정-파일-만들기). 윈도우 탐색기 **보기 → 파일 확장명**을 켜고 이름 끝에 `.txt`가 붙지 않았는지 확인 |
+| **`Access denied for user 'sanchaek'@'localhost'`** | 설정 파일의 비밀번호가 DB 계정 비밀번호와 다름 | [DB 안내 2)](../db/README.md#2-db와-팀-계정-만들기-root로-한-번만)에서 정한 비밀번호로 고치기 |
+| **`Communications link failure`** | MySQL이 꺼져 있음 | 윈도우 검색 → **서비스** → `MySQL84` → 시작. 맥은 `brew services start mysql@8.4` |
+| 모든 API가 **401** 이거나 **로그인 화면 HTML**이 옴 | `spring-boot-starter-security`가 들어감 | 빼고 비밀번호용 `spring-security-crypto`만 쓰기 ([세팅 가이드 3번](setup.md#3-백엔드-스프링부트-준비-중)) |
+| 인터넷 예제를 붙였더니 **`javax.servlet … cannot be resolved`** | 스프링부트 2 시절 예제 | `javax.`를 `jakarta.`로 바꾸기. 스프링부트 3 이상 예제를 찾기 |
+| 고친 코드가 반영이 안 됨 | 서버가 예전 코드로 계속 돌고 있음 | Spring Boot Dashboard에서 ■ 정지 → ▶ 다시 실행 |
 
 ## 프론트
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
-| 5173 화면에 **`❌ 연결 실패`** (404 외의 메시지) | 이클립스 Tomcat이 꺼져 있음 | 이클립스에서 Tomcat Start → `localhost:8080/api/hello` 가 열리는지 먼저 확인 |
+| 5173 화면에 **`❌ 연결 실패`** | 백엔드(8080)가 꺼져 있음 | 백엔드를 켜고 `localhost:8080/api/hello`가 열리는지 먼저 확인. 스프링부트 전환 전에는 실패가 정상 |
 | `npm run dev` 에서 버전 오류 | Node가 22.12보다 낮음 | `node -v` 확인 → nodejs.org에서 LTS 다시 설치 |
 | PowerShell에서 **`npm.ps1 … 이 시스템에서 스크립트를 실행할 수 없으므로`** | 윈도우 PowerShell 보안 정책 | **Git Bash**나 명령 프롬프트(cmd)에서 실행. 또는 PowerShell에서 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
-| 처음 실행할 때 **윈도우 방화벽 경고** | Node·Java가 네트워크를 쓰려고 함 | "개인 네트워크" 허용 |
-| 콘솔에 **`Unexpected token '<'`** / `is not valid JSON` | 백엔드가 JSON 대신 HTML 오류 페이지를 보냄. 주소가 틀렸거나(`/api` 빠짐, 오타) `ApiFilter`가 없는 옛 브랜치 | 개발자 도구 **Network** 탭에서 그 요청의 응답을 확인. 최신 develop에서는 `/api` 오류가 항상 `{ success: false, error }` JSON |
+| 처음 실행할 때 **윈도우 방화벽 경고** | Node · Java가 네트워크를 쓰려고 함 | "개인 네트워크" 허용 |
+| 콘솔에 **`Unexpected token '<'`** / `is not valid JSON` | 백엔드가 JSON 대신 HTML 오류 페이지를 보냄. 주소 오타(`/api` 빠짐 등)이거나 공통 오류 처리가 아직 없는 버전 | 개발자 도구 **Network** 탭에서 그 요청의 응답을 확인. 공통 코드가 들어간 뒤에는 `/api` 오류가 항상 `{ success: false, error }` JSON |
 | 후기 사진 자리에 **엑스박스** (5173에서만, 8080에서는 보임) | `vite.config.js`에 `/files` 프록시가 없는 옛 버전 | `git pull` 후 **`npm run dev`를 껐다 켜기** (설정 파일은 다시 켜야 반영) |
 
 ## Git
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
-| `git status` 에 `backend/` 처럼 **폴더만 보여서** 뭐가 올라갈지 모르겠음 | 새 폴더는 통째로 표시됨 | `git add --dry-run backend` → 실제로 올라갈 파일 목록 확인 |
-| 올라갈 목록에 **`.metadata`, `Servers`, `.project`, `target`, `node_modules`** 가 보임 | 워크스페이스가 저장소 안에 있거나 `.gitignore`가 없는 브랜치 | **커밋하지 말고** 워크스페이스 위치부터 고치기 ([이클립스 표](#이클립스-워크스페이스--프로젝트) 참고). 이미 커밋했다면 팀장에게 |
+| `git status`에 `backend/` 처럼 **폴더만 보여서** 뭐가 올라갈지 모르겠음 | 새 폴더는 통째로 표시됨 | `git add --dry-run backend` → 실제로 올라갈 파일 목록 확인 |
+| 올라갈 목록에 **`node_modules`, `build`, `.gradle`, `bin`** 이 보임 | `.gitignore`가 없는 옛 브랜치이거나, 만들어지는 폴더 이름이 다름 | **커밋하지 말고** 팀장에게 알리기 (`.gitignore`에 추가) |
+| 올라갈 목록에 **비밀번호가 든 설정 파일**이 보임 | 예시 파일이 아니라 진짜 파일을 add 함 | **절대 add 하지 않기.** `git restore --staged <파일>` → 최신 develop의 `.gitignore` 받기 |
 | 아무것도 안 고쳤는데 **파일 전체가 바뀐 것**으로 나옴 | 맥(LF)과 윈도우(CRLF)의 줄바꿈 차이 | `.gitattributes`로 자동 처리됨. 계속 나오면 팀장에게 |
 | `git push` 가 **`rejected … (fetch first)`** | 그사이 원격에 다른 커밋이 올라옴 | `git pull` 후 다시 `git push` |
+| 브랜치를 바꿨더니 **파일 · 폴더가 사라짐** | 아직 develop에 합쳐지지 않은 PR의 파일은 develop 기반 브랜치에서 안 보임 (**지워진 게 아님**) | 그 PR을 develop에 합친 뒤 `git checkout develop` → `git pull` |
 | develop에서 바로 작업했음, 커밋 메시지를 잘못 씀, 실수로 main에 push 등 | | [개발 규칙 3-6 자주 하는 실수와 되돌리기](development.md#3-6-자주-하는-실수와-되돌리기) |
-| `git status`에 **`db.properties`** 가 보임 | `.gitignore`가 없는 옛 브랜치이거나 이름이 다름 | **절대 add 하지 않기.** `git pull origin develop`으로 최신 `.gitignore` 받기 |

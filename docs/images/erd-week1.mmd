@@ -10,9 +10,9 @@ erDiagram
 
     users {
         bigint user_id PK
-        varchar login_id UK "로그인 아이디"
+        varchar login_id UK "아이디 4~16자"
         char password_hash "BCrypt 60자"
-        varchar nickname
+        varchar nickname "2~10자"
         varchar avatar "seagull 등 8종"
         varchar age_group "20s, 30s, 40s, 50s+"
         char mbti "선택"
@@ -43,7 +43,7 @@ erDiagram
         decimal start_lat "목록 마커용 시작점"
         decimal start_lng
         json path_json "전체 경로 좌표 배열"
-        varchar visibility "PUBLIC, PRIVATE"
+        varchar visibility "PUBLIC, MATCH_ONLY, PRIVATE"
         varchar gpx_path "GPX 파일 경로 (업로드 폴더)"
         int download_count "GPX 다운로드 수"
         boolean is_deleted "작성자 삭제"
@@ -59,7 +59,7 @@ erDiagram
         bigint host_id FK "모집자"
         bigint course_id FK
         varchar title "30자 이내"
-        text content
+        text content "소개글 (선택)"
         datetime meet_at "만나는 일시"
         varchar meet_place "만남 장소 설명"
         tinyint capacity "2~6, 모집자 포함"

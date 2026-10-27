@@ -60,7 +60,7 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 | --- | --- | --- | --- |
 | `users` | 정란 | 회원 1명 | 탈퇴해도 지우지 않음 (`status = 'WITHDRAWN'`) |
 | `user_tags` | 정란 | 회원의 스타일 또는 언어 1개 | 언어가 2개면 2줄 |
-| `courses` | 동언 | 코스 1개 | 경로는 `path_json` 한 칸에 통째로 |
+| `courses` | 동언 | 코스 1개 | 경로는 `path_json` 한 칸에, GPX 파일은 업로드 폴더에 (`gpx_path`) |
 | `course_facilities` | 동언 | 코스의 편의시설 1개 | 있음/없음만 (개수 없음) |
 | `matches` | 민서 | 동행 모집 글 1개 | `status`에는 OPEN · CLOSED · CANCELED만 저장 |
 | `match_tags` | 민서 | 동행이 원하는 스타일 · 언어 · 연령대 1개 | |
@@ -70,8 +70,8 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 
 | 테이블 | 담당 | 한 줄에 담기는 것 | 메모 |
 | --- | --- | --- | --- |
-| `reviews` | 정란 | 후기 1개 | 같은 동행에는 1개만. 작성자가 지우면 실제로 삭제 |
-| `review_photos` | 정란 | 후기 사진 1장 | 파일은 업로드 폴더에, DB에는 상대 경로만 |
+| `reviews` | 동언 | 후기 1개 | 같은 동행에는 1개만. 작성자가 지우면 실제로 삭제 |
+| `review_photos` | 동언 | 후기 사진 1장 | 파일은 업로드 폴더에, DB에는 상대 경로만 |
 | `reports` | 정란 | 신고 1건 | 대상은 `target_type` + `target_id`. 관리자 AD1에서 처리 |
 | `landmarks` | 동언 | 랜드마크 1곳 | 8곳을 `seed.sql`로 미리 넣음 (관리자 화면 없음) |
 | `user_stamps` | 동언 | 회원이 받은 스탬프 1개 | 랜드마크마다 1번만. 배지는 저장 안 하고 계산 |
@@ -82,7 +82,7 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 | 뷰 | 담당 | 내용 |
 | --- | --- | --- |
 | `v_match_status` | 민서 | 동행 1개의 현재 인원 · 화면 상태 (FULL, DONE은 여기서 계산) |
-| `v_course_rating` | 정란 · 동언 | 코스 1개의 후기 수 · 평균 별점 (관리자가 숨긴 후기는 뺌) |
+| `v_course_rating` | 동언 | 코스 1개의 후기 수 · 평균 별점 (관리자가 숨긴 후기는 뺌) |
 
 ---
 
@@ -95,7 +95,7 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 - **화면에 보이는 글자(이모지 포함)는 DB에 저장하지 않습니다.** DB와 API는 코드만 주고받고, 프론트가 코드에 맞는 문구를 붙여 보여 줍니다. 그래서 피그마 문구를 바꿔도 DB는 그대로입니다.
 - 약속에 없는 값을 넣으면 DB가 막습니다: `Check constraint 'chk_…' is violated`. 백엔드에서 먼저 검사해서 `400 INVALID_INPUT`으로 돌려주세요.
 
-**회원가입 · 동행 모집에서 고르는 값** (피그마 A4 회원가입, W3 모집 글 쓰기 기준)
+**회원가입 · 동행 모집 · 코스 등록에서 고르는 값** (피그마 A4 회원가입, W3 모집 글 쓰기, C3-3 코스 정보 입력 기준)
 
 | 종류 | 코드 → 화면 문구 |
 | --- | --- |
@@ -105,6 +105,8 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 | MBTI `mbti` | `ENFP` 같은 4글자, 선택 안 함이면 `NULL` |
 | 동행 모집 대상 `target` (하나만) | `ANYONE` 누구나, `EXCHANGE` 내 · 외국인 교류, `SAME_LANGUAGE` 같은 언어끼리, `MBTI` MBTI 맞춤 |
 | 동행 연령대 `AGE_GROUP` (여러 개) | 위 연령대 코드. **"무관"이면 아무것도 저장하지 않음** |
+| 코스 공개 범위 `visibility` (C3-3) | `PUBLIC` 전체 공개, `MATCH_ONLY` 동행 참여자에게만, `PRIVATE` 나만 보기 → 누가 볼 수 있는지는 [쿼리 예시](#쿼리-예시) |
+| 코스 편의시설 `facility` (C3-3) | `TOILET` 화장실, `BENCH` 벤치, `PARKING` 주차, `SEA_VIEW` 바다 뷰 (있음/없음만) |
 
 **2주차 값** (API 명세 "신고 · 스탬프" 기준)
 
@@ -115,6 +117,20 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 | 신고 사유 `reason` (코스, C2-1) | `PRIVATE_AREA` 사유지 · 출입 금지 구역, `DANGER` 위험한 구간, `WRONG_INFO` 경로 정보가 실제와 다름, `HOME_EXPOSED` 개인 주거지 노출, `ETC` 기타 |
 | 신고 상태 `status` / 처리 `action` | `PENDING` 대기 → `DONE` 처리 완료 + `WARN` 경고 · `SUSPEND` 7일 이용 정지 · `HIDE` 게시물 숨김 · `REJECT` 문제 없음 (AD1의 **보류**는 처리하지 않고 `PENDING`으로 둠) |
 | 배지 `code` (저장 안 함) | `FIRST_WALK` 첫 산책, `FIRST_MATCH` 첫 동행, `EXCHANGE_3` 내 · 외국인 교류 3회, `LANDMARK_3` 랜드마크 3곳, `SIHEUNG_MASTER` 시흥 산책 마스터 → 기준은 [설계 약속 11](#11-랜드마크--스탬프--배지-2주차) |
+
+**길이 · 범위 규칙** (피그마 화면 문구 기준. ✅는 DB도 막는 것, 나머지는 백엔드에서 검사)
+
+| 항목 | 규칙 | DB |
+| --- | --- | --- |
+| 아이디 `login_id` | 영문 · 숫자 4~16자 | ✅ 길이 |
+| 비밀번호 | 8자 이상, 영문 · 숫자 · 특수문자 포함 (DB에는 해시만) | |
+| 닉네임 `nickname` | 2~10자 | ✅ |
+| 코스 이름 `courses.name` | 20자 이내 | ✅ |
+| 동행 제목 `matches.title` | 30자 이내 | ✅ |
+| 동행 소개글 `matches.content` | 선택 (비우면 `NULL`) | ✅ |
+| 동행 정원 `capacity` | 2~6명 (모집자 포함) | ✅ |
+| 후기 내용 | 10자 이상, 사진 5장까지 | ✅ |
+| GPX 파일 | 5MB 이하, 경로 300m 이상, 위치 점 20개 이상 | |
 
 ### 2. 여러 개 고르는 값은 태그 테이블
 
@@ -130,7 +146,7 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 | 대상 | 지울 때 | 목록 · 상세 쿼리에 꼭 넣을 조건 |
 | --- | --- | --- |
 | 회원 탈퇴 | `users.status = 'WITHDRAWN'` | 작성자 이름을 "탈퇴한 회원"으로 표시 |
-| 코스 삭제 (작성자) | `courses.is_deleted = TRUE` | `is_deleted = FALSE` (+ 남의 `PRIVATE` 코스 제외) |
+| 코스 삭제 (작성자) | `courses.is_deleted = TRUE` | `is_deleted = FALSE` (목록은 `visibility = 'PUBLIC'`만) |
 | 코스 숨김 (관리자) | `courses.is_hidden = TRUE` | `is_hidden = FALSE` (상세는 404) |
 | 동행 모집 취소 | `matches.status = 'CANCELED'` | 목록 기본값은 모집 중(`OPEN`)만 |
 | 동행 숨김 (관리자) | `matches.is_hidden = TRUE` | `is_hidden = FALSE` (상세는 404) |
@@ -173,9 +189,9 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 ### 6. 비밀번호
 
 - `password_hash`에는 **BCrypt 해시(60자)** 만 저장합니다. 원문 저장 금지.
-- 공통 코드 **`PasswordUtil`** 로 만들고 확인합니다: 가입 · 비밀번호 변경은 `PasswordUtil.hash(pw)`, 로그인은 `PasswordUtil.matches(pw, hash)`.
+- 스프링의 **`BCryptPasswordEncoder`** (`spring-security-crypto`)로 만들고 확인합니다: 가입 · 비밀번호 변경은 `encoder.encode(pw)`, 로그인은 `encoder.matches(pw, hash)`.
 - 같은 비밀번호도 해시가 매번 달라서 **SQL의 `WHERE password_hash = ?`로는 비교할 수 없습니다.** 아이디로 행을 꺼낸 다음 `matches`로 확인합니다.
-- 테스트 계정 해시(`$2a$10$…`)도 `PasswordUtil.matches("test1234!", hash)`로 확인됩니다 (실제 테스트 완료).
+- 테스트 계정 해시(`$2a$10$…`)는 BCrypt 형식이라 `encoder.matches("test1234!", hash)`로 확인됩니다 (예전 Servlet 코드에서 실제로 확인함).
 
 ### 7. 참여하기는 트랜잭션으로
 
@@ -194,7 +210,7 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 - DB의 `review_photos.file_path`에는 업로드 폴더 기준 **상대 경로**만 넣습니다. 이름 규칙: `reviews/{후기번호}-{순서}.jpg` → 예) `reviews/88-1.jpg`
 - API 응답에는 앞에 `/files/`를 붙여서 `/files/reviews/88-1.jpg`로 보냅니다. 브라우저가 이 주소를 부르면, **백엔드가 업로드 폴더에서 파일을 읽어** 응답합니다.
 - 파일 저장과 `/files/…` 주소 처리는 백엔드 공통 코드(민서)에 넣습니다. (스프링부트로 바꾸면서 다시 만듦)
-- 폴더 위치는 설정 파일(`db.properties`의 `upload.dir`)에 있어서, 맥 사용자나 나중에 서버로 옮길 때는 설정만 바꿉니다. → [6)](#6-백엔드-설정-파일-만들기-dbproperties)
+- 폴더 위치는 설정 파일의 `app.upload-dir`에 있어서, 맥 사용자는 설정만 바꾸면 됩니다. → [6)](#6-백엔드-설정-파일-만들기)
 - React 화면(5173)에서도 사진이 보이도록 `frontend/vite.config.js`가 `/files`를 백엔드(8080)로 넘깁니다.
 - 한 후기에 최대 5장 (`sort_order` 1~5, 6번째는 DB가 막음). 장당 5MB · jpg/png 검사는 백엔드에서.
 
@@ -362,28 +378,29 @@ C:\dev\jspTeam\
    └─ gpx\        GPX 파일    course-1.gpx ~ course-4.gpx, match-1.gpx
 ```
 
-### 6) 백엔드 설정 파일 만들기 (db.properties)
+### 6) 백엔드 설정 파일 만들기
 
 > [!NOTE]
-> **스프링부트로 바꾸면 이 단계는 스프링부트 설정 파일로 바뀝니다.** 그 전까지는 하지 않아도 됩니다.
+> **스프링부트 프로젝트가 올라온 뒤에 하는 단계입니다.** 그 전에는 건너뛰세요.<br>
+> 파일 이름과 위치는 프로젝트가 올라올 때 이 칸에 정확히 적습니다 (민서).
 
-**백엔드 3명은 1주차에 바로** 합니다. 자바 코드가 DB에 접속할 때 이 파일의 주소 · 계정 · 비밀번호를 씁니다.
+백엔드가 DB에 접속할 때 이 설정 파일의 주소 · 계정 · 비밀번호를 씁니다.<br>
+비밀번호가 들어가므로 **깃허브에 올리지 않고**, 저장소의 예시 파일(`….example`)을 복사해서 각자 만듭니다.
 
-1. `C:\dev\jspTeam\Team_walk\backend\src\main\resources\` 폴더를 엽니다.
-2. `db.properties.example`을 **같은 폴더에 복사**하고 이름을 **`db.properties`** 로 바꿉니다.
-   Git Bash로 하려면: `cp backend/src/main/resources/db.properties.example backend/src/main/resources/db.properties`
-3. `db.properties`를 메모장으로 열어 `db.password=` 뒤를 **2)에서 정한 비밀번호**로 바꾸고 저장합니다.
-4. 업로드 폴더를 5)와 다른 곳에 만들었다면 `upload.dir`도 바꿉니다. 경로는 **슬래시(`/`)** 로 씁니다.
-5. 이클립스에서 `sanchaek` 우클릭 → **Refresh**(F5) → Tomcat 재시작.
+들어갈 값 (스프링부트 설정 이름 기준):
 
 ```properties
-db.url=jdbc:mysql://localhost:3306/sanchaek?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
-db.user=sanchaek
-db.password=내가_정한_비밀번호
-upload.dir=C:/dev/jspTeam/uploads
+spring.datasource.url=jdbc:mysql://localhost:3306/sanchaek?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+spring.datasource.username=sanchaek
+spring.datasource.password=내가_정한_비밀번호
+app.upload-dir=C:/dev/jspTeam/uploads
 ```
 
-> ⚠️ **`db.properties`는 깃허브에 올라가지 않습니다** (`.gitignore`). `git status`에 `db.properties`가 보이면 안 됩니다. 예시 파일(`db.properties.example`)에는 비밀번호를 넣지 마세요.
+- `spring.datasource.password`에는 **2)에서 정한 비밀번호**를 넣습니다.
+- 업로드 폴더를 5)와 다른 곳에 만들었다면 `app.upload-dir`도 바꿉니다. 경로는 **슬래시(`/`)** 로 씁니다.
+
+> ⚠️ 비밀번호가 든 설정 파일은 `git status`에 보이면 안 됩니다. 보이면 add 하지 말고 팀장에게 알려 주세요.<br>
+> 예시 파일(`….example`)에는 비밀번호를 넣지 않습니다.
 
 ### 화면으로 보고 싶다면 (선택)
 
@@ -459,7 +476,8 @@ GPX 파일은 `sample-uploads/gpx/course-1.gpx` ~ `course-4.gpx` 입니다 (다�
 
 ## 쿼리 예시
 
-DAO를 만들 때 출발점으로 쓰세요. `?` 자리는 `PreparedStatement`로 넣습니다.
+DB 코드를 만들 때 출발점으로 쓰세요. `?` 자리의 값은 JdbcTemplate에 순서대로 넘깁니다.<br>
+예) `jdbcTemplate.query(sql, rowMapper, area, size, offset)`
 
 ### 1주차
 
@@ -484,6 +502,19 @@ LIMIT ? OFFSET ?;                -- size, (page - 1) * size
 ```sql
 AND (SELECT COUNT(*) FROM course_facilities f2
      WHERE f2.course_id = c.course_id AND f2.facility IN ('TOILET', 'BENCH')) = 2
+```
+
+**코스 상세를 볼 수 있는지 (동언)**: 0줄이면 `404`. `?`는 코스 번호, 로그인한 회원 번호(로그인 안 했으면 `0`) 2번
+
+```sql
+SELECT c.course_id
+FROM courses c
+WHERE c.course_id = ? AND c.is_deleted = FALSE AND c.is_hidden = FALSE
+  AND (c.visibility = 'PUBLIC'
+       OR c.author_id = ?
+       OR (c.visibility = 'MATCH_ONLY' AND EXISTS (       -- 이 코스로 잡힌 동행에 참여 중인 사람
+             SELECT 1 FROM matches m JOIN match_participants p ON p.match_id = m.match_id
+             WHERE m.course_id = c.course_id AND p.user_id = ? AND p.status = 'JOINED')));
 ```
 
 **동행 목록 (민서)**: 모집 중만, 마감 임박순, 언어 필터
@@ -533,7 +564,7 @@ SELECT file_path FROM review_photos WHERE review_id = ? ORDER BY sort_order;  --
 SELECT avg_rating FROM v_course_rating WHERE course_id = ?;                  -- avgRating
 ```
 
-**내 동행 past 의 `reviewed` (민서 · 정란)**
+**내 동행 past 의 `reviewed` (민서)**
 
 ```sql
 EXISTS (SELECT 1 FROM reviews r WHERE r.user_id = ? AND r.match_id = m.match_id) AS reviewed
@@ -618,15 +649,14 @@ LIMIT ? OFFSET ?;
 | `ERROR 3819: Check constraint 'chk_…' is violated` | 값 약속에 없는 값 (소문자, 오타, 별점 6, 10자 미만 후기, 사진 6장째 등) | [설계 약속 1](#1-이름과-값) 확인 |
 | `ERROR 1062: Duplicate entry` | 중복 (아이디, 같은 동행 후기, 같은 대상 신고, 같은 랜드마크 스탬프). 아이디는 대소문자를 구분하지 않음 | 백엔드에서 `409 DUPLICATE`로 응답 (스탬프는 `alreadyStamped`) |
 | `ERROR 1452: Cannot add or update a child row` | 없는 회원 · 코스 · 동행 번호를 넣음 | 요청의 id가 실제로 있는지 먼저 조회 (`404`) |
-| `ERROR 3140: Invalid JSON text` | `path_json`에 JSON이 아닌 문자열 | Gson으로 만든 문자열을 넣기 |
+| `ERROR 3140: Invalid JSON text` | `path_json`에 JSON이 아닌 문자열 | 좌표 배열을 JSON 문자열로 바꿔서 넣기 (스프링부트에 들어 있는 Jackson의 `ObjectMapper` 사용) |
 | `ERROR 1451: Cannot delete or update a parent row` | 다른 테이블이 참조하는 행을 지우려 함 | 지우지 말고 상태 변경 ([설계 약속 3](#3-지우지-않습니다-후기만-예외)) |
 | 자바에서 **`Illegal mix of collations (utf8mb4_0900_ai_ci …) and (utf8mb4_unicode_ci …)`** | DB 드라이버의 글자 비교 기준이 MySQL 기본값과 다름. 뷰의 상태 값과 비교할 때 생김 (실제 테스트에서 발견) | 최신 `schema.sql`로 다시 실행 (뷰에 `COLLATE utf8mb4_0900_ai_ci`가 들어가 있어야 함). **뷰의 `COLLATE` 줄은 지우지 않기** |
-| 후기 사진이 화면에 안 나옴 (엑스박스) | 업로드 폴더에 파일이 없거나 `upload.dir`이 다른 곳 | [5)](#5-업로드-폴더-만들기-후기-사진--gpx)대로 복사했는지, [6)](#6-백엔드-설정-파일-만들기-dbproperties)의 `upload.dir` 확인. `localhost:8080/files/reviews/1-1.jpg`가 열리는지 먼저 보기 |
-| 이클립스 Console에 **`db.properties 파일이 없습니다`** | 설정 파일을 안 만들었거나 이름이 다름 (`db.properties.txt` 등) | [6)](#6-백엔드-설정-파일-만들기-dbproperties). 윈도우 탐색기 **보기 → 파일 확장명** 켜고 이름 확인 |
-| 자바에서 **`No suitable driver found for jdbc:mysql…`** | Tomcat 안에서는 드라이버가 자동 등록되지 않음 (실제 테스트에서 발견) | `DBUtil.getConnection()`으로 연결하기 (직접 `DriverManager` 쓰지 않기). 그래도 나면 Maven → Update Project |
-| 자바에서 **`Public Key Retrieval is not allowed`** | MySQL 보안 연결이 꺼진 PC에서 생김 | `db.url` 끝에 `&allowPublicKeyRetrieval=true&useSSL=false` 추가 |
+| 후기 사진이 화면에 안 나옴 (엑스박스) | 업로드 폴더에 파일이 없거나 `app.upload-dir`이 다른 곳 | [5)](#5-업로드-폴더-만들기-후기-사진--gpx)대로 복사했는지, [6)](#6-백엔드-설정-파일-만들기)의 `app.upload-dir` 확인. `localhost:8080/files/reviews/1-1.jpg`가 열리는지 먼저 보기 |
+| 백엔드 시작 시 **`Failed to configure a DataSource`** | 설정 파일을 안 만들었거나 이름이 다름 (끝에 `.txt`가 붙는 경우 등) | [6)](#6-백엔드-설정-파일-만들기). 윈도우 탐색기 **보기 → 파일 확장명** 켜고 이름 확인 |
+| 자바에서 **`Public Key Retrieval is not allowed`** | MySQL 보안 연결이 꺼진 PC에서 생김 | `spring.datasource.url` 끝에 `&allowPublicKeyRetrieval=true&useSSL=false` 추가 |
 | 자바에서 `Access denied for user 'sanchaek'` | 설정 파일의 비밀번호가 틀림 | 2)에서 정한 비밀번호로 다시 저장 → 백엔드 다시 실행 |
-| `upload.dir`에 `C:\dev\…` 를 넣었더니 폴더를 못 찾음 | 설정 파일에서 역슬래시(`\`)는 특수 문자 | 슬래시(`/`)로: `C:/dev/jspTeam/uploads` |
+| `app.upload-dir`에 `C:\dev\…` 를 넣었더니 폴더를 못 찾음 | 설정 파일에서 역슬래시(`\`)는 특수 문자 | 슬래시(`/`)로: `C:/dev/jspTeam/uploads` |
 | `check.sql`에서 `match status`만 `FAIL` | `seed.sql`을 실행한 지 며칠 지나 동행 날짜가 지남 | [3)](#3-테이블과-테스트-데이터-넣기-테이블이-바뀔-때마다-다시) 다시 실행 |
 | `check.sql`에서 `tables`나 `rows`, `rating`이 `FAIL` | `schema.sql`이나 `seed.sql` 실행 중 오류가 남 (예전 `schema.sql`로 만든 경우 포함) | `git pull` 후 3)을 다시 실행하면서 빨간 `ERROR` 줄을 캡처해 팀에 |
 
@@ -643,6 +673,6 @@ brew services start mysql@8.4
 그다음은 윈도우의 [2)](#2-db와-팀-계정-만들기-root로-한-번만)부터 같습니다. `source` 경로만 맥 경로로 씁니다.
 예: `source /Users/이름/Downloads/Team_walk/db/schema.sql`
 
-후기 사진 폴더는 저장소 옆에 만듭니다. 예: `cp -R db/sample-uploads/ ../uploads/` → `../uploads/reviews/1-1.jpg`
+업로드 폴더는 저장소 옆에 만듭니다. 예: `cp -R db/sample-uploads/ ../uploads/` → `../uploads/reviews/1-1.jpg`, `../uploads/gpx/course-1.gpx`
 
-`db.properties`의 `upload.dir`은 그 폴더의 전체 경로로 씁니다. 예: `upload.dir=/Users/이름/dev/jspTeam/uploads`
+설정 파일의 `app.upload-dir`은 그 폴더의 전체 경로로 씁니다. 예: `app.upload-dir=/Users/이름/dev/jspTeam/uploads`
