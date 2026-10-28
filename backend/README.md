@@ -101,6 +101,7 @@ backend/
    │  ├─ java/kr/sanchaek/
    │  │  ├─ SanchaekApplication.java   시작점
    │  │  ├─ common/      공통 코드 (민서) · ★ HelloController (/api/hello)
+   │  │  │                 ApiResponse · ApiException · LoginUser · FileStore … (쓰는 법: docs/development.md)
    │  │  ├─ match/       동행 · 관리자 AD3 (민서)
    │  │  ├─ user/        계정 · 신고 · 관리자 AD1 · AD2 · AD4 (정란)
    │  │  └─ course/      코스 · GPX · 후기 · 랜드마크 (동언)
@@ -150,4 +151,4 @@ backend/
 | Packaging / Configuration / Java | Jar / Properties / 21 |
 | Dependencies | Spring Web, JDBC API, MySQL Driver, Validation, Spring Boot DevTools |
 
-만든 뒤 바꾼 것: `application.properties` (각자 설정 파일 읽기, 업로드 크기), `HelloController`, `application-local.properties.example` 추가.
+만든 뒤 바꾼 것: `application.properties` (각자 설정 파일 읽기, 업로드 크기), `application-local.properties.example` 추가, `common/` 공통 코드 ([개발 규칙](../docs/development.md#백엔드-공통-코드)).
