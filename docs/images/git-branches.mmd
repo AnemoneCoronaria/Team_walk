@@ -1,0 +1,18 @@
+gitGraph
+    commit id: "처음"
+    branch develop
+    checkout develop
+    commit id: "환경 세팅"
+    branch feature/A1-login
+    checkout feature/A1-login
+    commit id: "로그인 API"
+    commit id: "아이디 확인"
+    checkout develop
+    merge feature/A1-login id: "PR 합침 (정란)"
+    branch feature/W2-match-detail
+    checkout feature/W2-match-detail
+    commit id: "동행 상세"
+    checkout develop
+    merge feature/W2-match-detail id: "PR 합침 (민서)"
+    checkout main
+    merge develop id: "주말 합치기 (팀장)"

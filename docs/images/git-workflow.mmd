@@ -1,0 +1,15 @@
+flowchart LR
+    subgraph PC["💻 내 컴퓨터 (Git Bash)"]
+        direction TB
+        A["① 최신 develop 받기<br/>git checkout develop<br/>git pull"] --> B["② 내 작업 브랜치 만들기<br/>git checkout -b feature/W2-match-detail"]
+        B --> C["③ 작업하고 커밋 (작게, 자주)<br/>git add backend<br/>git commit -m #quot;feat: 동행 상세 API 추가#quot;"]
+        C --> D["④ 그사이 바뀐 develop 반영<br/>git pull origin develop"]
+        D --> E["⑤ 깃허브에 올리기<br/>git push -u origin feature/W2-match-detail"]
+    end
+    subgraph GH["🌐 깃허브 웹사이트"]
+        direction TB
+        F["⑥ PR 만들기<br/>Compare #amp; pull request<br/>base 가 develop 인지 확인"] --> G["⑦ 리뷰어가 확인<br/>Files changed → Review changes<br/>→ Approve"]
+        G --> H["⑧ 합치기<br/>Merge pull request<br/>→ Delete branch"]
+        H --> I(["다음 기능은 다시 ①부터"])
+    end
+    PC ==> GH

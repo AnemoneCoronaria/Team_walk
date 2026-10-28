@@ -1,0 +1,12 @@
+flowchart LR
+    U["사용자가 신고<br/>W6 동행 글 · 사용자 · 후기<br/>C2-1 코스"] --> R[("reports<br/>status = PENDING")]
+    R --> A["관리자 AD1<br/>신고 처리 화면"]
+    A -- "WARN 경고" --> W["작성자의<br/>warning_count + 1"]
+    A -- "SUSPEND 7일 정지" --> S["users.status = SUSPENDED<br/>suspended_until = 7일 뒤<br/>(글이면 그 작성자)"]
+    A -- "HIDE 게시물 숨김" --> H["대상의 is_hidden = TRUE<br/>matches · courses · reviews"]
+    A -- "REJECT 문제 없음" --> N["바꾸는 것 없음"]
+    A -. "보류" .-> R
+    W --> D[("reports<br/>status = DONE<br/>action · 메모 · 처리자 기록")]
+    S --> D
+    H --> D
+    N --> D

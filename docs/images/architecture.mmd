@@ -1,0 +1,12 @@
+flowchart LR
+    K["카카오맵 API"]
+    B["브라우저<br/><b>localhost:5173</b><br/>사용자 화면 · 관리자 화면"]
+    V["<b>Vite 개발 서버</b> :5173<br/>React 화면<br/><i>프론트: 동훈 · 승민</i><br/><i>관리자 화면: 민서 · 정란</i>"]
+    S["<b>스프링부트</b> :8080<br/>API /api/… · 파일 /files/…<br/><i>백엔드: 민서 · 정란 · 동언</i>"]
+    M[("<b>MySQL</b> :3306<br/>DB sanchaek")]
+    U[("<b>업로드 폴더</b><br/>후기 사진 · GPX 파일")]
+    K -. "지도 불러오기" .-> B
+    B --> V
+    V -- "/api · /files 요청만<br/>넘김 (프록시)" --> S
+    S -- "SQL (JdbcTemplate)" --> M
+    S -- "저장 · 읽기" --> U

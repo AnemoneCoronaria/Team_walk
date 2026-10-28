@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="산책시루 테스트 데이터" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>배곧생명공원 산책 코스</name>
+    <trkseg>
+      <trkpt lat="37.37141" lon="126.716051"><time>2026-10-03T09:00:00Z</time></trkpt>
+      <trkpt lat="37.370804" lon="126.716395"><time>2026-10-03T09:01:35Z</time></trkpt>
+      <trkpt lat="37.370225" lon="126.716867"><time>2026-10-03T09:03:10Z</time></trkpt>
+      <trkpt lat="37.369654" lon="126.717534"><time>2026-10-03T09:04:45Z</time></trkpt>
+      <trkpt lat="37.369146" lon="126.718541"><time>2026-10-03T09:06:20Z</time></trkpt>
+      <trkpt lat="37.368813" lon="126.719916"><time>2026-10-03T09:07:55Z</time></trkpt>
+      <trkpt lat="37.368749" lon="126.721479"><time>2026-10-03T09:09:30Z</time></trkpt>
+      <trkpt lat="37.368949" lon="126.722961"><time>2026-10-03T09:11:05Z</time></trkpt>
+      <trkpt lat="37.369318" lon="126.724193"><time>2026-10-03T09:12:40Z</time></trkpt>
+      <trkpt lat="37.369754" lon="126.7252"><time>2026-10-03T09:14:15Z</time></trkpt>
+      <trkpt lat="37.370225" lon="126.726091"><time>2026-10-03T09:15:50Z</time></trkpt>
+      <trkpt lat="37.370767" lon="126.726868"><time>2026-10-03T09:17:25Z</time></trkpt>
+      <trkpt lat="37.37141" lon="126.727354"><time>2026-10-03T09:19:00Z</time></trkpt>
+      <trkpt lat="37.372106" lon="126.727314"><time>2026-10-03T09:20:35Z</time></trkpt>
+      <trkpt lat="37.37274" lon="126.726656"><time>2026-10-03T09:22:10Z</time></trkpt>
+      <trkpt lat="37.373212" lon="126.725527"><time>2026-10-03T09:23:45Z</time></trkpt>
+      <trkpt lat="37.373502" lon="126.724193"><time>2026-10-03T09:25:20Z</time></trkpt>
+      <trkpt lat="37.373672" lon="126.722841"><time>2026-10-03T09:26:55Z</time></trkpt>
+      <trkpt lat="37.37378" lon="126.721479"><time>2026-10-03T09:28:30Z</time></trkpt>
+      <trkpt lat="37.373808" lon="126.720035"><time>2026-10-03T09:30:05Z</time></trkpt>
+      <trkpt lat="37.373674" lon="126.718541"><time>2026-10-03T09:31:40Z</time></trkpt>
+      <trkpt lat="37.373311" lon="126.717208"><time>2026-10-03T09:33:15Z</time></trkpt>
+      <trkpt lat="37.37274" lon="126.716302"><time>2026-10-03T09:34:50Z</time></trkpt>
+      <trkpt lat="37.372069" lon="126.715949"><time>2026-10-03T09:36:25Z</time></trkpt>
+      <trkpt lat="37.37141" lon="126.716051"><time>2026-10-03T09:38:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>

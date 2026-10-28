@@ -30,7 +30,7 @@ export default function App() {
       )}
       {state.status === 'error' && (
         <p>
-          ❌ 연결 실패 ({state.message}). 이클립스에서 Tomcat이 켜져 있는지,
+          ❌ 연결 실패 ({state.message}). 백엔드(스프링부트, 8080)가 켜져 있는지,
           http://localhost:8080/api/hello 가 열리는지 확인하세요.
         </p>
       )}
