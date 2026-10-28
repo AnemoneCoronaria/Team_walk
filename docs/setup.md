@@ -6,9 +6,8 @@
 끝나면 [README의 빠른 시작](../README.md#-빠른-시작) 세 가지가 모두 보여야 합니다.
 
 > [!NOTE]
-> **백엔드는 VS Code + 스프링부트 4.1입니다.** (이클립스 · Tomcat · JSP는 쓰지 않음)<br>
-> 스프링부트 프로젝트는 민서가 [backend/README.md](../backend/README.md) 순서대로 만들어 올릴 예정입니다.<br>
-> 그 전까지는 **1 · 2 · 4번**과 [DB 세팅 1) ~ 5)](../db/README.md#처음-세팅-윈도우-한-번만)를 해 두면 됩니다.
+> **백엔드는 VS Code + 스프링부트 4.1, 실행은 Gradle `bootRun`입니다.** (이클립스 · Tomcat · JSP는 쓰지 않음)<br>
+> **백엔드 담당**은 1 · 2번 → [DB 세팅](../db/README.md#처음-세팅-윈도우-한-번만) → 3번, **프론트 담당**은 1 · 2 · 4번을 하면 됩니다.
 
 ## 목차
 
@@ -34,7 +33,7 @@
 | 2 | **Node.js** | 모두 | [nodejs.org](https://nodejs.org) → **LTS** 설치 파일 | `node -v` → `v22.12` 이상 |
 | 3 | **VS Code** | 모두 | [code.visualstudio.com](https://code.visualstudio.com) (프론트는 WebStorm도 가능) | |
 | 4 | **JDK 21** | 백엔드 | [adoptium.net](https://adoptium.net) → **Temurin 21 (LTS)** → Windows x64 **.msi**.<br>설치 중 **"Set JAVA_HOME variable"** 항목을 눌러 **"Will be installed on local hard drive"** 로 바꾸기 (기본값은 꺼져 있음) | 새 터미널에서 `java -version` → `21…` |
-| 5 | **MySQL 8.4** | 백엔드 (프론트는 2주차) | [DB 안내 1)](../db/README.md#1-mysql-84-설치) | |
+| 5 | **MySQL 8.4** + DB 화면 도구 | 백엔드 (프론트는 2주차) | [DB 안내 1)](../db/README.md#1-mysql-84-설치). 화면 도구는 윈도우 **MySQL Workbench**, 맥 **DataGrip** | |
 
 **VS Code 확장 프로그램**
 
@@ -77,16 +76,14 @@ VS Code에서는 **File → Open Folder…** 로 엽니다.<br>
 
 ## 3. 백엔드: 스프링부트
 
-> [!NOTE]
-> **스프링부트 프로젝트가 아직 develop에 없다면 이 절은 건너뛰세요.**<br>
-> 민서가 [backend/README.md](../backend/README.md) 순서대로 만들어 올립니다.
+자세한 내용(실행 방법, ▶ Run 오류, 폴더 구조)은 **[backend/README.md](../backend/README.md)** 에 있습니다.
 
 | 항목 | 값 |
 | --- | --- |
 | 스프링부트 | **4.1** (Spring Initializr 기본값. 3.5는 2026년 6월에 무료 지원이 끝나서 Initializr에서 고를 수 없음) |
 | 빌드 | Gradle (프로젝트에 들어 있는 `gradlew`를 쓰므로 따로 설치하지 않음) |
 | Java | 21 |
-| 라이브러리 | Spring Web, JDBC API(JdbcTemplate), MySQL Driver, Validation, 비밀번호용 `spring-security-crypto` |
+| 라이브러리 | Spring Web, JDBC API(JdbcTemplate), MySQL Driver, Validation, DevTools (비밀번호용 `spring-security-crypto`는 로그인 만들 때 추가) |
 | 포트 | **8080** (프론트가 `/api` · `/files` 요청을 여기로 보냄) |
 | 설정 파일 | `application.properties` 공통 (깃허브 O)<br>`application-local.properties` 각자 · 비밀번호 (깃허브 X) |
 
@@ -98,10 +95,14 @@ VS Code에서는 **File → Open Folder…** 로 엽니다.<br>
 1. 최신 develop 받기: `git checkout develop` → `git pull`
 2. 각자 설정 파일 만들기 → [DB 안내 6)](../db/README.md#6-백엔드-설정-파일-만들기)<br>
    `backend/src/main/resources/application-local.properties.example`을 복사 → 이름을 `application-local.properties`로 → 비밀번호 고치기
-3. VS Code → **File → Open Folder…** → `Team_walk\backend` → 오른쪽 아래 Java 준비 표시가 끝날 때까지 기다리기<br>
-   (처음엔 라이브러리를 내려받느라 몇 분 걸립니다)
-4. 왼쪽 **Spring Boot Dashboard**에서 `sanchaek` ▶ 실행 (또는 Git Bash에서 `./gradlew bootRun`)
-5. 브라우저에서 `http://localhost:8080/api/hello` → `"landmarks":8` 이 보이면 서버와 DB 모두 성공
+3. VS Code → **File → Open Folder…** → `Team_walk\backend`
+4. 왼쪽 **코끼리 아이콘(Gradle)** → `sanchaek` → Tasks → application → **bootRun** 더블클릭<br>
+   (터미널이면 Git Bash `./gradlew bootRun`, cmd · PowerShell `gradlew.bat bootRun`. 처음엔 몇 분 걸림)
+5. 로그에 `Started SanchaekApplication`이 뜨면 브라우저에서 `http://localhost:8080/api/hello` → `"landmarks":8` 이 보이면 서버와 DB 모두 성공
+
+> [!NOTE]
+> - `80% EXECUTING`에서 멈춘 것처럼 보여도 **정상**입니다 (서버가 켜져 있는 상태). 끌 때는 Ctrl+C.
+> - VS Code의 ▶ Run 버튼은 `ClassNotFoundException`이 날 수 있습니다. 그럴 땐 위처럼 Gradle `bootRun`으로 실행하세요 → [backend/README.md](../backend/README.md#vs-code의--run-버튼)
 
 > [!TIP]
 > 인터넷 예제는 대부분 **스프링부트 3** 기준입니다. 거의 그대로 되지만 이것만 다릅니다.
@@ -121,7 +122,7 @@ npm run dev        # 개발 서버 시작 → http://localhost:5173
 
 - 끌 때는 터미널에서 **Ctrl+C**
 - 화면에 ✅ 연결 성공이 뜨려면 **백엔드(8080)가 켜져 있어야** 합니다.<br>
-  스프링부트 프로젝트가 올라오기 전에는 ❌ 연결 실패가 나오는 게 정상입니다.
+  백엔드를 안 켰으면 ❌ 연결 실패가 나오는 게 정상입니다.
 
 | 명령 | 하는 일 |
 | --- | --- |
