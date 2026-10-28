@@ -1,0 +1,11 @@
+flowchart TD
+    G["R1 화면에서 GPX 업로드<br/>POST /api/landmarks/verify"] --> C{"위치정보 동의?<br/>users.agree_location"}
+    C -- "아니요" --> X["403 CONSENT_REQUIRED<br/>→ R1-1 동의 모달"]
+    C -- "예" --> P["GPX에서 좌표 뽑기<br/>(코스 등록과 같은 코드)"]
+    P --> M["랜드마크 8곳과 거리 계산<br/>경로의 한 점이라도 300m 안?"]
+    M -- "한 곳도 없음" --> F1["FAIL · NOT_NEAR<br/>→ R1-2 화면"]
+    M -- "있음" --> E{"이미 받은 곳?<br/>user_stamps"}
+    E -- "전부 이미 받음" --> F2["FAIL · ALREADY_ALL"]
+    E -- "새로 받은 곳 있음" --> I[("user_stamps 에 저장")]
+    I --> B["배지 다시 계산 (저장 안 함)<br/>1곳 → 첫 산책<br/>3곳 → 랜드마크 3곳<br/>8곳 전부 → 시흥 산책 마스터"]
+    B --> OK["SUCCESS<br/>newStamps · newBadges → R2-1 모달"]

@@ -1,0 +1,85 @@
+erDiagram
+    users ||--o{ user_tags : "스타일·언어"
+    users ||--o{ courses : "코스를 올림"
+    courses ||--o{ course_facilities : "편의시설"
+    users ||--o{ matches : "모집함"
+    courses ||--o{ matches : "이 코스로 모임"
+    matches ||--o{ match_tags : "원하는 조건"
+    matches ||--o{ match_participants : "참여자"
+    users ||--o{ match_participants : "참여함"
+
+    users {
+        bigint user_id PK
+        varchar login_id UK "아이디 4~16자"
+        char password_hash "BCrypt 60자"
+        varchar nickname "2~10자"
+        varchar avatar "seagull 등 8종"
+        varchar age_group "20s, 30s, 40s, 50s+"
+        char mbti "선택"
+        varchar role "USER, ADMIN"
+        varchar status "ACTIVE, SUSPENDED, WITHDRAWN"
+        datetime suspended_until "정지 끝 (7일 정지)"
+        int warning_count "경고 횟수"
+        datetime agree_terms_at "이용약관 동의"
+        datetime agree_privacy_at "개인정보 동의"
+        boolean agree_location "위치정보 동의"
+        datetime agree_location_at
+        datetime created_at
+    }
+    user_tags {
+        bigint user_id PK, FK
+        varchar tag_type PK "STYLE, LANGUAGE"
+        varchar tag_value PK "SLOW, KO 같은 코드"
+    }
+    courses {
+        bigint course_id PK
+        bigint author_id FK "올린 사람"
+        varchar name "20자 이내"
+        text description
+        varchar area "출발점으로 자동 (OKGU 등 4개)"
+        varchar level "EASY, NORMAL, HARD"
+        decimal distance_km
+        int duration_min "거리 / 시속 4km"
+        decimal start_lat "목록 마커용 시작점"
+        decimal start_lng
+        json path_json "전체 경로 좌표 배열"
+        varchar visibility "PUBLIC, MATCH_ONLY, PRIVATE"
+        varchar gpx_path "GPX 파일 경로 (업로드 폴더)"
+        int download_count "GPX 다운로드 수"
+        boolean is_deleted "작성자 삭제"
+        boolean is_hidden "관리자 숨김 (2주차)"
+        datetime created_at
+    }
+    course_facilities {
+        bigint course_id PK, FK
+        varchar facility PK "TOILET, BENCH, PARKING, SEA_VIEW"
+    }
+    matches {
+        bigint match_id PK
+        bigint host_id FK "모집자"
+        bigint course_id FK
+        varchar title "30자 이내"
+        text content "소개글 (선택)"
+        datetime meet_at "만나는 일시"
+        varchar meet_place "만남 장소 설명"
+        tinyint capacity "2~6, 모집자 포함"
+        varchar target "ANYONE, EXCHANGE, SAME_LANGUAGE, MBTI"
+        char mbti "target이 MBTI일 때만"
+        json path_json "첨부 GPX 경로 좌표, 없으면 NULL"
+        varchar gpx_path "첨부 GPX 파일 경로"
+        varchar status "OPEN, CLOSED, CANCELED"
+        boolean is_hidden "관리자 숨김"
+        datetime created_at
+    }
+    match_tags {
+        bigint match_id PK, FK
+        varchar tag_type PK "STYLE, LANGUAGE, AGE_GROUP"
+        varchar tag_value PK "SLOW, ZH, 20s 같은 코드"
+    }
+    match_participants {
+        bigint match_id PK, FK
+        bigint user_id PK, FK
+        varchar status "JOINED, LEFT, KICKED"
+        varchar leave_reason "참여 취소 사유"
+        datetime joined_at
+    }

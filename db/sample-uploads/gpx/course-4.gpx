@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="산책시루 테스트 데이터" xmlns="http://www.topografix.com/GPX/1/1">
+  <trk>
+    <name>오이도 빨강등대 코스</name>
+    <trkseg>
+      <trkpt lat="37.345543" lon="126.687608"><time>2026-10-03T09:00:00Z</time></trkpt>
+      <trkpt lat="37.34472" lon="126.687787"><time>2026-10-03T09:01:18Z</time></trkpt>
+      <trkpt lat="37.343935" lon="126.688033"><time>2026-10-03T09:02:35Z</time></trkpt>
+      <trkpt lat="37.34316" lon="126.688379"><time>2026-10-03T09:03:52Z</time></trkpt>
+      <trkpt lat="37.34247" lon="126.688903"><time>2026-10-03T09:05:10Z</time></trkpt>
+      <trkpt lat="37.342019" lon="126.689617"><time>2026-10-03T09:06:28Z</time></trkpt>
+      <trkpt lat="37.341932" lon="126.69043"><time>2026-10-03T09:07:45Z</time></trkpt>
+      <trkpt lat="37.342203" lon="126.6912"><time>2026-10-03T09:09:02Z</time></trkpt>
+      <trkpt lat="37.342704" lon="126.691841"><time>2026-10-03T09:10:20Z</time></trkpt>
+      <trkpt lat="37.343295" lon="126.692364"><time>2026-10-03T09:11:38Z</time></trkpt>
+      <trkpt lat="37.343935" lon="126.692827"><time>2026-10-03T09:12:55Z</time></trkpt>
+      <trkpt lat="37.344671" lon="126.693231"><time>2026-10-03T09:14:12Z</time></trkpt>
+      <trkpt lat="37.345543" lon="126.693484"><time>2026-10-03T09:15:30Z</time></trkpt>
+      <trkpt lat="37.346487" lon="126.693463"><time>2026-10-03T09:16:48Z</time></trkpt>
+      <trkpt lat="37.347348" lon="126.693121"><time>2026-10-03T09:18:05Z</time></trkpt>
+      <trkpt lat="37.347988" lon="126.692534"><time>2026-10-03T09:19:22Z</time></trkpt>
+      <trkpt lat="37.348382" lon="126.691841"><time>2026-10-03T09:20:40Z</time></trkpt>
+      <trkpt lat="37.348613" lon="126.691138"><time>2026-10-03T09:21:58Z</time></trkpt>
+      <trkpt lat="37.348759" lon="126.69043"><time>2026-10-03T09:23:15Z</time></trkpt>
+      <trkpt lat="37.348798" lon="126.689679"><time>2026-10-03T09:24:32Z</time></trkpt>
+      <trkpt lat="37.348616" lon="126.688903"><time>2026-10-03T09:25:50Z</time></trkpt>
+      <trkpt lat="37.348123" lon="126.68821"><time>2026-10-03T09:27:08Z</time></trkpt>
+      <trkpt lat="37.347348" lon="126.687739"><time>2026-10-03T09:28:25Z</time></trkpt>
+      <trkpt lat="37.346438" lon="126.687555"><time>2026-10-03T09:29:42Z</time></trkpt>
+      <trkpt lat="37.345543" lon="126.687608"><time>2026-10-03T09:31:00Z</time></trkpt>
+    </trkseg>
+  </trk>
+</gpx>
