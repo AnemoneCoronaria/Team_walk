@@ -26,19 +26,22 @@
 
 ## 백엔드 실행 (스프링부트)
 
-> 스프링부트 프로젝트가 올라오기 전이라, 자주 나는 오류를 미리 정리해 둔 것입니다. 실제로 겪으면 여기에 추가해 주세요.
+> 실행은 Gradle `bootRun` 기준입니다 ([backend/README.md](../backend/README.md#실행하기)). 새로 겪은 오류는 여기에 추가해 주세요.
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
 | **`Port 8080 was already in use`** | 다른 프로그램이 8080을 씀. 예전 Tomcat이 켜져 있거나, **Oracle DB(XE 11g 등)** 가 8080을 쓰는 경우가 많음 (수업에서 Oracle을 깔았다면 의심) | 누가 쓰는지 확인: `netstat -ano \| findstr :8080` → 마지막 숫자(PID)로 `tasklist /fi "PID eq 숫자"`. Oracle이면 SQL*Plus에서 `EXEC DBMS_XDB.SETHTTPPORT(9090);` 로 Oracle 쪽 포트를 옮기기 (백엔드를 8081로 바꾸면 `vite.config.js`도 같이 바꿔야 해서 비추천) |
 | **`Failed to configure a DataSource: 'url' attribute is not specified`** | `application-local.properties`가 없거나 이름 · 위치가 다름 | [DB 안내 6)](../db/README.md#6-백엔드-설정-파일-만들기). 윈도우 탐색기 **보기 → 파일 확장명**을 켜고 이름 끝에 `.txt`가 붙지 않았는지 확인 |
-| **`Access denied for user 'sanchaek'@'localhost'`** | 설정 파일의 비밀번호가 DB 계정 비밀번호와 다름 | [DB 안내 2)](../db/README.md#2-db와-팀-계정-만들기-root로-한-번만)에서 정한 비밀번호로 고치기 |
 | **`Communications link failure`** | MySQL이 꺼져 있음 | 윈도우 검색 → **서비스** → `MySQL84` → 시작. 맥은 `brew services start mysql@8.4` |
 | 모든 API가 **401** 이거나 **로그인 화면 HTML**이 옴 | `spring-boot-starter-security`가 들어감 | 빼고 비밀번호용 `spring-security-crypto`만 쓰기 ([세팅 가이드 3번](setup.md#3-백엔드-스프링부트)) |
 | 인터넷 예제를 붙였더니 **`javax.servlet … cannot be resolved`** | 스프링부트 2 시절 예제 | `javax.`를 `jakarta.`로 바꾸기. 스프링부트 3 · 4 예제를 찾기 |
 | 인터넷 예제의 **`com.fasterxml.jackson.databind … cannot be resolved`** (`ObjectMapper` 등) | 스프링부트 4는 Jackson 3을 써서 패키지 이름이 바뀜 | `tools.jackson.databind.…` 로 바꾸기 (어노테이션 `com.fasterxml.jackson.annotation`은 그대로) |
 | `build.gradle`에 **`spring-boot-starter-web`** 을 넣었더니 경고 | 스프링부트 4에서 이름이 바뀜 | `spring-boot-starter-webmvc` 로 (Initializr로 만들면 알아서 들어감) |
-| 고친 코드가 반영이 안 됨 | 서버가 예전 코드로 계속 돌고 있음 | Spring Boot Dashboard에서 ■ 정지 → ▶ 다시 실행 |
+| 고친 코드가 반영이 안 됨 | 서버가 예전 코드로 계속 돌고 있음 | Ctrl+C로 끄고 다시 `bootRun` |
+| `bootRun`이 **`80% EXECUTING`** 에서 멈춤 | 멈춘 게 아니라 서버가 켜져 있는 상태 (실제로 겪음) | 로그에 `Started SanchaekApplication`이 있으면 정상. 그대로 두고 브라우저에서 확인, 끌 때 Ctrl+C |
+| VS Code ▶ Run에서 **`ClassNotFoundException: kr.sanchaek.SanchaekApplication`** | VS Code 자바 확장이 컴파일을 못 함 (Gradle 9.8과 잘 안 맞음, 맥에서 실제로 겪음) | Gradle `bootRun`으로 실행. ▶ 를 쓰려면 [backend/README.md](../backend/README.md#vs-code의--run-버튼) |
+| `/api/hello`가 500, 화면에 **`Access denied for user 'sanchaek'@'localhost'`** (실제로 겪음) | MySQL에 그 계정이 없거나 설정 파일의 비밀번호가 다름 | [DB 안내 2)](../db/README.md#2-db와-팀-계정-만들기-root로-한-번만)의 계정 만들기, 또는 `ALTER USER 'sanchaek'@'localhost' IDENTIFIED BY '파일의_비밀번호';`. 설정 파일 비밀번호는 따옴표 · 공백 없이 |
+| `backend`에 **`.project`, `.classpath`, `.settings`, `bin`** 이 생김 | VS Code 자바 확장이 만든 파일 (속에서 이클립스 엔진을 씀) | 그대로 두기. `.gitignore`에 있어서 안 올라감 |
 
 ## 프론트
 
