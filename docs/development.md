@@ -8,7 +8,7 @@ API · 화면 만드는 법, 백엔드 공통 코드, 브랜치 · PR 규칙, **
 ## 목차
 
 - [1. 개발 방법](#1-개발-방법)
-  - [백엔드 공통 코드](#백엔드-공통-코드-스프링부트로-다시-만드는-중)
+  - [백엔드 공통 코드](#백엔드-공통-코드)
 - [2. 브랜치·PR 규칙](#2-브랜치pr-규칙)
 - [3. 깃허브 사용법](#3-깃허브-사용법)
   - [3-1. 처음 한 번](#3-1-처음-한-번)
@@ -45,22 +45,27 @@ API · 화면 만드는 법, 백엔드 공통 코드, 브랜치 · PR 규칙, **
 - 다 만들면 브라우저나 `curl`로 호출해서 **API 명세의 응답 예시와 모양이 같은지** 확인합니다.
 - 관리자 화면(AD1~AD4)도 **React**입니다 (`src/pages/admin/`). API는 `/api/admin/…`이고, 그 API를 만든 백엔드 담당이 화면도 같이 만듭니다.
 
-### 백엔드 공통 코드 (스프링부트로 다시 만드는 중)
+### 백엔드 공통 코드
 
-> 스프링부트 프로젝트는 만들었고(`backend/`), 공통 코드는 이제 아래처럼 만듭니다 (민서).<br>
-> 이름은 바뀔 수 있고, 만들면 이 표를 실제 이름으로 고칩니다. 지금 있는 건 ★ `HelloController`(`/api/hello`)뿐입니다.
+> `backend/src/main/java/kr/sanchaek/common/` 에 있습니다 (민서). **각자 따로 만들지 말고 가져다 쓰세요.**<br>
+> 파일마다 맨 위 주석에 사용 예시가 있습니다.
 
-| 하고 싶은 것 | 스프링부트에서 | 상태 |
+| 하고 싶은 것 | 이렇게 씁니다 | 파일 |
 | --- | --- | --- |
-| DB 조회 · 저장 | `JdbcTemplate`을 생성자로 받아서 사용 | 스프링부트 기본 기능 |
-| 성공 응답 | `ApiResponse.ok(data)` → `{ "success": true, "data": … }` | 만드는 중 |
-| 실패 응답 | `throw new ApiException(404, "NOT_FOUND", "코스를 찾을 수 없습니다.")` → 공통 처리기가 `{ "success": false, "error": … }`로 바꿈 | 만드는 중 |
-| 오류를 JSON으로 | `@RestControllerAdvice` 하나가 `/api` 오류(없는 주소, 예외, 업로드 용량 초과)를 모두 JSON으로 | 만드는 중 |
-| 로그인 확인 | 세션의 `userId`를 확인하는 인터셉터 (로그인 필요 API는 `401`, 관리자 API는 `403`) | 만드는 중 |
+| DB 조회 · 저장 | `JdbcTemplate`을 생성자로 받아서 사용 | (스프링부트 기본) |
+| 성공 응답 | `return ApiResponse.ok(data);` → `{ "success": true, "data": … }`<br>돌려줄 값이 없으면 `ApiResponse.ok()` → `{ "success": true }` | `ApiResponse` |
+| 새로 만들기 성공 (201) | 메서드에 `@ResponseStatus(HttpStatus.CREATED)` | |
+| 목록 응답 | `new PageResult<>(items, page, size, total)` → `{ "items", "page", "size", "total" }`<br>SQL `LIMIT ? OFFSET ?` 의 OFFSET은 `PageResult.offset(page, size)` | `PageResult` |
+| 실패 응답 | `throw ApiException.notFound("코스를 찾을 수 없어요.");`<br>`badRequest`(400) · `forbidden`(403) · `notFound`(404) · `conflict("FULL", …)`(409)<br>그 밖의 코드는 `throw new ApiException(401, "LOGIN_FAILED", "…");` | `ApiException` |
+| 오류를 JSON으로 | 자동. 없는 주소 404, `@Valid` 검사 실패 · JSON 형식 오류 400, 업로드 용량 초과 400 `TOO_LARGE`, 그 밖의 예외 500 (원인은 서버 로그에) | `ApiExceptionHandler` |
+| 로그인한 사람 번호 | 파라미터에 `@LoginUser Long userId` → 로그인 안 했으면 **자동으로 401**<br>로그인 선택 API는 `@LoginUser(required = false) Long userId` (안 했으면 `null`) | `LoginUser` |
+| 관리자 API | 주소를 `/api/admin/…`로 만들면 자동 검사 (로그인 안 함 401, 관리자 아님 403) | `AdminInterceptor` |
+| 로그인 · 로그아웃 (정란) | `SessionUtil.login(request, userId, role)` · `SessionUtil.logout(request)`<br>컨트롤러 파라미터에 `HttpServletRequest request` 를 받아서 사용 | `SessionUtil` |
 | 비밀번호 (정란) | `BCryptPasswordEncoder` — `build.gradle`에 `spring-security-crypto` 한 줄 추가 후 사용 ([backend/README.md](../backend/README.md#라이브러리-buildgradle)). **SQL로 비교하지 않기** | 로그인 만들 때 |
-| 사진 · GPX 파일 | 업로드 폴더에 저장, `/files/…` 주소로 내려 주기 | 만드는 중 |
+| 사진 · GPX 저장 | `fileStore.save(file, "reviews/88-1.jpg")` → DB에는 이 경로만 저장<br>응답 주소는 `FileStore.url(path)` → `"/files/reviews/88-1.jpg"` (이 주소로 파일이 열림) | `FileStore` |
+| GPX 다운로드 | `return fileStore.download(gpxPath, "코스이름.gpx");` (파일 없으면 404) | `FileStore` |
 
-**예시: 동행 상세 `GET /api/matches/3`** (모양만 참고. 공통 코드가 올라오면 그대로 쓸 수 있게 맞춥니다)
+**예시: 동행 상세 `GET /api/matches/3`** (모양 참고용. 공통 코드를 그대로 쓰는 예시)
 
 ```java
 @RestController
@@ -75,9 +80,16 @@ public class MatchController {
     public ApiResponse<Match> detail(@PathVariable long id) {
         Match match = repo.findById(id);
         if (match == null) {
-            throw new ApiException(404, "NOT_FOUND", "모집 글을 찾을 수 없어요.");
+            throw ApiException.notFound("모집 글을 찾을 수 없어요.");
         }
         return ApiResponse.ok(match);
+    }
+
+    @PostMapping("/api/matches/{id}/join")              // 로그인 "필요" API
+    public ApiResponse<Void> join(@PathVariable long id, @LoginUser Long userId) {
+        // 여기까지 왔으면 userId 는 항상 있음 (로그인 안 했으면 이미 401)
+        repo.join(id, userId);
+        return ApiResponse.ok();
     }
 }
 ```

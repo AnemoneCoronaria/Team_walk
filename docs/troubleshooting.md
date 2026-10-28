@@ -51,7 +51,7 @@
 | `npm run dev` 에서 버전 오류 | Node가 22.12보다 낮음 | `node -v` 확인 → nodejs.org에서 LTS 다시 설치 |
 | PowerShell에서 **`npm.ps1 … 이 시스템에서 스크립트를 실행할 수 없으므로`** | 윈도우 PowerShell 보안 정책 | **Git Bash**나 명령 프롬프트(cmd)에서 실행. 또는 PowerShell에서 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | 처음 실행할 때 **윈도우 방화벽 경고** | Node · Java가 네트워크를 쓰려고 함 | "개인 네트워크" 허용 |
-| 콘솔에 **`Unexpected token '<'`** / `is not valid JSON` | 백엔드가 JSON 대신 HTML 오류 페이지를 보냄. 주소 오타(`/api` 빠짐 등)이거나 공통 오류 처리가 아직 없는 버전 | 개발자 도구 **Network** 탭에서 그 요청의 응답을 확인. 공통 코드가 들어간 뒤에는 `/api` 오류가 항상 `{ success: false, error }` JSON |
+| 콘솔에 **`Unexpected token '<'`** / `is not valid JSON` | JSON 대신 HTML이 옴. 대부분 주소 오타(`/api` 빠짐 등)라서 백엔드 대신 Vite가 HTML을 보낸 것 | 개발자 도구 **Network** 탭에서 그 요청의 응답을 확인. 백엔드의 `/api` 오류는 항상 `{ success: false, error }` JSON |
 | 후기 사진 자리에 **엑스박스** (5173에서만, 8080에서는 보임) | `vite.config.js`에 `/files` 프록시가 없는 옛 버전 | `git pull` 후 **`npm run dev`를 껐다 켜기** (설정 파일은 다시 켜야 반영) |
 
 ## Git
