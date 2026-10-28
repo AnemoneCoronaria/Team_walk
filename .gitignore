@@ -1,32 +1,36 @@
 # 빌드 결과물
+build/
+.gradle/
 target/
+out/
 dist/
 node_modules/
 
 # IDE 설정 (각자 환경이 달라서 올리지 않음)
+# VS Code 자바 확장이 만드는 .project · .classpath · .settings · bin 도 여기서 막습니다
 .idea/
 .vscode/
 *.iml
 .settings/
 .project
 .classpath
-.metadata/
+.factorypath
 bin/
 
-# 이클립스 워크스페이스를 실수로 저장소 안에 만들었을 때 생기는 폴더
-Servers/
-RemoteSystemsTempFiles/
+# 스프링 Initializr 가 만드는 안내 파일
+HELP.md
 
 # OS
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# 후기 사진 업로드 폴더 (각자 PC에만. 실수로 저장소 안에 만들었을 때 대비)
+# 업로드 폴더 (각자 PC에만. 실수로 저장소 안에 만들었을 때 대비)
 uploads/
 
 # 비밀 정보 (절대 커밋 금지)
 .env
 .env.local
-db.properties
+application-local.properties
 *.local.properties
+db.properties

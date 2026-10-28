@@ -2,9 +2,9 @@
 
 7팀 **산책크루**의 시흥시 정왕동 산책 동행 서비스 저장소입니다.
 
-> [!WARNING]
-> **백엔드를 JSP · Servlet에서 스프링부트로 바꾸는 중입니다.**<br>
-> 스프링부트 프로젝트는 민서가 만들어 올릴 예정이고, 지금 `backend` 폴더에 남아 있는 Servlet 코드는 실행하지 않아도 됩니다.
+> [!IMPORTANT]
+> **백엔드는 VS Code + 스프링부트 4.1로 만듭니다.** JSP · Servlet 코드는 지웠습니다.<br>
+> 스프링부트 프로젝트는 민서가 [backend/README.md](backend/README.md) 순서대로 만들어 올릴 예정입니다.
 >
 > **지금 해도 되는 것**
 > - Git · Node.js · VS Code · JDK 21 설치와 저장소 받기 → [세팅 가이드 1 · 2번](docs/setup.md#1-설치-처음-한-번)
@@ -47,7 +47,7 @@
 | 항목 | 사용 |
 | --- | --- |
 | 프론트 | React 19 + Vite 8, ESLint |
-| 백엔드 | 스프링부트 3.5, Gradle |
+| 백엔드 | 스프링부트 4.1 (Spring Initializr), Gradle |
 | Java | JDK 21 |
 | Node.js | 22.12 이상 (LTS) |
 | DB | MySQL 8.4 (8.0도 가능), 각자 PC에 설치 |
@@ -58,8 +58,8 @@
 | 배포 | 하지 않음 (로컬 시연) |
 
 > [!TIP]
-> 인터넷 예제가 `import javax.…` 로 시작하면 옛날 버전(스프링부트 2) 예제입니다.<br>
-> `jakarta.…` 로 바꾸거나, 스프링부트 3 이상 예제를 찾아보세요.
+> 인터넷 예제는 대부분 스프링부트 3 기준이라 거의 그대로 됩니다.<br>
+> 다른 점 몇 가지는 [세팅 가이드 3번](docs/setup.md#3-백엔드-스프링부트)의 TIP에 정리했습니다. (`javax.` → `jakarta.` 등)
 
 <br>
 
@@ -82,7 +82,8 @@
 
 | 문서 | 언제 보나 | 내용 |
 | --- | --- | --- |
-| [세팅 가이드](docs/setup.md) | 처음 한 번 | 설치, VS Code 확장, 저장소 받기, 프론트 세팅 |
+| [세팅 가이드](docs/setup.md) | 처음 한 번 | 설치, VS Code 확장, 저장소 받기, 백엔드 · 프론트 실행 |
+| [백엔드 안내](backend/README.md) | 스프링부트 프로젝트를 만들 때 (민서) | Initializr 설정, 설정 파일, 폴더 구조 |
 | [DB 안내](db/README.md) | DB 세팅할 때<br>테이블이 바뀔 때 | ERD, 설계 약속, 테스트 계정, 쿼리 예시 |
 | [개발 규칙](docs/development.md) | 작업할 때마다 | 화면 · API 만드는 법, **깃허브 사용법**, 커밋 메시지 |
 | [막혔을 때](docs/troubleshooting.md) | 오류가 났을 때 | 지금까지 겪은 문제와 해결법 |
@@ -97,13 +98,13 @@
 
 ## ✅ 빠른 시작
 
-스프링부트 전환이 끝나면 아래 세 가지가 모두 보여야 합니다.<br>
+스프링부트 프로젝트가 올라오면 아래 세 가지가 모두 보여야 합니다.<br>
 다 되면 화면을 캡처해서 팀에 공유해 주세요.
 
 **1. 백엔드** — `http://localhost:8080/api/hello`
 
 ```json
-{"success":true,"data":{"message":"안녕하세요, 산책시루 서버입니다", …}}
+{"success":true,"data":{"message":"안녕하세요, 산책시루 서버입니다", …, "landmarks":8}}
 ```
 
 **2. 프론트** — `http://localhost:5173/`
@@ -175,15 +176,15 @@ Team_walk/
 │  ├─ check.sql             세팅 확인 (7줄 모두 OK면 성공)
 │  └─ sample-uploads/       테스트용 후기 사진 · GPX 파일
 │
-├─ backend/                 백엔드 (VS Code로 열기) — 스프링부트로 교체 예정
-│  ├─ build.gradle          라이브러리 목록 (예정)
+├─ backend/                 백엔드 (VS Code로 열기) — 만드는 법은 backend/README.md
+│  ├─ build.gradle          라이브러리 목록 (Initializr로 만들 예정)
 │  └─ src/main/
 │     ├─ java/kr/sanchaek/
-│     │  ├─ common/         공통 코드 (민서) · ★ /api/hello 테스트 API
+│     │  ├─ common/         공통 코드 (민서) · ★ HelloController (/api/hello)
 │     │  ├─ match/          동행 · 관리자 AD3 (민서)
 │     │  ├─ user/           계정 · 신고 · 관리자 AD1 · AD2 · AD4 (정란)
 │     │  └─ course/         코스 · GPX · 후기 · 랜드마크 (동언)
-│     └─ resources/         설정 파일 (DB 비밀번호는 각자 PC에만)
+│     └─ resources/         application.properties (공통) · application-local.properties (각자, 비밀번호)
 │
 └─ frontend/                프론트 (VS Code · WebStorm으로 열기)
    ├─ package.json          라이브러리 목록

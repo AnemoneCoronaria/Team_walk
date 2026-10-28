@@ -381,13 +381,17 @@ C:\dev\jspTeam\
 ### 6) 백엔드 설정 파일 만들기
 
 > [!NOTE]
-> **스프링부트 프로젝트가 올라온 뒤에 하는 단계입니다.** 그 전에는 건너뛰세요.<br>
-> 파일 이름과 위치는 프로젝트가 올라올 때 이 칸에 정확히 적습니다 (민서).
+> **스프링부트 프로젝트가 develop에 올라온 뒤에 하는 단계입니다.** 그 전에는 건너뛰세요. ([backend/README.md](../backend/README.md))
 
-백엔드가 DB에 접속할 때 이 설정 파일의 주소 · 계정 · 비밀번호를 씁니다.<br>
-비밀번호가 들어가므로 **깃허브에 올리지 않고**, 저장소의 예시 파일(`….example`)을 복사해서 각자 만듭니다.
+백엔드가 DB에 접속할 때 이 파일의 주소 · 계정 · 비밀번호를 씁니다.<br>
+비밀번호가 들어가므로 **깃허브에 올리지 않고** 예시 파일을 복사해서 각자 만듭니다.
 
-들어갈 값 (스프링부트 설정 이름 기준):
+1. `C:\dev\jspTeam\Team_walk\backend\src\main\resources\` 폴더를 엽니다.
+2. `application-local.properties.example`을 **같은 폴더에 복사**하고 이름을 **`application-local.properties`** 로 바꿉니다.<br>
+   Git Bash로 하려면: `cp backend/src/main/resources/application-local.properties.example backend/src/main/resources/application-local.properties`
+3. 메모장(또는 VS Code)으로 열어 `spring.datasource.password=` 뒤를 **2)에서 정한 비밀번호**로 바꾸고 저장합니다.
+4. 업로드 폴더를 5)와 다른 곳에 만들었다면 `app.upload-dir`도 바꿉니다. 경로는 **슬래시(`/`)** 로 씁니다.
+5. 백엔드를 다시 실행합니다.
 
 ```properties
 spring.datasource.url=jdbc:mysql://localhost:3306/sanchaek?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
@@ -396,11 +400,10 @@ spring.datasource.password=내가_정한_비밀번호
 app.upload-dir=C:/dev/jspTeam/uploads
 ```
 
-- `spring.datasource.password`에는 **2)에서 정한 비밀번호**를 넣습니다.
-- 업로드 폴더를 5)와 다른 곳에 만들었다면 `app.upload-dir`도 바꿉니다. 경로는 **슬래시(`/`)** 로 씁니다.
+공통 설정 파일 `application.properties`가 이 파일을 읽어 옵니다 (`spring.config.import`).
 
-> ⚠️ 비밀번호가 든 설정 파일은 `git status`에 보이면 안 됩니다. 보이면 add 하지 말고 팀장에게 알려 주세요.<br>
-> 예시 파일(`….example`)에는 비밀번호를 넣지 않습니다.
+> ⚠️ **`application-local.properties`는 깃허브에 올라가지 않습니다** (`.gitignore`). `git status`에 보이면 안 됩니다.<br>
+> 예시 파일(`….example`)에는 진짜 비밀번호를 넣지 마세요.
 
 ### 화면으로 보고 싶다면 (선택)
 

@@ -6,15 +6,15 @@
 끝나면 [README의 빠른 시작](../README.md#-빠른-시작) 세 가지가 모두 보여야 합니다.
 
 > [!NOTE]
-> **백엔드는 스프링부트로 바꾸는 중입니다.**<br>
-> 스프링부트 프로젝트는 민서가 만들어 올릴 예정이고, 올라오면 [3번](#3-백엔드-스프링부트-준비-중)을 실제 화면 기준으로 채웁니다.<br>
+> **백엔드는 VS Code + 스프링부트 4.1입니다.** (이클립스 · Tomcat · JSP는 쓰지 않음)<br>
+> 스프링부트 프로젝트는 민서가 [backend/README.md](../backend/README.md) 순서대로 만들어 올릴 예정입니다.<br>
 > 그 전까지는 **1 · 2 · 4번**과 [DB 세팅 1) ~ 5)](../db/README.md#처음-세팅-윈도우-한-번만)를 해 두면 됩니다.
 
 ## 목차
 
 1. [설치 (처음 한 번)](#1-설치-처음-한-번)
 2. [저장소 받기와 폴더 배치](#2-저장소-받기와-폴더-배치)
-3. [백엔드: 스프링부트 (준비 중)](#3-백엔드-스프링부트-준비-중)
+3. [백엔드: 스프링부트](#3-백엔드-스프링부트)
 4. [프론트 세팅 (처음 한 번)](#4-프론트-세팅-처음-한-번)
 5. [환경 확인용 테스트 코드](#5-환경-확인용-테스트-코드)
 6. [부록: 맥 사용자](#부록-맥-사용자)
@@ -75,32 +75,39 @@ VS Code에서는 **File → Open Folder…** 로 엽니다.<br>
 
 ---
 
-## 3. 백엔드: 스프링부트 (준비 중)
+## 3. 백엔드: 스프링부트
 
-> 이 절은 스프링부트 프로젝트가 올라오면 실제 화면 기준으로 다시 씁니다 (민서).<br>
-> 지금 `backend` 폴더에 있는 Servlet 코드(`pom.xml`, `HelloServlet.java` 등)는 예전 방식이라 실행하지 않아도 됩니다.
-
-**정해진 것**
+> [!NOTE]
+> **스프링부트 프로젝트가 아직 develop에 없다면 이 절은 건너뛰세요.**<br>
+> 민서가 [backend/README.md](../backend/README.md) 순서대로 만들어 올립니다.
 
 | 항목 | 값 |
 | --- | --- |
-| 스프링부트 | **3.5** (start.spring.io에 4.x만 보이면 만든 뒤 `build.gradle`의 버전을 3.5.x로 바꿈) |
-| 빌드 | Gradle |
+| 스프링부트 | **4.1** (Spring Initializr 기본값. 3.5는 2026년 6월에 무료 지원이 끝나서 Initializr에서 고를 수 없음) |
+| 빌드 | Gradle (프로젝트에 들어 있는 `gradlew`를 쓰므로 따로 설치하지 않음) |
 | Java | 21 |
-| 라이브러리 | Spring Web, JDBC API(JdbcTemplate), MySQL Driver, 비밀번호용 `spring-security-crypto` |
+| 라이브러리 | Spring Web, JDBC API(JdbcTemplate), MySQL Driver, Validation, 비밀번호용 `spring-security-crypto` |
 | 포트 | **8080** (프론트가 `/api` · `/files` 요청을 여기로 보냄) |
-| 설정 파일 | DB 비밀번호 · 업로드 폴더 위치는 각자 PC의 파일에만 (깃허브에 안 올라감) → [DB 안내 6)](../db/README.md#6-백엔드-설정-파일-만들기) |
+| 설정 파일 | `application.properties` 공통 (깃허브 O)<br>`application-local.properties` 각자 · 비밀번호 (깃허브 X) |
 
 > ⚠️ **Spring Security(`spring-boot-starter-security`)는 넣지 않습니다.**<br>
 > 넣으면 모든 API에 기본 로그인 화면이 걸려서 React 요청이 전부 막힙니다. 로그인은 세션으로 직접 처리합니다 ([API 명세](../README.md#-문서-안내) "공통 규칙").
 
-**실행 순서 (예정)**
+**처음 실행 (팀원 모두 같은 순서)**
 
-1. VS Code에서 `backend` 폴더 열기 → 오른쪽 아래 Java 준비 표시가 끝날 때까지 기다리기<br>
+1. 최신 develop 받기: `git checkout develop` → `git pull`
+2. 각자 설정 파일 만들기 → [DB 안내 6)](../db/README.md#6-백엔드-설정-파일-만들기)<br>
+   `backend/src/main/resources/application-local.properties.example`을 복사 → 이름을 `application-local.properties`로 → 비밀번호 고치기
+3. VS Code → **File → Open Folder…** → `Team_walk\backend` → 오른쪽 아래 Java 준비 표시가 끝날 때까지 기다리기<br>
    (처음엔 라이브러리를 내려받느라 몇 분 걸립니다)
-2. 설정 파일 만들기 → [DB 안내 6)](../db/README.md#6-백엔드-설정-파일-만들기)
-3. 왼쪽 **Spring Boot Dashboard**에서 ▶ 실행 (또는 Git Bash에서 `./gradlew bootRun`)
-4. 브라우저에서 `http://localhost:8080/api/hello` → JSON 응답이 보이면 성공
+4. 왼쪽 **Spring Boot Dashboard**에서 `sanchaek` ▶ 실행 (또는 Git Bash에서 `./gradlew bootRun`)
+5. 브라우저에서 `http://localhost:8080/api/hello` → `"landmarks":8` 이 보이면 서버와 DB 모두 성공
+
+> [!TIP]
+> 인터넷 예제는 대부분 **스프링부트 3** 기준입니다. 거의 그대로 되지만 이것만 다릅니다.
+> - `spring-boot-starter-web` → 4에서는 **`spring-boot-starter-webmvc`** (Initializr가 알아서 넣어 줌)
+> - JSON 라이브러리(Jackson) 패키지: `com.fasterxml.jackson.databind` → **`tools.jackson.databind`** (`@JsonIgnore` 같은 어노테이션은 그대로)
+> - `javax.`로 시작하는 예제는 스프링부트 2 시절 것 → `jakarta.`로 바꾸기
 
 ---
 
@@ -114,7 +121,7 @@ npm run dev        # 개발 서버 시작 → http://localhost:5173
 
 - 끌 때는 터미널에서 **Ctrl+C**
 - 화면에 ✅ 연결 성공이 뜨려면 **백엔드(8080)가 켜져 있어야** 합니다.<br>
-  지금은 스프링부트 전환 중이라 ❌ 연결 실패가 나오는 게 정상입니다.
+  스프링부트 프로젝트가 올라오기 전에는 ❌ 연결 실패가 나오는 게 정상입니다.
 
 | 명령 | 하는 일 |
 | --- | --- |
@@ -144,10 +151,9 @@ npm run dev        # 개발 서버 시작 → http://localhost:5173
 
 | 파일 | 주소 | 확인하는 것 |
 | --- | --- | --- |
-| 스프링부트의 hello API (예정, `kr.sanchaek.common`) | `localhost:8080/api/hello` | 서버 실행, 공통 응답 형식 `{ success, data }` |
+| `backend/src/main/java/kr/sanchaek/common/HelloController.java` | `localhost:8080/api/hello` | 서버 실행, DB 접속(`landmarks: 8`), 공통 응답 형식 `{ success, data }` |
 | `frontend/src/App.jsx` | `localhost:5173/` | React 동작 + 프록시를 거쳐 백엔드 `/api/hello`에 연결되는지 |
 
-- 지금 `backend`의 `index.jsp`, `HelloServlet.java`는 예전 Servlet 버전 테스트 코드입니다. 스프링부트로 바꿀 때 같이 정리합니다.
 - 나중에 실제 메인 화면을 만들면서 `App.jsx`가 바뀌면, 이 테스트 화면은 `src/pages/HealthCheck.jsx` 같은 별도 화면으로 옮겨서 유지합니다.
 
 ---

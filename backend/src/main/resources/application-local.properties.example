@@ -1,0 +1,15 @@
+# =====================================================================
+# 각자 PC 전용 설정 (예시 파일)
+# 이 파일을 같은 폴더에 복사해서 이름을 application-local.properties 로 바꾸고,
+# 비밀번호와 업로드 폴더 위치만 내 PC에 맞게 고칩니다.
+# application-local.properties 는 깃허브에 올라가지 않습니다 (.gitignore).
+# 이 예시 파일에는 진짜 비밀번호를 넣지 마세요.
+# =====================================================================
+
+# DB 접속 (db/README.md 2) 에서 만든 계정)
+spring.datasource.url=jdbc:mysql://localhost:3306/sanchaek?characterEncoding=UTF-8&serverTimezone=Asia/Seoul
+spring.datasource.username=sanchaek
+spring.datasource.password=내가_정한_비밀번호
+
+# 업로드 폴더 (후기 사진 · GPX). 경로는 슬래시(/)로 씁니다. 맥 예: /Users/이름/dev/jspTeam/uploads
+app.upload-dir=C:/dev/jspTeam/uploads
