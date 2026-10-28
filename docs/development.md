@@ -47,8 +47,8 @@ API · 화면 만드는 법, 백엔드 공통 코드, 브랜치 · PR 규칙, **
 
 ### 백엔드 공통 코드 (스프링부트로 다시 만드는 중)
 
-> 예전 Servlet 공통 코드는 지웠고, 스프링부트 프로젝트를 만든 뒤 아래처럼 다시 만듭니다 (민서).<br>
-> 이름은 바뀔 수 있고, 올라오면 이 표를 실제 이름으로 고칩니다.
+> 스프링부트 프로젝트는 만들었고(`backend/`), 공통 코드는 이제 아래처럼 만듭니다 (민서).<br>
+> 이름은 바뀔 수 있고, 만들면 이 표를 실제 이름으로 고칩니다. 지금 있는 건 ★ `HelloController`(`/api/hello`)뿐입니다.
 
 | 하고 싶은 것 | 스프링부트에서 | 상태 |
 | --- | --- | --- |
@@ -57,7 +57,7 @@ API · 화면 만드는 법, 백엔드 공통 코드, 브랜치 · PR 규칙, **
 | 실패 응답 | `throw new ApiException(404, "NOT_FOUND", "코스를 찾을 수 없습니다.")` → 공통 처리기가 `{ "success": false, "error": … }`로 바꿈 | 만드는 중 |
 | 오류를 JSON으로 | `@RestControllerAdvice` 하나가 `/api` 오류(없는 주소, 예외, 업로드 용량 초과)를 모두 JSON으로 | 만드는 중 |
 | 로그인 확인 | 세션의 `userId`를 확인하는 인터셉터 (로그인 필요 API는 `401`, 관리자 API는 `403`) | 만드는 중 |
-| 비밀번호 (정란) | `BCryptPasswordEncoder` (`spring-security-crypto`) — **SQL로 비교하지 않기** | 만드는 중 |
+| 비밀번호 (정란) | `BCryptPasswordEncoder` — `build.gradle`에 `spring-security-crypto` 한 줄 추가 후 사용 ([backend/README.md](../backend/README.md#라이브러리-buildgradle)). **SQL로 비교하지 않기** | 로그인 만들 때 |
 | 사진 · GPX 파일 | 업로드 폴더에 저장, `/files/…` 주소로 내려 주기 | 만드는 중 |
 
 **예시: 동행 상세 `GET /api/matches/3`** (모양만 참고. 공통 코드가 올라오면 그대로 쓸 수 있게 맞춥니다)

@@ -2,159 +2,152 @@
 
 [← README](../README.md) · [세팅 가이드](../docs/setup.md) · [개발 규칙](../docs/development.md) · [DB 안내](../db/README.md)
 
-> [!NOTE]
-> **예전 JSP · Servlet 코드는 지웠습니다.** 이 폴더에 스프링부트 프로젝트가 들어옵니다.<br>
-> 처음 한 번은 **민서가 아래 1 ~ 5번**으로 만들어 올립니다.<br>
-> 올라온 뒤 다른 팀원은 [세팅 가이드 3번](../docs/setup.md#3-백엔드-스프링부트)만 하면 됩니다.
-
-지금 이 폴더에 미리 들어 있는 파일은 두 개입니다.
-
-| 파일 | 내용 |
-| --- | --- |
-| `src/main/java/kr/sanchaek/common/HelloController.java` | ★ 환경 확인용 테스트 API `GET /api/hello` (서버 + DB 접속 확인) |
-| `src/main/resources/application-local.properties.example` | 각자 PC 설정 파일의 예시 (DB 비밀번호 · 업로드 폴더) |
+**스프링부트 4.1 · Java 21 · Gradle** 프로젝트입니다. [Spring Initializr](https://start.spring.io)로 만들었습니다.<br>
+개발 도구는 **VS Code**, 실행은 **Gradle `bootRun`** 이 팀 기준입니다.
 
 ## 목차
 
-1. [Spring Initializr로 만들기](#1-spring-initializr로-만들기)
-2. [저장소에 넣기](#2-저장소에-넣기)
-3. [파일 두 개 손보기](#3-파일-두-개-손보기)
-4. [실행해서 확인](#4-실행해서-확인)
-5. [깃허브에 올리기](#5-깃허브에-올리기)
-6. [만든 뒤 폴더 구조](#만든-뒤-폴더-구조)
+1. [처음 한 번 준비](#처음-한-번-준비)
+2. [실행하기](#실행하기)
+3. [VS Code의 ▶ Run 버튼](#vs-code의--run-버튼)
+4. [폴더 구조](#폴더-구조)
+5. [라이브러리 (build.gradle)](#라이브러리-buildgradle)
+6. [프로젝트를 만든 설정 (참고)](#프로젝트를-만든-설정-참고)
 
 ---
 
-## 1. Spring Initializr로 만들기
+## 처음 한 번 준비
 
-[start.spring.io](https://start.spring.io)를 열고 아래처럼 고릅니다.
+1. JDK 21, VS Code 확장 3개 설치 → [세팅 가이드 1번](../docs/setup.md#1-설치-처음-한-번)
+2. MySQL에 DB 만들고 `schema.sql` → `seed.sql` → `check.sql` 실행 → [DB 안내 1) ~ 4)](../db/README.md#처음-세팅-윈도우-한-번만)
+3. 각자 설정 파일 만들기 → [DB 안내 6)](../db/README.md#6-백엔드-설정-파일-만들기)<br>
+   `src/main/resources/application-local.properties.example`을 복사 → 이름을 `application-local.properties`로 → 비밀번호 넣기
 
-| 항목 | 고를 것 |
+---
+
+## 실행하기
+
+**방법 1. VS Code의 Gradle 버튼 (추천)**
+
+1. VS Code에서 **File → Open Folder…** → `Team_walk/backend`
+2. 왼쪽의 **코끼리 아이콘(Gradle)** → `sanchaek` → **Tasks** → **application** → **bootRun** 더블클릭
+
+**방법 2. 터미널** (`backend` 폴더에서)
+
+| 터미널 | 명령 |
 | --- | --- |
-| Project | **Gradle - Groovy** |
-| Language | **Java** |
-| Spring Boot | **4.1.x** (`SNAPSHOT` · `M` · `RC`가 붙지 않은 것 중 가장 위) |
-| Group | `kr.sanchaek` |
-| Artifact | `sanchaek` |
-| Name | `sanchaek` |
-| Package name | **`kr.sanchaek`** (기본값 `kr.sanchaek.sanchaek`에서 뒤쪽 `.sanchaek`을 지우기) |
-| Packaging | **Jar** |
-| Configuration | **Properties** |
-| Java | **21** |
+| 맥 · Git Bash | `./gradlew bootRun` |
+| 윈도우 cmd · PowerShell | `gradlew.bat bootRun` |
 
-오른쪽 **ADD DEPENDENCIES…** 에서 검색해서 넣습니다.
+**켜졌는지 확인**
 
-| 검색어 | 고를 것 | 쓰임 |
-| --- | --- | --- |
-| `web` | **Spring Web** | API 만들기 (`@RestController`) |
-| `jdbc` | **JDBC API** | `JdbcTemplate` (SQL을 직접 작성) |
-| `mysql` | **MySQL Driver** | MySQL 접속 |
-| `validation` | **Validation** | 입력값 검사 (`@NotBlank`, `@Size` 등) |
-| `devtools` | Spring Boot DevTools (선택) | 코드를 저장하면 서버가 알아서 다시 시작 |
-
-> [!WARNING]
-> **넣지 않는 것**
-> - **Spring Security** — 넣으면 모든 API에 기본 로그인 화면이 걸려서 React 요청이 전부 막힙니다. 로그인은 세션으로 직접 처리합니다.
-> - **Spring Data JPA** — 우리는 JdbcTemplate으로 SQL을 직접 씁니다.
-> - **Thymeleaf · JSP** — 화면은 전부 React입니다.
-
-**GENERATE** → `sanchaek.zip`이 내려받아집니다.
-
----
-
-## 2. 저장소에 넣기
-
-Git Bash에서 새 브랜치를 만듭니다.
-
-```bash
-cd /c/dev/jspTeam/Team_walk
-git checkout develop
-git pull
-git checkout -b feature/springboot-setup
-```
-
-`sanchaek.zip`을 풀면 `sanchaek` 폴더가 나옵니다.<br>
-그 **안의 내용물 전부**를 `Team_walk\backend\` 안으로 옮깁니다.
-
-- `backend\sanchaek\build.gradle`이 아니라 **`backend\build.gradle`** 이 되어야 합니다.
-- 숨김 파일 `.gitignore`, `.gitattributes`도 같이 옮깁니다 (탐색기 **보기 → 숨긴 항목** 켜기).
-- 이 폴더에 미리 있던 `HelloController.java`, `….example` 파일은 그대로 둡니다 (zip 안의 파일과 겹치지 않음).
-
----
-
-## 3. 파일 두 개 손보기
-
-**① `backend/build.gradle`** — `dependencies { … }` 안에 한 줄 추가
-
-```groovy
-implementation 'org.springframework.security:spring-security-crypto'
-```
-
-비밀번호를 BCrypt로 암호화하는 작은 라이브러리입니다. Spring Security 전체가 아니라서 로그인 화면이 생기지 않습니다. 버전은 스프링부트가 알아서 맞춥니다.
-
-**② `backend/src/main/resources/application.properties`** — 내용을 아래로 바꾸기 (이 파일은 깃허브에 올라감)
-
-```properties
-spring.application.name=sanchaek
-server.port=8080
-
-# 비밀번호가 들어가는 설정은 각자 만드는 application-local.properties 에서 읽음 (깃허브에 안 올라감)
-spring.config.import=optional:classpath:application-local.properties
-
-# 파일 업로드: GPX · 사진 한 장 5MB, 후기 사진 최대 5장
-spring.servlet.multipart.max-file-size=5MB
-spring.servlet.multipart.max-request-size=30MB
-```
-
----
-
-## 4. 실행해서 확인
-
-1. `src/main/resources/application-local.properties.example`을 같은 폴더에 복사 → 이름을 **`application-local.properties`** 로 바꾸기 → 비밀번호를 [DB 안내 2)](../db/README.md#2-db와-팀-계정-만들기-root로-한-번만)에서 정한 것으로 고치기
-2. VS Code → **File → Open Folder…** → `Team_walk\backend` → 오른쪽 아래 Java 준비 표시가 끝날 때까지 기다리기 (처음엔 몇 분)
-3. 왼쪽 **Spring Boot Dashboard**에서 `sanchaek` ▶ 실행 (또는 Git Bash에서 `./gradlew bootRun`)
-4. 브라우저에서 `http://localhost:8080/api/hello`
+- 로그에 **`Started SanchaekApplication in … seconds`** 가 보이면 켜진 것입니다.
+- 브라우저에서 `http://localhost:8080/api/hello`
 
 ```json
-{"success":true,"data":{"message":"안녕하세요, 산책시루 서버입니다","serverTime":"…","javaVersion":"21…","landmarks":8}}
+{
+  "success": true,
+  "data": {
+    "message": "안녕하세요, 산책시루 서버입니다",
+    "serverTime": "2026-10-28T11:23:21",
+    "javaVersion": "21.0.12.1",
+    "landmarks": 8
+  }
+}
 ```
 
-5. `frontend`에서 `npm run dev` → `http://localhost:5173` 에 **✅ 연결 성공**
+`landmarks`가 `8`이면 DB까지 연결된 것입니다.
 
-`landmarks`가 `8`이면 DB까지 연결된 것입니다. 안 되면 [막혔을 때](../docs/troubleshooting.md#백엔드-실행-스프링부트)를 보세요.
+> [!NOTE]
+> **`80% EXECUTING > :bootRun` 에서 멈춘 것처럼 보이는 건 정상입니다.**<br>
+> 서버가 켜져 있는 동안 계속 그 상태이고, 100%는 서버가 꺼질 때입니다. **끌 때는 Ctrl+C.**
+
+- 처음 실행할 때는 Gradle과 라이브러리를 내려받느라 몇 분 걸립니다.
+- 서버는 **하나만** 켭니다. 두 개를 켜면 `Port 8080 was already in use`.
+- **Java 코드나 설정 파일을 고쳤으면 Ctrl+C로 끄고 다시 `bootRun`** 합니다.
 
 ---
 
-## 5. 깃허브에 올리기
+## VS Code의 ▶ Run 버튼
 
-```bash
-git status                     # application-local.properties, build/, .gradle/ 이 보이면 안 됨
-git add backend
-git commit -m "chore: 스프링부트 4.1 프로젝트 생성 (Initializr)"
-git push -u origin feature/springboot-setup
+`SanchaekApplication.java`의 **Run** 이나 왼쪽 스프링 아이콘(Spring Boot Dashboard)의 ▶ 는 Gradle이 아니라 **VS Code 자바 확장이 직접 컴파일한 결과**로 실행합니다.<br>
+지금 프로젝트의 Gradle(9.8)과 확장이 잘 맞지 않아 아래 오류가 날 수 있습니다. 실제로 맥에서 겪었고, 윈도우도 같을 수 있습니다.
+
+```
+오류: 기본 클래스 kr.sanchaek.SanchaekApplication을(를) 찾거나 로드할 수 없습니다.
+원인: java.lang.ClassNotFoundException: kr.sanchaek.SanchaekApplication
 ```
 
-깃허브에서 PR을 만듭니다 (**base: develop**, 리뷰어: 정란 또는 동언).<br>
-합쳐지면 이 README의 1 ~ 5번은 지우고, 아래 폴더 구조만 남깁니다.
+이 오류가 나면 **Gradle `bootRun`으로 실행하면 됩니다** (위 방법 1 · 2). ▶ 를 꼭 쓰고 싶으면:
+
+1. ⌘, (윈도우 Ctrl+,) → `gradle build server` 검색 → **Java › Gradle › Build Server: Enabled** 를 **off**
+2. ⌘⇧P (윈도우 Ctrl+Shift+P) → **Java: Clean Java Language Server Workspace** → **Restart and delete**
+3. 오른쪽 아래 진행 표시가 끝난 뒤 `bin/main/kr/sanchaek/SanchaekApplication.class`가 생겼는지 확인 → **Run**
+
+> 💡 `backend` 안에 `.project`, `.classpath`, `.settings`, `bin` 이 생기는 건 VS Code 자바 확장이 만든 파일입니다 (속에서 이클립스 엔진을 씀). `.gitignore`에 있어서 깃허브에 안 올라갑니다.
 
 ---
 
-## 만든 뒤 폴더 구조
+## 폴더 구조
 
 ```
 backend/
 ├─ build.gradle               라이브러리 목록 (고치기 전에 팀에 알리기)
 ├─ settings.gradle
 ├─ gradlew, gradlew.bat       Gradle 실행 파일 (따로 설치할 필요 없음)
-└─ src/main/
-   ├─ java/kr/sanchaek/
-   │  ├─ SanchaekApplication.java   시작점 (Initializr가 만듦)
-   │  ├─ common/       공통 코드 (민서) · ★ HelloController
-   │  ├─ match/        동행 · 관리자 AD3 (민서)
-   │  ├─ user/         계정 · 신고 · 관리자 AD1 · AD2 · AD4 (정란)
-   │  └─ course/       코스 · GPX · 후기 · 랜드마크 (동언)
-   └─ resources/
-      ├─ application.properties                 공통 설정 (깃허브에 올라감)
-      ├─ application-local.properties.example   각자 설정 예시
-      └─ application-local.properties           각자 설정 (비밀번호, 깃허브에 안 올라감)
+├─ gradle/wrapper/            Gradle 버전 정보 (9.8.2)
+└─ src/
+   ├─ main/
+   │  ├─ java/kr/sanchaek/
+   │  │  ├─ SanchaekApplication.java   시작점
+   │  │  ├─ common/      공통 코드 (민서) · ★ HelloController (/api/hello)
+   │  │  ├─ match/       동행 · 관리자 AD3 (민서)
+   │  │  ├─ user/        계정 · 신고 · 관리자 AD1 · AD2 · AD4 (정란)
+   │  │  └─ course/      코스 · GPX · 후기 · 랜드마크 (동언)
+   │  └─ resources/
+   │     ├─ application.properties                 공통 설정 (깃허브에 올라감)
+   │     ├─ application-local.properties.example   각자 설정 예시
+   │     └─ application-local.properties           각자 설정 (비밀번호, 깃허브에 안 올라감)
+   └─ test/java/kr/sanchaek/
+      └─ SanchaekApplicationTests.java    서버가 뜨는지만 보는 기본 테스트
 ```
+
+- `match/`, `user/`, `course/` 폴더는 각자 첫 API를 만들 때 생깁니다.
+- **★ `HelloController`는 환경 확인용이라 지우지 않습니다.**
+- `./gradlew build`(또는 `test`)는 기본 테스트가 DB 설정을 읽으므로 `application-local.properties`가 있어야 통과합니다. `bootRun`은 테스트를 돌리지 않습니다.
+
+---
+
+## 라이브러리 (build.gradle)
+
+| 라이브러리 | 쓰임 |
+| --- | --- |
+| `spring-boot-starter-webmvc` | API 만들기 (`@RestController`). 스프링부트 3의 `starter-web`이 4에서 이름이 바뀐 것 |
+| `spring-boot-starter-jdbc` | `JdbcTemplate` (SQL을 직접 작성) |
+| `spring-boot-starter-validation` | 입력값 검사 (`@NotBlank`, `@Size` 등) |
+| `mysql-connector-j` | MySQL 접속 |
+| `spring-boot-devtools` | 개발 편의 기능 (IDE의 ▶ 로 실행할 때 저장하면 자동 재시작. `bootRun`에서는 껐다 켜기) |
+
+**나중에 추가할 것**
+
+- 회원가입 · 로그인을 만들 때 (정란): `dependencies { … }` 안에 아래 한 줄을 추가합니다.
+  ```groovy
+  implementation 'org.springframework.security:spring-security-crypto'
+  ```
+  비밀번호를 BCrypt로 암호화하는 작은 라이브러리입니다. **Spring Security 전체(`spring-boot-starter-security`)는 넣지 않습니다.** 넣으면 모든 API에 기본 로그인 화면이 걸려서 React 요청이 전부 막힙니다.
+
+---
+
+## 프로젝트를 만든 설정 (참고)
+
+다시 만들 일은 없지만, 어떻게 만들었는지 기록입니다.
+
+| 항목 | 값 |
+| --- | --- |
+| Project | Gradle - Groovy |
+| Spring Boot | 4.1.2 |
+| Group / Artifact / Package name | `kr.sanchaek` / `sanchaek` / `kr.sanchaek` |
+| Packaging / Configuration / Java | Jar / Properties / 21 |
+| Dependencies | Spring Web, JDBC API, MySQL Driver, Validation, Spring Boot DevTools |
+
+만든 뒤 바꾼 것: `application.properties` (각자 설정 파일 읽기, 업로드 크기), `HelloController`, `application-local.properties.example` 추가.

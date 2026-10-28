@@ -3,13 +3,12 @@
 7팀 **산책크루**의 시흥시 정왕동 산책 동행 서비스 저장소입니다.
 
 > [!IMPORTANT]
-> **백엔드는 VS Code + 스프링부트 4.1로 만듭니다.** JSP · Servlet 코드는 지웠습니다.<br>
-> 스프링부트 프로젝트는 민서가 [backend/README.md](backend/README.md) 순서대로 만들어 올릴 예정입니다.
+> **백엔드는 VS Code + 스프링부트 4.1, 실행은 Gradle `bootRun`입니다.** (JSP · 이클립스 · Tomcat은 쓰지 않음)
 >
-> **지금 해도 되는 것**
-> - Git · Node.js · VS Code · JDK 21 설치와 저장소 받기 → [세팅 가이드 1 · 2번](docs/setup.md#1-설치-처음-한-번)
-> - 프론트 세팅 → [세팅 가이드 4번](docs/setup.md#4-프론트-세팅-처음-한-번)
-> - MySQL 설치와 DB 세팅 → [DB 안내 1) ~ 5)](db/README.md#처음-세팅-윈도우-한-번만)
+> **처음 온 사람이 할 것**
+> 1. Git · Node.js · VS Code · JDK 21 설치, 저장소 받기 → [세팅 가이드 1 · 2번](docs/setup.md#1-설치-처음-한-번)
+> 2. MySQL 설치 → DB 만들고 `schema.sql` · `seed.sql` · `check.sql` 실행 → [DB 안내](db/README.md#처음-세팅-윈도우-한-번만) (윈도우 Workbench, 맥 DataGrip)
+> 3. 백엔드 실행 → [backend/README.md](backend/README.md#실행하기) · 프론트 실행 → [세팅 가이드 4번](docs/setup.md#4-프론트-세팅-처음-한-번)
 
 <br>
 
@@ -53,6 +52,7 @@
 | DB | MySQL 8.4 (8.0도 가능), 각자 PC에 설치 |
 | DB 접근 | JdbcTemplate (SQL을 직접 작성) |
 | 개발 도구 | VS Code (프론트는 WebStorm도 가능) |
+| DB 화면 도구 | MySQL Workbench (윈도우), DataGrip (맥) |
 | 지도 | 카카오맵 JavaScript API |
 | 협업 | GitHub |
 | 배포 | 하지 않음 (로컬 시연) |
@@ -83,7 +83,7 @@
 | 문서 | 언제 보나 | 내용 |
 | --- | --- | --- |
 | [세팅 가이드](docs/setup.md) | 처음 한 번 | 설치, VS Code 확장, 저장소 받기, 백엔드 · 프론트 실행 |
-| [백엔드 안내](backend/README.md) | 스프링부트 프로젝트를 만들 때 (민서) | Initializr 설정, 설정 파일, 폴더 구조 |
+| [백엔드 안내](backend/README.md) | 백엔드를 실행할 때 | Gradle `bootRun` 실행, ▶ Run 오류, 폴더 구조, 라이브러리 |
 | [DB 안내](db/README.md) | DB 세팅할 때<br>테이블이 바뀔 때 | ERD, 설계 약속, 테스트 계정, 쿼리 예시 |
 | [개발 규칙](docs/development.md) | 작업할 때마다 | 화면 · API 만드는 법, **깃허브 사용법**, 커밋 메시지 |
 | [막혔을 때](docs/troubleshooting.md) | 오류가 났을 때 | 지금까지 겪은 문제와 해결법 |
@@ -98,10 +98,10 @@
 
 ## ✅ 빠른 시작
 
-스프링부트 프로젝트가 올라오면 아래 세 가지가 모두 보여야 합니다.<br>
+세팅이 끝나면 아래 세 가지가 모두 보여야 합니다.<br>
 다 되면 화면을 캡처해서 팀에 공유해 주세요.
 
-**1. 백엔드** — `http://localhost:8080/api/hello`
+**1. 백엔드** — Gradle `bootRun` 실행 후 `http://localhost:8080/api/hello`
 
 ```json
 {"success":true,"data":{"message":"안녕하세요, 산책시루 서버입니다", …, "landmarks":8}}
@@ -112,7 +112,7 @@
 > 산책시루 프론트가 동작합니다<br>
 > ✅ 연결 성공
 
-**3. DB** — `mysql>` 에서 `source …/db/check.sql`
+**3. DB** — Workbench · DataGrip에서 `db/check.sql` 실행
 
 > 7줄 모두 **OK** ([DB 안내 4)](db/README.md#4-확인))
 
@@ -176,10 +176,12 @@ Team_walk/
 │  ├─ check.sql             세팅 확인 (7줄 모두 OK면 성공)
 │  └─ sample-uploads/       테스트용 후기 사진 · GPX 파일
 │
-├─ backend/                 백엔드 (VS Code로 열기) — 만드는 법은 backend/README.md
-│  ├─ build.gradle          라이브러리 목록 (Initializr로 만들 예정)
+├─ backend/                 백엔드 (VS Code로 열기) — 실행 방법은 backend/README.md
+│  ├─ build.gradle          라이브러리 목록 (스프링부트 4.1)
+│  ├─ gradlew               실행: ./gradlew bootRun (윈도우 cmd는 gradlew.bat bootRun)
 │  └─ src/main/
 │     ├─ java/kr/sanchaek/
+│     │  ├─ SanchaekApplication.java   시작점
 │     │  ├─ common/         공통 코드 (민서) · ★ HelloController (/api/hello)
 │     │  ├─ match/          동행 · 관리자 AD3 (민서)
 │     │  ├─ user/           계정 · 신고 · 관리자 AD1 · AD2 · AD4 (정란)

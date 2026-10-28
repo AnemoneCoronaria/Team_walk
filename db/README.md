@@ -281,20 +281,26 @@ static double meters(double lat1, double lng1, double lat2, double lng2) {
 | 4 | **Accounts and Roles**: root 비밀번호 정하기. **본인 PC 관리용이라 본인만 알면 됩니다.** 잊지 않게 적어 두세요 |
 | 5 | **Windows Service**: 체크된 그대로 (서비스 이름 `MySQL84`, 컴퓨터 켤 때 자동 시작) |
 | 6 | **Sample Databases**: 체크하지 않음 → **Execute** → **Finish** |
+| 7 | **MySQL Workbench** 설치: [dev.mysql.com/downloads/workbench](https://dev.mysql.com/downloads/workbench/) → **Microsoft Windows** → MSI Installer → 설치 (DB를 화면으로 보고 SQL 파일을 실행하는 프로그램) |
 
 > 💡 수업 때 **MySQL 8.0을 이미 깔았다면** 새로 깔지 말고 그대로 쓰세요. 2)부터 하면 됩니다. (명령의 `8.4`를 `8.0`으로 바꿔서)
 
 ### 2) DB와 팀 계정 만들기 (root로, 한 번만)
 
-**명령 프롬프트(cmd)** 를 열고:
+팀원은 **MySQL Workbench**(윈도우)로, 맥은 **DataGrip**으로 합니다 ([부록: 맥](#부록-맥)). 명령 프롬프트로 하는 방법은 맨 아래 접어 두었습니다.
 
-```bat
-"C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u root -p
-```
+**① Workbench에 root 접속 만들기**
 
-root 비밀번호를 넣고 `mysql>`이 나오면 아래 세 줄을 붙여 넣습니다.
-**`내가_정한_비밀번호` 자리에 본인이 정한 비밀번호**를 넣으세요.<br>
-DB는 각자 PC에만 있어서 팀원과 같을 필요가 없습니다. 잊지 않게 적어 두세요.
+1. Workbench 첫 화면의 **MySQL Connections** 옆 **⊕** 클릭
+2. Connection Name `root`, Hostname `127.0.0.1`, Port `3306`, Username `root` → **Test Connection** → 1)에서 정한 root 비밀번호 → **OK**
+3. 만든 접속을 눌러 엽니다
+
+> 💡 Workbench 8.0으로 MySQL 8.4에 접속하면 "서버 버전이 호환되지 않는다"는 경고가 뜹니다. **Continue Anyway**를 누르면 SQL 실행과 테이블 보기는 정상입니다.
+
+**② DB와 계정 만들기**
+
+쿼리 창에 아래 세 줄을 붙여 넣고 **⚡(번개 아이콘)** 을 누릅니다. 커서가 달린 번개는 한 줄만 실행하니, 그냥 번개를 누르세요.<br>
+**`내가_정한_비밀번호` 자리에 본인이 정한 비밀번호**를 넣으세요. 각자 PC에만 있는 DB라 팀원과 같을 필요는 없습니다.
 
 ```sql
 CREATE DATABASE sanchaek DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
@@ -302,40 +308,24 @@ CREATE USER 'sanchaek'@'localhost' IDENTIFIED BY '내가_정한_비밀번호';
 GRANT ALL PRIVILEGES ON sanchaek.* TO 'sanchaek'@'localhost';
 ```
 
-`exit`로 나옵니다. 주소 · DB 이름 · 계정은 다섯 명 모두 똑같이 맞춥니다.
-
 | 항목 | 값 |
 | --- | --- |
 | 주소 | `localhost:3306` |
 | DB 이름 | `sanchaek` |
-| 계정 | `sanchaek` |
+| 계정 | `sanchaek` (각자 PC라 `root`로 써도 됨 → 그때는 [6)](#6-백엔드-설정-파일-만들기)에도 `root`를 넣기) |
 | 비밀번호 | 각자 정함 (**깃허브에 절대 올리지 않음**) |
 
 ### 3) 테이블과 테스트 데이터 넣기 (테이블이 바뀔 때마다 다시)
 
-```bat
-"C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u sanchaek -p
-```
+Workbench에서 **File → Open SQL Script…** → `C:\dev\jspTeam\Team_walk\db\schema.sql` → **⚡** 을 누릅니다.<br>
+같은 방법으로 **`seed.sql`** 을 열고 **⚡**. 아래 Output 창에 빨간 ✖ 없이 초록 ✔만 있으면 됩니다.
 
-2)에서 정한 비밀번호를 넣고 `mysql>`에서:
-
-```sql
-source C:/dev/jspTeam/Team_walk/db/schema.sql
-source C:/dev/jspTeam/Team_walk/db/seed.sql
-```
-
-> ⚠️ **한 줄에 `source` 하나씩** 입력합니다 (두 줄을 한 번에 붙여 넣어도 됩니다).
-> 경로는 역슬래시(`\`)가 아니라 **슬래시(`/`)** 로 씁니다. 저장소를 다른 곳에 받았다면 경로만 바꾸세요.
+> ⚠️ **순서가 중요합니다:** `schema.sql`(테이블 만들기) → `seed.sql`(테스트 데이터).<br>
+> `schema.sql`을 실행하면 **기존 테이블과 데이터가 전부 지워지고** 새로 만들어집니다. 개발 중에는 테스트 데이터뿐이라 괜찮습니다.
 
 ### 4) 확인
 
-같은 `mysql>`에서:
-
-```sql
-source C:/dev/jspTeam/Team_walk/db/check.sql
-```
-
-아래처럼 **7줄 모두 `OK`** 면 성공입니다. **캡처해서 팀에 공유해 주세요.**
+같은 방법으로 **`check.sql`** 을 열고 **⚡**. 아래 결과 표가 **7줄 모두 `OK`** 면 성공입니다. **캡처해서 팀에 공유해 주세요.**
 
 ```
 +----------------------------------------------------+--------+
@@ -353,12 +343,35 @@ source C:/dev/jspTeam/Team_walk/db/check.sql
 
 > 💡 동행 날짜는 `seed.sql`을 **실행한 날** 기준입니다. 실행하고 5일쯤 지나면 1번 동행도 날짜가 지나 `match status`가 `FAIL`로 바뀝니다. 그때는 3)을 다시 실행하세요.
 
-직접 눈으로 보고 싶으면:
+왼쪽 **SCHEMAS**에서 🔄 새로고침 → `sanchaek` → Tables 13개, Views 2개가 보이면 됩니다. 직접 눈으로 보고 싶으면:
 
 ```sql
 SELECT m.match_id, m.title, s.current_count, m.capacity, s.status
 FROM matches m JOIN v_match_status s ON s.match_id = m.match_id;
 ```
+
+<details>
+<summary><b>명령 프롬프트(cmd)로 2) ~ 4) 하기</b> (Workbench 없이)</summary>
+
+```bat
+"C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u root -p
+```
+
+root 비밀번호를 넣고 `mysql>`에서 2)의 세 줄을 붙여 넣은 뒤 `exit`.
+
+```bat
+"C:\Program Files\MySQL\MySQL Server 8.4\bin\mysql.exe" -u sanchaek -p
+```
+
+```sql
+source C:/dev/jspTeam/Team_walk/db/schema.sql
+source C:/dev/jspTeam/Team_walk/db/seed.sql
+source C:/dev/jspTeam/Team_walk/db/check.sql
+```
+
+경로는 역슬래시(`\`)가 아니라 **슬래시(`/`)** 로 씁니다.
+
+</details>
 
 ### 5) 업로드 폴더 만들기 (후기 사진 · GPX)
 
@@ -381,7 +394,7 @@ C:\dev\jspTeam\
 ### 6) 백엔드 설정 파일 만들기
 
 > [!NOTE]
-> **스프링부트 프로젝트가 develop에 올라온 뒤에 하는 단계입니다.** 그 전에는 건너뛰세요. ([backend/README.md](../backend/README.md))
+> **백엔드(스프링부트)를 처음 실행하기 전에 한 번** 합니다. 실행 방법은 [backend/README.md](../backend/README.md#실행하기)에 있습니다.
 
 백엔드가 DB에 접속할 때 이 파일의 주소 · 계정 · 비밀번호를 씁니다.<br>
 비밀번호가 들어가므로 **깃허브에 올리지 않고** 예시 파일을 복사해서 각자 만듭니다.
@@ -389,7 +402,8 @@ C:\dev\jspTeam\
 1. `C:\dev\jspTeam\Team_walk\backend\src\main\resources\` 폴더를 엽니다.
 2. `application-local.properties.example`을 **같은 폴더에 복사**하고 이름을 **`application-local.properties`** 로 바꿉니다.<br>
    Git Bash로 하려면: `cp backend/src/main/resources/application-local.properties.example backend/src/main/resources/application-local.properties`
-3. 메모장(또는 VS Code)으로 열어 `spring.datasource.password=` 뒤를 **2)에서 정한 비밀번호**로 바꾸고 저장합니다.
+3. 메모장(또는 VS Code)으로 열어 `spring.datasource.password=` 뒤를 **2)에서 정한 비밀번호**로 바꾸고 저장합니다. 따옴표 · 앞뒤 공백 없이 씁니다.<br>
+   `root`로 쓰기로 했다면 `spring.datasource.username=root`, 비밀번호는 root 비밀번호 (없으면 비워 둠).
 4. 업로드 폴더를 5)와 다른 곳에 만들었다면 `app.upload-dir`도 바꿉니다. 경로는 **슬래시(`/`)** 로 씁니다.
 5. 백엔드를 다시 실행합니다.
 
@@ -404,11 +418,6 @@ app.upload-dir=C:/dev/jspTeam/uploads
 
 > ⚠️ **`application-local.properties`는 깃허브에 올라가지 않습니다** (`.gitignore`). `git status`에 보이면 안 됩니다.<br>
 > 예시 파일(`….example`)에는 진짜 비밀번호를 넣지 마세요.
-
-### 화면으로 보고 싶다면 (선택)
-
-- **MySQL Workbench 8.0**으로 접속하면 "서버 버전이 호환되지 않는다"는 경고가 뜹니다. **Continue Anyway**를 누르면 SQL 실행과 테이블 보기는 됩니다. 일부 관리 기능은 안 될 수 있습니다.
-- 세팅과 테이블 생성은 위의 명령 프롬프트 방법을 기준으로 합니다.
 
 ---
 
@@ -667,14 +676,24 @@ LIMIT ? OFFSET ?;
 
 ## 부록: 맥
 
+**MySQL 설치 · 켜기**
+
 ```bash
 brew install mysql@8.4
 brew services start mysql@8.4
-/opt/homebrew/opt/mysql@8.4/bin/mysql -u root        # 처음에는 root 비밀번호 없음
+brew services list | grep mysql        # started 면 켜진 것
 ```
 
-그다음은 윈도우의 [2)](#2-db와-팀-계정-만들기-root로-한-번만)부터 같습니다. `source` 경로만 맥 경로로 씁니다.
-예: `source /Users/이름/Downloads/Team_walk/db/schema.sql`
+처음에는 root 비밀번호가 없습니다. `mysql` 명령을 쓰려면 `export PATH="/opt/homebrew/opt/mysql@8.4/bin:$PATH"`.
+
+**DataGrip으로 2) ~ 4) 하기**
+
+1. 왼쪽 위 **+** → **Data Source** → **MySQL** → Host `localhost`, Port `3306`, User `root`, Password 비움(정했으면 입력) → 아래 **Download missing driver files** → **Test Connection** → **OK**
+2. 접속 이름 오른쪽 클릭 → **New → Query Console** → 2)의 SQL을 붙여 넣고 **⌘A → ⌘⏎** (선택 안 하면 커서가 있는 한 줄만 실행)
+3. **File → Open** → `db/schema.sql` → 편집기에서 오른쪽 클릭 → **Run 'schema.sql'** → root 접속 선택. 같은 방법으로 `seed.sql`, `check.sql`
+4. `check.sql` 결과 7줄 모두 `OK`면 성공
+
+**업로드 폴더 · 설정 파일**
 
 업로드 폴더는 저장소 옆에 만듭니다. 예: `cp -R db/sample-uploads/ ../uploads/` → `../uploads/reviews/1-1.jpg`, `../uploads/gpx/course-1.gpx`
 
