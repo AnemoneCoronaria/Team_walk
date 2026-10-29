@@ -1,0 +1,70 @@
+/* 카카오맵 영역 — 크기는 사용하는 곳의 className 에서 정함 */
+.kmap {
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 16px;
+  background: var(--map-land);
+}
+
+/* SDK를 못 불러왔을 때 */
+.kmap-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 마커: 초록 동그라미 (Figma 'Map layer'의 22px 점) */
+.kmap-pin {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.kmap-pin.is-clickable { cursor: pointer; }
+
+.kmap-pin-dot {
+  width: 22px;
+  height: 22px;
+  margin-bottom: -11px; /* 점의 가운데가 좌표에 오도록 */
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: var(--brand-green);
+  box-shadow: 0 1px 4px rgba(28, 43, 38, 0.35);
+}
+
+.kmap-pin.is-selected .kmap-pin-dot {
+  width: 28px;
+  height: 28px;
+  margin-bottom: -14px;
+}
+
+/* 선택된 마커 위 말풍선 (Figma C1 '옥구공원 순환 · 3.2km') */
+.kmap-tip {
+  margin-bottom: 8px;
+  padding: 10px 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  color: var(--text-strong);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(28, 43, 38, 0.12);
+}
+
+/* 경로의 출발 · 도착 점 */
+.kmap-dot {
+  display: block;
+  width: 16px;
+  height: 16px;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  transform: translate(0, 0);
+  box-shadow: 0 1px 4px rgba(28, 43, 38, 0.35);
+}
+
+.kmap-dot-start { background: var(--brand-green); }
+.kmap-dot-end { background: var(--status-danger); }

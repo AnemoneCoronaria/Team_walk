@@ -1,0 +1,14 @@
+.course-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  background: var(--bg-surface);
+}
+
+/* 카드 안 지도: 카드 폭에 맞춰 꽉 채움, 높이 160px (Figma) */
+.course-card-map { align-self: stretch; height: 160px; border-radius: 12px; pointer-events: none; }
+.course-card-chips { display: flex; gap: 6px; }
