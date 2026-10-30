@@ -37,12 +37,12 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 | 폴더 | 내용 |
 | --- | --- |
 | `src/pages/` | 화면 (Figma 화면 ID로 시작: `M1Main.jsx`, `C1CourseList.jsx` …) |
-| `src/components/` | 공통 부품: `Header`, `Footer`, `KakaoMap`, `MatchCard`, `CourseCard`, `Layout` |
+| `src/components/` | 공통 부품: `Header`, `Footer`, `KakaoMap`, `MatchCard`, `CourseCard`, `Layout` (동훈) · `Button`, `Input`, `Chip`, `Avatar`, `Modal`, `Toast` (승민, 사용법은 각 파일 맨 위 주석) |
 | `src/api/` | 백엔드 호출 함수 (`client.js` 공통, 도메인별 파일) |
 | `src/mocks/` | 가짜 데이터 |
 | `src/auth/` | 로그인 상태 (`useAuth()`) |
 | `src/constants/labels.js` | API 코드 → 화면 글자 (`SLOW` → `🐢 천천히` 등) |
-| `src/utils/` | 날짜 · 거리 형식, `useAsync` 훅 |
+| `src/utils/` | 날짜 · 거리 형식, `useAsync` 훅, `showToast()` 알림, 입력값 검사(`validate.js`) |
 | `public/avatars/` | 아바타 8종 (파일 이름 = API의 avatar 코드: `seagull.svg` …) |
 
 ## 화면 주소

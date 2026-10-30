@@ -70,6 +70,18 @@ export const MATCH_STATUS_LABELS = {
   DONE: '끝남',
 }
 
+// 아바타 코드 → 이름 (Figma Avatar 8종, A4에서 고르는 순서)
+export const AVATAR_LABELS = {
+  seagull: '갈매기',
+  lighthouse: '등대',
+  lotus: '연꽃',
+  reed: '갈대',
+  sogeumi: '소금이',
+  wave: '파도',
+  dog: '강아지',
+  cat: '고양이',
+}
+
 // 아바타 코드 → 이미지 주소 (public/avatars/)
 export function avatarSrc(avatar) {
   return `/avatars/${avatar || 'seagull'}.svg`
