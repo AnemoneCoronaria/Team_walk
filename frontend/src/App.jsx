@@ -9,10 +9,11 @@ import C2CourseDetail from './pages/C2CourseDetail.jsx'
 import W1MatchList from './pages/W1MatchList.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import A1Login from './pages/A1Login.jsx'
+import Signup from './pages/Signup.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/new
-//   승민: /login, /signup, /mypage … (/signup, /mypage 는 아직 자리만)
+//   승민: /login, /signup, /mypage … (/mypage 는 아직 자리만)
 export default function App() {
   return (
     <Routes>
@@ -35,7 +36,7 @@ export default function App() {
 
         {/* 계정 · 마이페이지 (승민) */}
         <Route path="/login" element={<A1Login />} />
-        <Route path="/signup" element={<Placeholder id="A3 ~ A5" title="회원가입" owner="승민" />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/mypage" element={<Placeholder id="P1" title="마이페이지" owner="승민" />} />
 
         {/* 없는 주소 → X1 404 (승민) */}
