@@ -10,10 +10,12 @@ import W1MatchList from './pages/W1MatchList.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import A1Login from './pages/A1Login.jsx'
 import Signup from './pages/Signup.jsx'
+import X1NotFound from './pages/X1NotFound.jsx'
+import X2ServerError from './pages/X2ServerError.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/new
-//   승민: /login, /signup, /mypage … (/mypage 는 아직 자리만)
+//   승민: /login, /signup, /mypage, /500, 없는 주소(*) … (/mypage 는 아직 자리만)
 export default function App() {
   return (
     <Routes>
@@ -39,8 +41,9 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/mypage" element={<Placeholder id="P1" title="마이페이지" owner="승민" />} />
 
-        {/* 없는 주소 → X1 404 (승민) */}
-        <Route path="*" element={<Placeholder id="X1" title="페이지를 찾을 수 없어요" owner="승민" />} />
+        {/* 오류 화면 (승민): X2 500 은 확인 · 시연용 주소, 없는 주소 → X1 404 */}
+        <Route path="/500" element={<X2ServerError />} />
+        <Route path="*" element={<X1NotFound />} />
       </Route>
     </Routes>
   )
