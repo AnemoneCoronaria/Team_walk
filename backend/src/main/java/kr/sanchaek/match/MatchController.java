@@ -29,6 +29,8 @@ public class MatchController {
     // 동행 상세
     @GetMapping("/api/matches/{id}")
     public ApiResponse<Map<String, Object>> detail(@PathVariable("id") Long id) {
+                // @PathVariable에 "id"를 추가함  
+                // ==> 스프링이 이름을 알 수 없어서 Name for argument of type [java.lang.Long] not specified 같은 오류가 발생했음
         return ApiResponse.ok(repo.findMatchById(id));
 }
 
