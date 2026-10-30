@@ -247,6 +247,22 @@ public class MatchRepository {
         return match;
     }
 
+    /**
+     * 모집자가 첨부한 GPX 파일 경로 (업로드 폴더 기준, 예: gpx/match-1.gpx).
+     * 없는 글 · 숨긴 글 · 첨부가 없는 글은 404. (코스 GPX 가 아니라 "동행 경로" 만 받음)
+     */
+    public String findGpxPath(Long matchId) {
+        List<String> rows = jdbc.queryForList(
+                "SELECT gpx_path FROM matches WHERE match_id = ? AND is_hidden = FALSE", String.class, matchId);
+        if (rows.isEmpty()) {
+            throw ApiException.notFound("동행 찾을 수 없음");
+        }
+        if (rows.get(0) == null) {
+            throw ApiException.notFound("모집자가 첨부한 경로 파일이 없어요.");
+        }
+        return rows.get(0);
+    }
+
     /** 원하는 스타일 · 언어 · 연령대 태그 */
     @SuppressWarnings("unchecked")
     private void attachDetailTags(Long matchId, Map<String, Object> match) {
