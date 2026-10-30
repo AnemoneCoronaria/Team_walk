@@ -1,111 +1,216 @@
+/* ==========================================================
+   산책시루 전체 공통 스타일
+   Figma '00 컴포넌트 · 스타일' 페이지의 값(색상 · 글자 · 버튼 · 칩)을 옮긴 파일입니다.
+   - 색은 아래 변수(--brand-green 등)로만 씁니다.
+   - .btn / .chip / .input 은 승민이 Button · Chip · Input 컴포넌트를 만들면
+     그 컴포넌트 안에서 이 클래스를 그대로 쓰거나 바꿔 끼우면 됩니다. (고치기 전에 팀에 알리기)
+   ========================================================== */
+
+/* ---------- 디자인 토큰 (Figma 변수) ---------- */
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
-
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
-
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  --brand-green: #2e7d5b;
+  --brand-green-soft: #e8f3ec;
+  --brand-blue: #2b6cb0;
+  --brand-blue-soft: #eaf1f8;
+  --status-danger: #c0392b;
+  --status-danger-soft: #fdecea;
+  --text-strong: #1c2b26;
+  --text-body: #4a5a54;
+  --text-muted: #6a7a73;
+  --text-inverse: #ffffff;
+  --bg-page: #f6f8f4;
+  --bg-surface: #ffffff;
+  --bg-subtle: #eef2ee;
+  --border-default: #dce4de;
+  --map-land: #eef3ec;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
-
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
-}
-
-body {
-  margin: 0;
-}
-
-#root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
-  display: flex;
-  flex-direction: column;
+/* ---------- 기본 ---------- */
+* {
   box-sizing: border-box;
 }
 
-h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
+html,
+body {
+  margin: 0;
+  padding: 0;
 }
 
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
+body {
+  min-width: 1440px; /* PC 화면 설계 기준 폭 */
+  background: var(--bg-page);
+  color: var(--text-strong);
+  font-family: 'Noto Sans KR', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.55;
+  word-break: keep-all;
 }
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+
+p,
+h1,
+h2,
+h3 {
   margin: 0;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+a {
+  color: inherit;
+  text-decoration: none;
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+img {
+  display: block;
 }
+
+button,
+input,
+select {
+  font-family: inherit;
+}
+
+/* 좌우 여백 120px (1440px 화면에서 내용 폭 1200px) */
+.wrap {
+  width: 1200px;
+  margin: 0 auto;
+}
+
+/* ---------- 글자 스타일 (Figma 텍스트 스타일) ---------- */
+.t-display48 { font-size: 48px; font-weight: 700; line-height: 1.3; letter-spacing: -0.48px; }
+.t-h32 { font-size: 32px; font-weight: 700; line-height: 1.35; letter-spacing: -0.32px; }
+.t-h24 { font-size: 24px; font-weight: 700; line-height: 1.4; letter-spacing: -0.24px; }
+.t-h20 { font-size: 20px; font-weight: 700; line-height: 1.4; letter-spacing: -0.2px; }
+.t-b16m { font-size: 16px; font-weight: 500; line-height: 1.5; }
+.t-b16 { font-size: 16px; font-weight: 400; line-height: 1.55; }
+.t-b14m { font-size: 14px; font-weight: 500; line-height: 1.5; }
+.t-b14 { font-size: 14px; font-weight: 400; line-height: 1.5; }
+.t-c12b { font-size: 12px; font-weight: 700; line-height: 1.45; }
+.t-c12 { font-size: 12px; font-weight: 400; line-height: 1.45; }
+.t-emoji32 { font-size: 32px; font-weight: 700; line-height: 1.35; }
+
+.c-strong { color: var(--text-strong); }
+.c-body { color: var(--text-body); }
+.c-muted { color: var(--text-muted); }
+.c-green { color: var(--brand-green); }
+.c-blue { color: var(--brand-blue); }
+.c-danger { color: var(--status-danger); }
+
+.nowrap { white-space: nowrap; }
+.tc { text-align: center; }
+
+/* ---------- Button ---------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: 10px;
+  background: none;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.btn-primary { background: var(--brand-green); color: var(--text-inverse); }
+.btn-secondary { background: var(--bg-surface); border: 1.5px solid var(--brand-green); color: var(--brand-green); }
+.btn-ghost { color: var(--text-body); }
+.btn-danger { background: var(--status-danger-soft); color: var(--status-danger); }
+.btn-disabled,
+.btn:disabled { background: var(--bg-subtle); border: 0; color: var(--text-muted); cursor: default; }
+.btn-block { display: flex; width: 100%; }
+
+/* ---------- Chip ---------- */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  padding: 6px 12px;
+  border: 0;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.5;
+  white-space: nowrap;
+}
+
+.chip-green { background: var(--brand-green-soft); color: var(--brand-green); }
+.chip-blue { background: var(--brand-blue-soft); color: var(--brand-blue); }
+.chip-neutral { background: var(--bg-subtle); color: var(--text-body); }
+.chip-danger { background: var(--status-danger-soft); color: var(--status-danger); }
+/* 필터에서 선택된 상태 */
+.chip.is-selected { background: var(--brand-green); color: var(--text-inverse); }
+button.chip { cursor: pointer; }
+
+/* ---------- Input ---------- */
+.input {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.input-label { font-size: 14px; font-weight: 500; line-height: 1.5; color: var(--text-strong); }
+
+.input-field {
+  width: 100%;
+  height: 48px;
+  padding: 0 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+  background: var(--bg-surface);
+  color: var(--text-strong);
+  font-size: 16px;
+  line-height: 1.55;
+  outline: none;
+}
+
+.input-field::placeholder { color: var(--text-muted); }
+.input-field:focus { border: 1.5px solid var(--brand-green); }
+
+/* ---------- Avatar ---------- */
+.avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+/* ---------- 흰색 카드 상자 ---------- */
+.panel {
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  background: var(--bg-surface);
+}
+
+/* ---------- 제목 + 오른쪽 링크 한 줄 ---------- */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  white-space: nowrap;
+}
+
+/* ---------- 로딩 뼈대 ---------- */
+.skeleton { border-radius: 6px; background: var(--bg-subtle); }
+
+/* ==========================================================
+   배치용 보조 클래스 (Figma의 Auto layout 값을 옮길 때 사용)
+   row = 가로로 나열, col = 세로로 나열, g숫자 = 사이 간격(px)
+   ========================================================== */
+.row { display: flex; align-items: flex-start; }
+.col { display: flex; flex-direction: column; align-items: flex-start; }
+.ai-c { align-items: center; }
+.jc-c { justify-content: center; }
+.jc-b { justify-content: space-between; }
+.fwrap { flex-wrap: wrap; }
+.fill { align-self: stretch; }          /* col 안에서 가로로 꽉 채우기 */
+.grow { flex: 1 0 0; min-width: 1px; }  /* row 안에서 남는 폭 차지하기 */
+.noshrink { flex-shrink: 0; }
+.g2 { gap: 2px; } .g4 { gap: 4px; } .g6 { gap: 6px; } .g8 { gap: 8px; } .g12 { gap: 12px; }
+.g16 { gap: 16px; } .g20 { gap: 20px; } .g24 { gap: 24px; } .g32 { gap: 32px; }
+.p16 { padding: 16px; } .p20 { padding: 20px; } .p24 { padding: 24px; }

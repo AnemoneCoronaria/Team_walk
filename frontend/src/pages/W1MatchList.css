@@ -1,0 +1,23 @@
+/* W1 동행 찾기 · E1 결과 없음 */
+.w1-top { padding: 40px 0 16px; }
+.w1-body { padding: 16px 0 64px; }
+
+.w1-filter { flex-shrink: 0; width: 288px; padding: 24px; }
+/* Figma 에서 칩 줄이 238px 폭에 맞춰 줄바꿈되도록 */
+.w1-chips { margin-right: -16px; }
+.w1-date { height: 40px; margin-top: 2px; font-size: 14px; }
+
+.w1-card { width: 100%; }
+.w1-skel { width: 100%; height: 253px; background: var(--bg-surface); }
+
+.w1-sort {
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+button.chip:disabled { opacity: 0.4; cursor: default; }
+
+/* E1 */
+.e1 { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 120px 120px 160px; }

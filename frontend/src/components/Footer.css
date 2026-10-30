@@ -1,0 +1,10 @@
+.footer {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-default);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.footer-inner { display: flex; align-items: center; justify-content: space-between; padding: 32px 0; }
+.footer-links { white-space: pre; }

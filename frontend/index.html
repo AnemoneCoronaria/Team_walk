@@ -5,6 +5,15 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>산책시루</title>
+    <!-- 글꼴: Figma와 같은 Noto Sans KR -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet" />
+    <!--
+      카카오맵 SDK. 키는 frontend/.env.local 의 VITE_KAKAO_JS_KEY 값이 들어갑니다. (깃허브에 올리지 않는 파일)
+      autoload=false: 지도는 src/components/KakaoMap.jsx 에서 kakao.maps.load() 로 불러옵니다.
+    -->
+    <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=%VITE_KAKAO_JS_KEY%&autoload=false"></script>
   </head>
   <body>
     <div id="root"></div>

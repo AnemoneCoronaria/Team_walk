@@ -1,0 +1,19 @@
+/* 폭은 사용하는 곳에서 정함 (M1 588px, W1 꽉 채움) */
+.match-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  background: var(--bg-surface);
+}
+
+.match-card-row { display: flex; align-items: center; justify-content: space-between; width: 100%; }
+.match-card-title { max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
+.match-card-title:hover { text-decoration: underline; }
+.match-card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.match-card-people { display: flex; }
+.match-card-people .avatar { margin-right: -8px; border: 2px solid var(--bg-surface); }
+.match-card-people .avatar:last-child { margin-right: 0; }
