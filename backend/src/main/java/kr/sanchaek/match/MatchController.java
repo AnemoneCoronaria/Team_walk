@@ -28,7 +28,7 @@ public class MatchController {
 
     // 동행 상세
     @GetMapping("/api/matches/{id}")
-    public ApiResponse<Map<String, Object>> detail(@PathVariable Long id) {
+    public ApiResponse<Map<String, Object>> detail(@PathVariable("id") Long id) {
         return ApiResponse.ok(repo.findMatchById(id));
 }
 
