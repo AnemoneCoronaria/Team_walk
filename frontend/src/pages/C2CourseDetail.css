@@ -1,0 +1,31 @@
+/* C2 코스 상세 */
+.c2 { padding: 32px 0 64px; }
+.c2-inner { display: flex; align-items: flex-start; gap: 32px; }
+.c2-main { flex: 1 0 0; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; min-width: 1px; }
+.c2-toprow { display: flex; align-items: center; justify-content: space-between; width: 100%; white-space: nowrap; }
+.c2-link { padding: 0; border: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+
+.c2-stats { display: flex; gap: 12px; width: 100%; white-space: nowrap; }
+.c2-stat {
+  flex: 1 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 1px;
+  padding: 16px;
+  border: 1px solid var(--border-default);
+  border-radius: 16px;
+  background: var(--bg-surface);
+}
+
+.c2-map { width: 100%; height: 380px; }
+.c2-legend { display: flex; gap: 16px; white-space: nowrap; }
+.c2-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: -1px; }
+.c2-dot-start { background: var(--brand-green); }
+.c2-dot-end { background: var(--status-danger); }
+
+.c2-box { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; width: 100%; padding: 24px; }
+.c2-key { flex-shrink: 0; width: 110px; }
+
+.c2-side { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; width: 400px; }
+.c2-match { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; padding: 16px; }

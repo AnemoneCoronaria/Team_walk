@@ -1,0 +1,3 @@
+/* X1 404 · X2 500 오류 화면 */
+
+.error-page { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 140px 120px 180px; text-align: center; }

@@ -1,0 +1,43 @@
+/* M0 · M1 메인 */
+
+/* 동행 카드 2열 (카드 588px) */
+.main-match-list { display: flex; flex-wrap: wrap; gap: 24px; width: 100%; }
+.main-match-list .match-card { width: 588px; }
+
+/* ---------- M0 (로그인 전) ---------- */
+.m0-hero { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 96px 120px 80px; background: var(--bg-surface); }
+.m0-steps { padding: 56px 0 32px; }
+.m0-preview { padding: 24px 0 80px; }
+
+/* ---------- M1 (로그인 후) ---------- */
+.m1-hero { padding: 64px 0; background: var(--bg-surface); }
+.m1-hero-inner { display: flex; align-items: center; gap: 64px; }
+.m1-hero-text { flex: 1 0 0; display: flex; flex-direction: column; align-items: flex-start; gap: 20px; min-width: 1px; }
+.m1-hero-desc { width: 520px; }
+.m1-hero-stats { display: flex; gap: 32px; white-space: nowrap; }
+.m1-map { width: 560px; height: 380px; }
+
+.m1-matches { padding: 56px 0; }
+.m1-courses { padding: 24px 0 56px; }
+.m1-course-list { display: flex; gap: 24px; }
+.m1-course-list .course-card { width: 384px; }
+
+.m1-stamp { padding: 24px 0 64px; }
+.m1-stamp-banner { display: flex; align-items: center; justify-content: space-between; padding: 32px 40px; border-radius: 20px; background: var(--brand-green-soft); }
+
+.stamp-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border: 2px solid var(--brand-green);
+  border-radius: 28px;
+  background: var(--bg-surface);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+/* 아직 인증하지 않은 스탬프 */
+.stamp-badge.is-locked { border-color: var(--border-default); background: var(--bg-subtle); opacity: 0.5; }

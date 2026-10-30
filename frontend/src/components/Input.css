@@ -1,0 +1,16 @@
+/* Input 컴포넌트 — index.css 의 .input · .input-label · .input-field 에 상태(Error · Disabled)만 더함 */
+
+.input-full { width: 100%; }
+
+/* 칸 + 오른쪽 버튼(addon) 한 줄 */
+.input-row { display: flex; gap: 8px; width: 100%; }
+.input-row .input-field { flex: 1 0 0; min-width: 1px; }
+
+.input-field.is-error,
+.input-field.is-error:focus { border: 1.5px solid var(--status-danger); }
+
+.input-field:disabled { background: var(--bg-subtle); color: var(--text-muted); }
+.input:has(.input-field:disabled) .input-label { color: var(--text-muted); }
+
+.input-helper { font-size: 12px; line-height: 1.45; color: var(--text-muted); }
+.input-helper.is-error { color: var(--status-danger); }
