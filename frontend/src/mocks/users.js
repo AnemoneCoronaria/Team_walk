@@ -10,6 +10,11 @@ export const USERS = {
   6: { userId: 6, nickname: '승민', avatar: 'cat' },
 }
 
+// 로그인 아이디 → 회원 번호 (db/seed.sql 테스트 계정, 비밀번호는 모두 test1234!)
+// 7번 banned 는 정지 테스트용이라 가짜 로그인에서도 403 SUSPENDED
+export const LOGIN_IDS = { admin: 1, minseo: 2, jeongran: 3, dongeon: 4, donghun: 5, seungmin: 6, banned: 7 }
+export const MOCK_PASSWORD = 'test1234!'
+
 // GET /api/users/me 응답 (로그인한 사람 = 민서)
 export const ME = {
   userId: 2,

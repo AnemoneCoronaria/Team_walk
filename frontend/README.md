@@ -56,5 +56,6 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 | `/courses/:id/reviews` | C4 후기 전체 (자리만) | 승민 |
 | `/matches` | W1 동행 찾기 (E1 결과 없음) | 동훈 |
 | `/matches/:id`, `/matches/new` | W2 · W4, W3 (2주차, 자리만) | 동훈 |
-| `/login`, `/signup`, `/mypage` | A1, A3~A5, P1 (자리만) | 승민 |
+| `/login` | A1 로그인 (실패하면 A2 오류 상태). 가짜 데이터에서는 `db/seed.sql` 테스트 계정 + `test1234!` | 승민 |
+| `/signup`, `/mypage` | A3~A5, P1 (자리만) | 승민 |
 | `/health` | 환경 확인 | - |

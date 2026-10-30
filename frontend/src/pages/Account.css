@@ -1,0 +1,22 @@
+/* 계정 화면 (A1 로그인 · A3~A5 회원가입) */
+
+.account-page { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 64px 0; }
+.account-card { padding: 40px; border: 1px solid var(--border-default); border-radius: 20px; background: var(--bg-surface); }
+
+/* A2 로그인 오류 배너 */
+.account-alert {
+  align-self: stretch;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--status-danger-soft);
+  color: var(--status-danger);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+/* 체크박스 + 글자 (로그인 상태 유지, 약관 동의) */
+.account-check { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+.account-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--brand-green); cursor: pointer; }
+
+/* 버튼 모양 없는 글자 링크 (비밀번호 찾기) */
+.account-link { padding: 0; border: 0; background: none; font: inherit; cursor: pointer; }
