@@ -13,7 +13,3 @@ spring.datasource.password=내가_정한_비밀번호
 
 # 업로드 폴더 (후기 사진 · GPX). 경로는 슬래시(/)로 씁니다. 맥 예: /Users/이름/dev/jspTeam/uploads
 app.upload-dir=C:/dev/jspTeam/uploads
-
-# 개발용 로그인 (정란의 로그인 API가 나오기 전 테스트용). true 면 localhost:8080/api/dev/login?userId=2 로 로그인됨
-# 자세한 건 docs/development.md "로그인한 상태로 시험해 보기"
-app.dev-login=true

@@ -58,25 +58,12 @@ API · 화면 만드는 법, 백엔드 공통 코드, 브랜치 · PR 규칙, **
 | 목록 응답 | `new PageResult<>(items, page, size, total)` → `{ "items", "page", "size", "total" }`<br>SQL `LIMIT ? OFFSET ?` 의 OFFSET은 `PageResult.offset(page, size)` | `PageResult` |
 | 실패 응답 | `throw ApiException.notFound("코스를 찾을 수 없어요.");`<br>`badRequest`(400) · `forbidden`(403) · `notFound`(404) · `conflict("FULL", …)`(409)<br>그 밖의 코드는 `throw new ApiException(401, "LOGIN_FAILED", "…");` | `ApiException` |
 | 오류를 JSON으로 | 자동. 없는 주소 404, `@Valid` 검사 실패 · JSON 형식 오류 400, 업로드 용량 초과 400 `TOO_LARGE`, 그 밖의 예외 500 (원인은 서버 로그에) | `ApiExceptionHandler` |
-| 로그인한 사람 번호 | 파라미터에 `@LoginUser Long userId` → 로그인 안 했으면 **자동으로 401**<br>로그인 선택 API는 `@LoginUser(required = false) Long userId` (안 했으면 `null`)<br>파라미터 **맨 앞**에 두기 (그래야 입력값 검사 400보다 로그인 확인 401이 먼저) | `LoginUser` |
+| 로그인한 사람 번호 | 파라미터에 `@LoginUser Long userId` → 로그인 안 했으면 **자동으로 401**<br>로그인 선택 API는 `@LoginUser(required = false) Long userId` (안 했으면 `null`) | `LoginUser` |
 | 관리자 API | 주소를 `/api/admin/…`로 만들면 자동 검사 (로그인 안 함 401, 관리자 아님 403) | `AdminInterceptor` |
 | 로그인 · 로그아웃 (정란) | `SessionUtil.login(request, userId, role)` · `SessionUtil.logout(request)`<br>컨트롤러 파라미터에 `HttpServletRequest request` 를 받아서 사용 | `SessionUtil` |
 | 비밀번호 (정란) | `BCryptPasswordEncoder` — `build.gradle`에 `spring-security-crypto` 한 줄 추가 후 사용 ([backend/README.md](../backend/README.md#라이브러리-buildgradle)). **SQL로 비교하지 않기** | 로그인 만들 때 |
 | 사진 · GPX 저장 | `fileStore.save(file, "reviews/88-1.jpg")` → DB에는 이 경로만 저장<br>응답 주소는 `FileStore.url(path)` → `"/files/reviews/88-1.jpg"` (이 주소로 파일이 열림) | `FileStore` |
 | GPX 다운로드 | `return fileStore.download(gpxPath, "코스이름.gpx");` (파일 없으면 404) | `FileStore` |
-| GPX 읽기 | `GpxParser.parse(file)` → `[위도, 경도]` 목록, `GpxParser.toJson(points)` → `path_json`에 넣을 문자열. 형식이 틀리면 400 `INVALID_FORMAT` | `GpxParser` |
-
-**로그인한 상태로 시험해 보기 (개발용 로그인)**
-
-정란의 로그인 API가 나오기 전에도 "로그인 필요" API를 시험할 수 있게 개발용 로그인을 만들어 두었습니다.
-
-1. `application-local.properties`에 `app.dev-login=true` 한 줄 추가 → 서버 다시 켜기
-2. 브라우저에서 `localhost:8080/api/dev/login?userId=2` (seed 회원 번호: 1 admin, 2 민서, 3 정란, 4 동언, 5 동훈, 6 승민)
-3. 같은 브라우저에서 API 주소를 열면 그 회원으로 로그인한 상태입니다. 끝낼 때는 `/api/dev/logout`
-
-- POST · PUT · DELETE는 브라우저 주소창으로 못 부르니 터미널의 `curl`을 씁니다. 예시는 [`backend/scripts/match-api-test.sh`](../backend/scripts/match-api-test.sh) (동행 API 전체를 차례로 불러 보는 스크립트).
-- `app.dev-login`이 없거나 `false`면 이 주소는 404입니다.
-
 
 **예시: 동행 상세 `GET /api/matches/3`** (모양 참고용. 공통 코드를 그대로 쓰는 예시)
 
