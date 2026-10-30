@@ -6,7 +6,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.core.io.Resource;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,15 +16,18 @@ import org.springframework.web.bind.annotation.RestController;
 
 import kr.sanchaek.common.ApiException;
 import kr.sanchaek.common.ApiResponse;
+import kr.sanchaek.common.FileStore;
 import kr.sanchaek.common.PageResult;
 
 @RestController                     // web api endpoint 
 public class MatchController { 
 
     private final MatchRepository repo;     // MatchRepository를 DI함
+    private final FileStore files;          // GPX 파일 내려주기 (공통 코드)
 
-    public MatchController(MatchRepository repo) {
+    public MatchController(MatchRepository repo, FileStore files) {
         this.repo = repo;
+        this.files = files;
     }
 
 
@@ -79,4 +84,11 @@ public class MatchController {
 }
 
     
+
+    // 동행 경로 GPX 받기 (모집자가 첨부한 경우만. 없으면 404)
+    @GetMapping("/api/matches/{id}/gpx")
+    public ResponseEntity<Resource> gpx(@PathVariable("id") Long id) {
+        return files.download(repo.findGpxPath(id), "match-" + id + ".gpx");
+    }
+
 }
