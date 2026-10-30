@@ -96,14 +96,13 @@ backend/
 ├─ settings.gradle
 ├─ gradlew, gradlew.bat       Gradle 실행 파일 (따로 설치할 필요 없음)
 ├─ gradle/wrapper/            Gradle 버전 정보 (9.8.2)
-├─ scripts/                 API 확인용 curl 스크립트 (match-api-test.sh)
 └─ src/
    ├─ main/
    │  ├─ java/kr/sanchaek/
    │  │  ├─ SanchaekApplication.java   시작점
    │  │  ├─ common/      공통 코드 (민서) · ★ HelloController (/api/hello)
    │  │  │                 ApiResponse · ApiException · LoginUser · FileStore … (쓰는 법: docs/development.md)
-   │  │  ├─ match/       동행 · 관리자 AD3 (민서) · MatchController, MatchService, MatchRepository …
+   │  │  ├─ match/       동행 · 관리자 AD3 (민서)
    │  │  ├─ user/        계정 · 신고 · 관리자 AD1 · AD2 · AD4 (정란)
    │  │  └─ course/      코스 · GPX · 후기 · 랜드마크 (동언)
    │  └─ resources/
@@ -114,7 +113,7 @@ backend/
       └─ SanchaekApplicationTests.java    서버가 뜨는지만 보는 기본 테스트
 ```
 
-- `user/`, `course/` 폴더는 각자 첫 API를 만들 때 생깁니다. `match/`가 예시입니다 (Controller → Service → Repository).
+- `match/`, `user/`, `course/` 폴더는 각자 첫 API를 만들 때 생깁니다.
 - **★ `HelloController`는 환경 확인용이라 지우지 않습니다.**
 - `./gradlew build`(또는 `test`)는 기본 테스트가 DB 설정을 읽으므로 `application-local.properties`가 있어야 통과합니다. `bootRun`은 테스트를 돌리지 않습니다.
 
