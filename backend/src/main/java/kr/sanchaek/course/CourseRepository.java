@@ -187,6 +187,64 @@ public class CourseRepository {
                 rs.getDouble("avg_rating"), rs.getLong("review_count"));
     }
 
+    /** P3 내가 올린 코스: 코스 목록과 같은 모양 + visibility */
+    public record MyCourse(long courseId, String name, String area, double distanceKm, int durationMin,
+            String level, List<String> facilities, List<Double> start, double rating, long reviewCount,
+            String visibility) {}
+
+    /** 작성자가 지운 코스와 관리자가 숨긴 코스(상세 404)는 빼고, 최신순 */
+    @Transactional(readOnly = true)
+    public PageResult<MyCourse> mine(long userId, int page, int size) {
+        if (page < 1 || size < 1 || size > 100 || (long) (page - 1) * size > Integer.MAX_VALUE) {
+            throw ApiException.badRequest("페이지 값을 확인해 주세요.");
+        }
+        String where = " WHERE c.author_id=:userId AND c.is_deleted=FALSE AND c.is_hidden=FALSE";
+        MapSqlParameterSource params = new MapSqlParameterSource("userId", userId);
+        long total = jdbc.queryForObject("SELECT COUNT(*)" + BASE + where, params, Long.class);
+        params.addValue("size", size).addValue("offset", PageResult.offset(page, size));
+        List<MyCourse> items = jdbc.query("SELECT " + COLUMNS + ", c.visibility" + BASE + where
+                + " ORDER BY c.created_at DESC, c.course_id DESC LIMIT :size OFFSET :offset", params, (rs, n) -> {
+                    Summary s = summary(rs);
+                    return new MyCourse(s.courseId(), s.name(), s.area(), s.distanceKm(), s.durationMin(),
+                            s.level(), s.facilities(), s.start(), s.rating(), s.reviewCount(),
+                            rs.getString("visibility"));
+                });
+        return new PageResult<>(items, page, size, total);
+    }
+
+    /** 수정 · 삭제 전 확인: 없거나 지웠거나 숨긴 코스면 404, 작성자가 아니면 403. 행을 잠근다 */
+    public void checkAuthor(long id, long userId) {
+        List<Long> authors = jdbc.queryForList("SELECT author_id FROM courses "
+                + "WHERE course_id=:id AND is_deleted=FALSE AND is_hidden=FALSE FOR UPDATE",
+                new MapSqlParameterSource("id", id), Long.class);
+        if (authors.isEmpty()) {
+            throw ApiException.notFound("코스를 찾을 수 없습니다.");
+        }
+        if (authors.get(0) != userId) {
+            throw ApiException.forbidden("내가 올린 코스만 수정 · 삭제할 수 있어요.");
+        }
+    }
+
+    /** null 인 칸은 그대로 둔다 */
+    public void update(long id, String name, String description, boolean clearDescription, String level,
+            String visibility) {
+        jdbc.update("""
+                UPDATE courses SET
+                    name = COALESCE(:name, name),
+                    description = CASE WHEN :clear THEN NULL ELSE COALESCE(:description, description) END,
+                    level = COALESCE(:level, level),
+                    visibility = COALESCE(:visibility, visibility)
+                WHERE course_id = :id
+                """, new MapSqlParameterSource("id", id).addValue("name", name)
+                .addValue("description", description).addValue("clear", clearDescription)
+                .addValue("level", level).addValue("visibility", visibility));
+    }
+
+    /** 삭제해도 그 코스로 잡힌 동행 · 후기는 남기고, 코스만 숨긴다 */
+    public void markDeleted(long id) {
+        jdbc.update("UPDATE courses SET is_deleted=TRUE WHERE course_id=:id", new MapSqlParameterSource("id", id));
+    }
+
     @Transactional(readOnly = true)
     public Detail detail(long id, Long userId) {
         String sql = "SELECT " + COLUMNS

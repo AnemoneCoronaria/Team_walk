@@ -11,7 +11,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
-/** 코스 등록 (C3-3). GPX 파일은 업로드 폴더에 그대로 저장하고, 한 번 읽은 결과를 DB에 저장한다. */
+/** 코스 등록 (C3-3) · 내 코스 수정 · 삭제 (P3). GPX 파일은 업로드 폴더에 그대로 저장하고, 한 번 읽은 결과를 DB에 저장한다. */
 @Service
 public class CourseService {
     private static final int MAX_NAME_LENGTH = 20;
@@ -48,6 +48,34 @@ public class CourseService {
         deleteIfRolledBack(gpxPath);
         courses.setGpxPath(courseId, gpxPath);
         return courseId;
+    }
+
+    /** PUT /api/courses/{id} 본문. 보낸 칸만 바뀐다 (경로는 못 바꿈) */
+    public record UpdateCourseRequest(String name, String description, String level, List<String> facilities,
+            String visibility) {}
+
+    @Transactional
+    public void update(long userId, long courseId, UpdateCourseRequest request) {
+        if (request == null) {
+            throw ApiException.badRequest("요청 값을 확인해 주세요.");
+        }
+        courses.checkAuthor(courseId, userId);
+        String name = request.name() == null ? null : validName(request.name());
+        String level = request.level() == null ? null : validLevel(request.level());
+        String visibility = request.visibility() == null ? null : validVisibility(request.visibility());
+        List<String> facilities = request.facilities() == null ? null : validFacilities(request.facilities());
+        String description = blankToNull(request.description());
+        boolean clearDescription = request.description() != null && description == null;
+        courses.update(courseId, name, description, clearDescription, level, visibility);
+        if (facilities != null) {
+            courses.replaceFacilities(courseId, facilities);
+        }
+    }
+
+    @Transactional
+    public void delete(long userId, long courseId) {
+        courses.checkAuthor(courseId, userId);
+        courses.markDeleted(courseId);
     }
 
     static String validName(String name) {

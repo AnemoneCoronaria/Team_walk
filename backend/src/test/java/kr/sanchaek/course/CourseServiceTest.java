@@ -53,6 +53,40 @@ class CourseServiceTest {
         assertEquals("PRIVATE", jdbc.queryForObject("SELECT visibility FROM courses WHERE course_id=?", String.class, id));
     }
 
+    @Test void authorUpdatesOnlySentFieldsAndOthersAreForbidden() {
+        long author = jdbc.queryForObject("SELECT author_id FROM courses WHERE course_id=1", Long.class);
+        var before = courses.detail(1, author);
+        service().update(author, 1, new CourseService.UpdateCourseRequest(null, "", "HARD", List.of("PARKING"), null));
+        var after = courses.detail(1, author);
+        assertEquals(before.name(), after.name());
+        assertNull(after.description());
+        assertEquals("HARD", after.level());
+        assertEquals(List.of("PARKING"), after.facilities());
+        assertEquals(before.path(), after.path());
+
+        var forbidden = assertThrows(ApiException.class, () -> service().update(author + 1, 1,
+                new CourseService.UpdateCourseRequest("남의 코스", null, null, null, null)));
+        assertEquals(403, forbidden.getStatus());
+        var invalid = assertThrows(ApiException.class, () -> service().update(author, 1,
+                new CourseService.UpdateCourseRequest(null, null, null, null, "SECRET")));
+        assertEquals(400, invalid.getStatus());
+        assertEquals(404, assertThrows(ApiException.class, () -> service().delete(author, 9999)).getStatus());
+    }
+
+    @Test void deletedCourseLeavesListsAndDetailButKeepsReviewsAndMatches() {
+        long author = jdbc.queryForObject("SELECT author_id FROM courses WHERE course_id=1", Long.class);
+        long mineBefore = courses.mine(author, 1, 20).total();
+        assertTrue(courses.mine(author, 1, 20).items().stream().anyMatch(c -> c.courseId() == 1 && c.visibility() != null));
+        assertEquals(403, assertThrows(ApiException.class, () -> service().delete(author + 1, 1)).getStatus());
+        long reviews = jdbc.queryForObject("SELECT COUNT(*) FROM reviews WHERE course_id=1", Long.class);
+        service().delete(author, 1);
+        assertEquals(mineBefore - 1, courses.mine(author, 1, 20).total());
+        assertThrows(ApiException.class, () -> courses.detail(1, author));
+        assertEquals(404, assertThrows(ApiException.class, () -> service().delete(author, 1)).getStatus());
+        assertEquals(reviews, jdbc.queryForObject("SELECT COUNT(*) FROM reviews WHERE course_id=1", Long.class));
+        assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM courses WHERE course_id=1", Long.class));
+    }
+
     @Test void rejectsInvalidInputBeforeSaving() {
         long before = jdbc.queryForObject("SELECT COUNT(*) FROM courses", Long.class);
         for (var form : List.of(

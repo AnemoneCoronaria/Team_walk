@@ -4,9 +4,12 @@ import jakarta.servlet.http.HttpServletRequest;
 import kr.sanchaek.common.ApiResponse;
 import kr.sanchaek.common.LoginUser;
 import kr.sanchaek.common.PageResult;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -39,6 +42,26 @@ public class CourseController {
             @RequestParam(required = false) String visibility) {
         var form = new CourseService.NewCourseForm(name, level, description, facilities, visibility);
         return ApiResponse.ok(new Created(service.register(userId, file, form)));
+    }
+
+    @PutMapping("/api/courses/{id}")
+    public ApiResponse<Void> update(@PathVariable long id, @LoginUser Long userId,
+            @RequestBody CourseService.UpdateCourseRequest request) {
+        service.update(userId, id, request);
+        return ApiResponse.ok();
+    }
+
+    @DeleteMapping("/api/courses/{id}")
+    public ApiResponse<Void> delete(@PathVariable long id, @LoginUser Long userId) {
+        service.delete(userId, id);
+        return ApiResponse.ok();
+    }
+
+    @GetMapping("/api/users/me/courses")
+    public ApiResponse<PageResult<CourseRepository.MyCourse>> mine(@LoginUser Long userId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        return ApiResponse.ok(courses.mine(userId, page, size));
     }
 
     @GetMapping("/api/courses")
