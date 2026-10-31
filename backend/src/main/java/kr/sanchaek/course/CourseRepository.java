@@ -59,6 +59,15 @@ public class CourseRepository {
         return new MapSqlParameterSource("id", id).addValue("userId", userId == null ? 0L : userId);
     }
 
+    /** 이 사람이 볼 수 있는 코스인지 (상세와 같은 기준). 아니면 404. 후기 작성 · 목록에서 사용 */
+    public void checkVisible(long id, Long userId) {
+        Long found = jdbc.query("SELECT c.course_id FROM courses c WHERE c.course_id=:id AND " + VISIBLE,
+                accessParameters(id, userId), rs -> rs.next() ? rs.getLong(1) : null);
+        if (found == null) {
+            throw ApiException.notFound("코스를 찾을 수 없습니다.");
+        }
+    }
+
     public String gpxPath(long id, Long userId) {
         List<String> paths = jdbc.query("SELECT c.gpx_path FROM courses c WHERE c.course_id=:id AND " + VISIBLE,
                 accessParameters(id, userId), (rs, n) -> rs.getString("gpx_path"));
