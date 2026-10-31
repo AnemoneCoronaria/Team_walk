@@ -4,8 +4,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 import kr.sanchaek.common.ApiException;
 import kr.sanchaek.course.Geo;
 import kr.sanchaek.course.GpxService;
@@ -47,23 +45,26 @@ public class LandmarkService {
                 .toList());
     }
 
-    /** GPX 하나를 모든 랜드마크와 한 번에 비교: 경로의 어느 점이든 반경 안이면 스탬프 */
+    /**
+     * GPX 하나를 모든 랜드마크와 한 번에 비교: 경로의 어느 점이든 반경 안이면 스탬프.
+     * 동의 확인 → 파일 검사 순서는 명세(flow-stamp)대로. 파일 검사(최대 5MB)는 회원 행을 잠그기 전에 끝낸다.
+     */
     @Transactional
     public VerifyResult verify(long userId, MultipartFile file) {
-        Boolean agreed = landmarks.agreeLocationForUpdate(userId);
-        if (!Boolean.TRUE.equals(agreed)) {
-            throw new ApiException(403, "CONSENT_REQUIRED", "위치 정보 이용에 동의해야 인증할 수 있어요.");
-        }
+        checkConsent(landmarks.agreeLocation(userId));
         List<List<Double>> path = gpx.parse(file).path();
+        checkConsent(landmarks.agreeLocationForUpdate(userId));
 
-        List<LandmarkRepository.Row> near = landmarks.landmarks(userId).stream()
-                .filter(l -> path.stream().anyMatch(p -> Geo.meters(l.lat(), l.lng(), p.get(0), p.get(1)) <= l.radiusM()))
+        // 잠근 뒤에 읽어야 동시에 들어온 인증과 스탬프 수가 엇갈리지 않는다. 모든 랜드마크가 들어 있어 전체 수로도 쓴다
+        List<LandmarkRepository.Row> all = landmarks.landmarks(userId);
+        List<LandmarkRepository.Row> near = all.stream()
+                .filter(l -> Geo.passesNear(path, l.lat(), l.lng(), l.radiusM()))
                 .toList();
         if (near.isEmpty()) {
             return new VerifyResult("FAIL", "NOT_NEAR", List.of(), List.of(), List.of());
         }
 
-        Set<String> badgesBefore = codes(badges(userId));
+        int stampsBefore = (int) all.stream().filter(l -> l.stampedAt() != null).count();
         List<LandmarkRef> newStamps = new ArrayList<>();
         List<LandmarkRef> already = new ArrayList<>();
         for (LandmarkRepository.Row l : near) {
@@ -77,33 +78,52 @@ public class LandmarkService {
         if (newStamps.isEmpty()) {
             return new VerifyResult("FAIL", "ALREADY_ALL", List.of(), already, List.of());
         }
-        List<BadgeRef> newBadges = badges(userId).stream()
-                .filter(b -> !badgesBefore.contains(b.code()))
+        // 인증으로 바뀌는 건 스탬프 수뿐이라 동행 배지는 다시 셀 필요가 없다
+        int stampsAfter = stampsBefore + newStamps.size();
+        List<BadgeRef> newBadges = stampBadges(all.size()).stream()
+                .filter(b -> b.count() > stampsBefore && b.count() <= stampsAfter)
                 .map(b -> new BadgeRef(b.code(), b.name()))
                 .toList();
         return new VerifyResult("SUCCESS", null, newStamps, already, newBadges);
     }
 
+    private static void checkConsent(Boolean agreed) {
+        if (!Boolean.TRUE.equals(agreed)) {
+            throw new ApiException(403, "CONSENT_REQUIRED", "위치 정보 이용에 동의해야 인증할 수 있어요.");
+        }
+    }
+
     @Transactional(readOnly = true)
     public MyStamps myStamps(long userId) {
         List<LandmarkRepository.Stamp> stamps = landmarks.stamps(userId);
-        return new MyStamps(stamps.size(), landmarks.countLandmarks(), stamps, badges(userId));
+        long total = landmarks.countLandmarks();
+        return new MyStamps(stamps.size(), total, stamps, badges(stamps, total, landmarks.doneMatches(userId)));
     }
 
-    /** 배지는 저장하지 않고 스탬프 수 · 끝난 동행 참여 횟수로 계산 (Figma R2의 5개) */
-    List<Badge> badges(long userId) {
-        List<LocalDateTime> stamps = landmarks.stamps(userId).stream().map(LandmarkRepository.Stamp::stampedAt).toList();
-        long total = landmarks.countLandmarks();
-        List<LandmarkRepository.DoneMatch> done = landmarks.doneMatches(userId);
+    /** 스탬프 수로 받는 배지. count 번째 스탬프를 받을 때 생긴다 */
+    private record StampBadge(String code, String name, int count) {}
+
+    private static List<StampBadge> stampBadges(long totalLandmarks) {
+        List<StampBadge> list = new ArrayList<>();
+        list.add(new StampBadge("FIRST_WALK", "첫 산책", 1));
+        list.add(new StampBadge("LANDMARK_3", "랜드마크 3곳", 3));
+        if (totalLandmarks > 0) {
+            list.add(new StampBadge("SIHEUNG_MASTER", "시흥 산책 마스터", (int) totalLandmarks));
+        }
+        return list;
+    }
+
+    /** 배지는 저장하지 않고 스탬프 수 · 끝난 동행 참여 횟수로 계산 (Figma R2의 5개). stamps 는 받은 순서대로 */
+    static List<Badge> badges(List<LandmarkRepository.Stamp> stamps, long totalLandmarks,
+            List<LandmarkRepository.DoneMatch> done) {
+        List<LocalDateTime> stampTimes = stamps.stream().map(LandmarkRepository.Stamp::stampedAt).toList();
         List<LocalDateTime> matches = done.stream().map(LandmarkRepository.DoneMatch::meetAt).toList();
         List<LocalDateTime> exchanges = done.stream()
                 .filter(m -> "EXCHANGE".equals(m.target())).map(LandmarkRepository.DoneMatch::meetAt).toList();
 
         List<Badge> badges = new ArrayList<>();
-        addIfReached(badges, "FIRST_WALK", "첫 산책", stamps, 1);
-        addIfReached(badges, "LANDMARK_3", "랜드마크 3곳", stamps, 3);
-        if (total > 0) {
-            addIfReached(badges, "SIHEUNG_MASTER", "시흥 산책 마스터", stamps, (int) total);
+        for (StampBadge b : stampBadges(totalLandmarks)) {
+            addIfReached(badges, b.code(), b.name(), stampTimes, b.count());
         }
         addIfReached(badges, "FIRST_MATCH", "첫 동행", matches, 1);
         addIfReached(badges, "EXCHANGE_3", "내 · 외국인 교류 3회", exchanges, 3);
@@ -115,9 +135,5 @@ public class LandmarkService {
         if (times.size() >= n) {
             badges.add(new Badge(code, name, times.get(n - 1)));
         }
-    }
-
-    private static Set<String> codes(List<Badge> badges) {
-        return badges.stream().map(Badge::code).collect(Collectors.toSet());
     }
 }

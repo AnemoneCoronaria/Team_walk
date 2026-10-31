@@ -83,5 +83,7 @@ class LandmarkServiceTest {
         assertEquals("CONSENT_REQUIRED", consent.getCode());
         var bad = new MockMultipartFile("file", "walk.gpx", "application/gpx+xml", "<gpx/>".getBytes());
         assertEquals("INVALID_FORMAT", assertThrows(ApiException.class, () -> service.verify(4, bad)).getCode());
+        // 명세(flow-stamp) 순서: 동의 확인이 파일 검사보다 먼저
+        assertEquals("CONSENT_REQUIRED", assertThrows(ApiException.class, () -> service.verify(3, bad)).getCode());
     }
 }

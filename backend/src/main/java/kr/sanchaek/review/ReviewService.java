@@ -2,6 +2,7 @@ package kr.sanchaek.review;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -12,8 +13,6 @@ import kr.sanchaek.course.CourseRepository;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 /** 후기 작성 (R1) · 코스 후기 목록 (C2, C4) · 내 후기 · 삭제 (P4) */
@@ -22,6 +21,9 @@ public class ReviewService {
     private static final int MAX_PHOTOS = 5;
     private static final long MAX_PHOTO_SIZE = 5 * 1024 * 1024;
     private static final int MIN_CONTENT_LENGTH = 10;
+    private static final int MAX_CONTENT_LENGTH = 20000;
+    /** content 는 TEXT 컬럼(최대 65,535바이트). 이모지(4바이트)만 쓰면 20000자도 넘칠 수 있어서 바이트도 확인 */
+    private static final int TEXT_MAX_BYTES = 65_535;
 
     private final ReviewRepository reviews;
     private final CourseRepository courses;
@@ -44,8 +46,12 @@ public class ReviewService {
             throw ApiException.badRequest("별점은 1~5점이에요.");
         }
         String content = form.content() == null ? "" : form.content().strip();
-        if (content.codePointCount(0, content.length()) < MIN_CONTENT_LENGTH) {
+        int length = content.codePointCount(0, content.length());
+        if (length < MIN_CONTENT_LENGTH) {
             throw ApiException.badRequest("후기는 10자 이상 써 주세요.");
+        }
+        if (length > MAX_CONTENT_LENGTH || utf8Bytes(content) > TEXT_MAX_BYTES) {
+            throw ApiException.badRequest("후기는 20000자 이하로 써 주세요.");
         }
         List<Photo> photos = validPhotos(photoFiles);
         courses.checkVisible(form.courseId(), userId);
@@ -61,8 +67,7 @@ public class ReviewService {
         }
         for (int i = 0; i < photos.size(); i++) {
             String path = "reviews/" + reviewId + "-" + (i + 1) + photos.get(i).extension();
-            files.save(photos.get(i).file(), path);
-            deleteIfRolledBack(path);
+            files.saveInTransaction(photos.get(i).file(), path);
             reviews.insertPhoto(reviewId, path, i + 1);
         }
         return reviewId;
@@ -76,7 +81,7 @@ public class ReviewService {
             case "rating" -> "r.rating DESC, r.created_at DESC";
             default -> throw ApiException.badRequest("정렬 값을 확인해 주세요.");
         };
-        checkPage(page, size);
+        PageResult.validate(page, size);
         courses.checkVisible(courseId, userId);
         PageResult<ReviewRepository.Review> result = reviews.courseReviews(courseId, order, photoOnly, page, size);
         return new ReviewRepository.ReviewPage(result.items(), page, size, result.total(), reviews.avgRating(courseId));
@@ -84,14 +89,14 @@ public class ReviewService {
 
     @Transactional(readOnly = true)
     public PageResult<ReviewRepository.MyReview> myReviews(long userId, int page, int size) {
-        checkPage(page, size);
+        PageResult.validate(page, size);
         return reviews.userReviews(userId, page, size);
     }
 
     @Transactional
     public void delete(long userId, long reviewId) {
         Long author = reviews.authorForUpdate(reviewId);
-        if (author == null) {
+        if (author == null) {   // 관리자가 숨긴 후기도 목록처럼 없는 것으로 (신고 기록 · 중복 작성 막기 유지)
             throw ApiException.notFound("후기를 찾을 수 없어요.");
         }
         if (author != userId) {
@@ -99,13 +104,7 @@ public class ReviewService {
         }
         List<String> paths = reviews.photoPaths(reviewId);
         reviews.delete(reviewId);
-        deleteAfterCommit(paths);
-    }
-
-    static void checkPage(int page, int size) {
-        if (page < 1 || size < 1 || size > 100 || (long) (page - 1) * size > Integer.MAX_VALUE) {
-            throw ApiException.badRequest("페이지 값을 확인해 주세요.");
-        }
+        files.deleteAfterCommit(paths);
     }
 
     /** 동행으로 걸었을 때: 그 코스의 끝난 동행이고, 내가 끝까지 참여했어야 함 */
@@ -176,32 +175,7 @@ public class ReviewService {
         throw new ApiException(400, "INVALID_FORMAT", "사진은 jpg · png 파일만 올릴 수 있어요.");
     }
 
-    /** 삭제가 확정(커밋)된 뒤에 사진 파일을 지운다 */
-    private void deleteAfterCommit(List<String> paths) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            paths.forEach(files::delete);
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCommit() {
-                paths.forEach(files::delete);
-            }
-        });
-    }
-
-    /** DB 저장이 취소되면(롤백) 방금 저장한 사진도 지운다 */
-    private void deleteIfRolledBack(String path) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCompletion(int status) {
-                if (status != STATUS_COMMITTED) {
-                    files.delete(path);
-                }
-            }
-        });
+    private static int utf8Bytes(String text) {
+        return text.getBytes(StandardCharsets.UTF_8).length;
     }
 }

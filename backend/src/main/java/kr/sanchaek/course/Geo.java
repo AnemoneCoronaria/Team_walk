@@ -1,5 +1,7 @@
 package kr.sanchaek.course;
 
+import java.util.List;
+
 /** 두 좌표 사이 거리 · 지역 계산. 코스 상세의 랜드마크와 랜드마크 인증이 같은 코드를 쓴다 */
 public final class Geo {
     private static final double EARTH_RADIUS_METERS = 6_371_000;
@@ -12,6 +14,11 @@ public final class Geo {
         double a = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(Math.toRadians(lat1))
                 * Math.cos(Math.toRadians(lat2)) * Math.pow(Math.sin(dLon / 2), 2);
         return EARTH_RADIUS_METERS * 2 * Math.asin(Math.sqrt(Math.min(1, a)));
+    }
+
+    /** 경로([[lat, lng], ...])의 어느 한 점이라도 (lat, lng) 에서 radiusM 미터 안이면 true */
+    public static boolean passesNear(List<List<Double>> path, double lat, double lng, double radiusM) {
+        return path.stream().anyMatch(point -> meters(lat, lng, point.get(0), point.get(1)) <= radiusM);
     }
 
     // 명세에 지역 중심 좌표가 없어 시드 코스의 시작점을 대표점으로 사용한다.

@@ -97,6 +97,8 @@ class ReviewServiceTest {
                 new Case(6, new ReviewService.NewReview(null, null, 4, "열 글자 넘는 후기예요"), null, 400),
                 new Case(6, new ReviewService.NewReview(3L, null, 6, "열 글자 넘는 후기예요"), null, 400),
                 new Case(6, new ReviewService.NewReview(3L, null, 4, "짧아요"), null, 400),
+                new Case(6, new ReviewService.NewReview(3L, null, 4, "가".repeat(20001)), null, 400),
+                new Case(6, new ReviewService.NewReview(3L, null, 4, "😀".repeat(17000)), null, 400),
                 new Case(6, new ReviewService.NewReview(3L, null, 4, "열 글자 넘는 후기예요"), List.of(fakeJpg), 400),
                 new Case(6, new ReviewService.NewReview(3L, null, 4, "열 글자 넘는 후기예요"), six, 400),
                 new Case(6, new ReviewService.NewReview(9999L, null, 4, "열 글자 넘는 후기예요"), null, 404),

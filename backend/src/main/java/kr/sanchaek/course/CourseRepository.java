@@ -5,7 +5,9 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -164,14 +166,16 @@ public class CourseRepository {
         }
         long total = jdbc.queryForObject("SELECT COUNT(*)" + BASE + where, params, Long.class);
         params.addValue("size", size).addValue("offset", (page - 1) * size);
-        List<Summary> items = jdbc.query("SELECT " + COLUMNS + BASE + where + " ORDER BY " + order
-                + ", c.course_id ASC LIMIT :size OFFSET :offset", params, (rs, n) -> summary(rs));
+        List<Summary> rows = jdbc.query("SELECT " + COLUMNS + BASE + where + " ORDER BY " + order
+                + ", c.course_id ASC LIMIT :size OFFSET :offset", params, (rs, n) -> summary(rs, List.of()));
+        Map<Long, List<String>> facilities = facilitiesOf(rows.stream().map(Summary::courseId).toList());
+        List<Summary> items = rows.stream().map(s -> withFacilities(s, facilities)).toList();
         return new PageResult<>(items, page, size, total);
     }
 
     private static void validateFilters(String area, Double min, Double max, String level, int page, int size) {
-        if (page < 1 || size < 1 || size > 100 || (long) (page - 1) * size > Integer.MAX_VALUE
-                || invalidDistance(min) || invalidDistance(max) || (min != null && max != null && min > max)) {
+        PageResult.validate(page, size);
+        if (invalidDistance(min) || invalidDistance(max) || (min != null && max != null && min > max)) {
             throw ApiException.badRequest("필터와 페이지 값을 확인해 주세요.");
         }
         if ((area != null && !AREAS.contains(area)) || (level != null && !LEVELS.contains(level))) {
@@ -188,12 +192,30 @@ public class CourseRepository {
                 new MapSqlParameterSource("id", id), String.class);
     }
 
-    private Summary summary(ResultSet rs) throws SQLException {
-        long id = rs.getLong("course_id");
-        return new Summary(id, rs.getString("name"), rs.getString("area"), rs.getDouble("distance_km"),
-                rs.getInt("duration_min"), rs.getString("level"), facilities(id),
+    /** 목록용: 여러 코스의 편의시설을 쿼리 한 번으로 (코스마다 facility 순) */
+    private Map<Long, List<String>> facilitiesOf(List<Long> ids) {
+        Map<Long, List<String>> result = new HashMap<>();
+        if (ids.isEmpty()) {
+            return result;
+        }
+        jdbc.query("SELECT course_id, facility FROM course_facilities WHERE course_id IN (:ids) "
+                + "ORDER BY course_id, facility", new MapSqlParameterSource("ids", ids), rs -> {
+                    result.computeIfAbsent(rs.getLong("course_id"), k -> new ArrayList<>())
+                            .add(rs.getString("facility"));
+                });
+        return result;
+    }
+
+    private static Summary summary(ResultSet rs, List<String> facilities) throws SQLException {
+        return new Summary(rs.getLong("course_id"), rs.getString("name"), rs.getString("area"),
+                rs.getDouble("distance_km"), rs.getInt("duration_min"), rs.getString("level"), facilities,
                 List.of(rs.getDouble("start_lat"), rs.getDouble("start_lng")),
                 rs.getDouble("avg_rating"), rs.getLong("review_count"));
+    }
+
+    private static Summary withFacilities(Summary s, Map<Long, List<String>> facilities) {
+        return new Summary(s.courseId(), s.name(), s.area(), s.distanceKm(), s.durationMin(), s.level(),
+                facilities.getOrDefault(s.courseId(), List.of()), s.start(), s.rating(), s.reviewCount());
     }
 
     /** P3 내가 올린 코스: 코스 목록과 같은 모양 + visibility */
@@ -204,20 +226,22 @@ public class CourseRepository {
     /** 작성자가 지운 코스와 관리자가 숨긴 코스(상세 404)는 빼고, 최신순 */
     @Transactional(readOnly = true)
     public PageResult<MyCourse> mine(long userId, int page, int size) {
-        if (page < 1 || size < 1 || size > 100 || (long) (page - 1) * size > Integer.MAX_VALUE) {
-            throw ApiException.badRequest("페이지 값을 확인해 주세요.");
-        }
+        PageResult.validate(page, size);
         String where = " WHERE c.author_id=:userId AND c.is_deleted=FALSE AND c.is_hidden=FALSE";
         MapSqlParameterSource params = new MapSqlParameterSource("userId", userId);
         long total = jdbc.queryForObject("SELECT COUNT(*)" + BASE + where, params, Long.class);
         params.addValue("size", size).addValue("offset", PageResult.offset(page, size));
-        List<MyCourse> items = jdbc.query("SELECT " + COLUMNS + ", c.visibility" + BASE + where
+        List<MyCourse> rows = jdbc.query("SELECT " + COLUMNS + ", c.visibility" + BASE + where
                 + " ORDER BY c.created_at DESC, c.course_id DESC LIMIT :size OFFSET :offset", params, (rs, n) -> {
-                    Summary s = summary(rs);
+                    Summary s = summary(rs, List.of());
                     return new MyCourse(s.courseId(), s.name(), s.area(), s.distanceKm(), s.durationMin(),
                             s.level(), s.facilities(), s.start(), s.rating(), s.reviewCount(),
                             rs.getString("visibility"));
                 });
+        Map<Long, List<String>> facilities = facilitiesOf(rows.stream().map(MyCourse::courseId).toList());
+        List<MyCourse> items = rows.stream().map(c -> new MyCourse(c.courseId(), c.name(), c.area(),
+                c.distanceKm(), c.durationMin(), c.level(), facilities.getOrDefault(c.courseId(), List.of()),
+                c.start(), c.rating(), c.reviewCount(), c.visibility())).toList();
         return new PageResult<>(items, page, size, total);
     }
 
@@ -284,11 +308,8 @@ public class CourseRepository {
     private List<Landmark> landmarksAlong(List<List<Double>> path) {
         return jdbc.query("SELECT landmark_id, name, lat, lng, radius_m FROM landmarks "
                 + "ORDER BY sort_order, landmark_id", (rs, i) -> {
-                    double lat = rs.getDouble("lat");
-                    double lon = rs.getDouble("lng");
-                    double radius = rs.getDouble("radius_m");
-                    boolean nearby = path.stream()
-                            .anyMatch(point -> Geo.meters(lat, lon, point.get(0), point.get(1)) <= radius);
+                    boolean nearby = Geo.passesNear(path, rs.getDouble("lat"), rs.getDouble("lng"),
+                            rs.getDouble("radius_m"));
                     return nearby ? new Landmark(rs.getLong("landmark_id"), rs.getString("name")) : null;
                 }).stream().filter(java.util.Objects::nonNull).toList();
     }

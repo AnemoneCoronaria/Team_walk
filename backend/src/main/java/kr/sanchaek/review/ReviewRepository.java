@@ -3,9 +3,13 @@ package kr.sanchaek.review;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import kr.sanchaek.common.FileStore;
 import kr.sanchaek.common.PageResult;
+import org.springframework.jdbc.core.RowCallbackHandler;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -43,6 +47,9 @@ public class ReviewRepository {
         params.addValue("size", size).addValue("offset", PageResult.offset(page, size));
         List<Review> items = jdbc.query("SELECT " + COLUMNS + where + " ORDER BY " + order
                 + ", r.review_id DESC LIMIT :size OFFSET :offset", params, (rs, n) -> review(rs));
+        Map<Long, List<String>> photos = photos(items.stream().map(Review::reviewId).toList());
+        items = items.stream().map(r -> new Review(r.reviewId(), r.author(), r.rating(), r.content(),
+                photos.getOrDefault(r.reviewId(), List.of()), r.withMatch(), r.createdAt())).toList();
         return new PageResult<>(items, page, size, total);
     }
 
@@ -107,6 +114,9 @@ public class ReviewRepository {
                             r.withMatch(), r.createdAt(), new CourseRef(rs.getLong("course_id"),
                                     rs.getString("course_name")));
                 });
+        Map<Long, List<String>> photos = photos(items.stream().map(MyReview::reviewId).toList());
+        items = items.stream().map(r -> new MyReview(r.reviewId(), r.author(), r.rating(), r.content(),
+                photos.getOrDefault(r.reviewId(), List.of()), r.withMatch(), r.createdAt(), r.course())).toList();
         return new PageResult<>(items, page, size, total);
     }
 
@@ -127,17 +137,25 @@ public class ReviewRepository {
         jdbc.update("DELETE FROM reviews WHERE review_id = :id", new MapSqlParameterSource("id", reviewId));
     }
 
-    private List<String> photos(long reviewId) {
-        return jdbc.queryForList("SELECT file_path FROM review_photos WHERE review_id = :id ORDER BY sort_order",
-                new MapSqlParameterSource("id", reviewId), String.class)
-                .stream().map(FileStore::url).toList();
+    /** 한 페이지 후기들의 사진 url 을 한 번에: review_id → sort_order 순 url 목록 */
+    private Map<Long, List<String>> photos(List<Long> reviewIds) {
+        Map<Long, List<String>> photos = new HashMap<>();
+        if (reviewIds.isEmpty()) {
+            return photos;
+        }
+        jdbc.query("SELECT review_id, file_path FROM review_photos WHERE review_id IN (:ids) "
+                + "ORDER BY review_id, sort_order", new MapSqlParameterSource("ids", reviewIds),
+                (RowCallbackHandler) rs -> photos.computeIfAbsent(rs.getLong("review_id"), id -> new ArrayList<>())
+                        .add(FileStore.url(rs.getString("file_path"))));
+        return photos;
     }
 
-    Review review(ResultSet rs) throws SQLException {
+    /** 사진은 비워 두고 만든다. 목록에서 photos(ids) 로 한 번에 채움 */
+    private Review review(ResultSet rs) throws SQLException {
         long id = rs.getLong("review_id");
         String nickname = "WITHDRAWN".equals(rs.getString("user_status")) ? "탈퇴한 회원" : rs.getString("nickname");
         return new Review(id, new Author(rs.getLong("user_id"), nickname, rs.getString("avatar")),
-                rs.getInt("rating"), rs.getString("content"), photos(id), rs.getBoolean("with_match"),
+                rs.getInt("rating"), rs.getString("content"), List.of(), rs.getBoolean("with_match"),
                 rs.getTimestamp("created_at").toLocalDateTime());
     }
 }

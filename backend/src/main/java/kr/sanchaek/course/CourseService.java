@@ -1,5 +1,6 @@
 package kr.sanchaek.course;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -7,14 +8,16 @@ import kr.sanchaek.common.ApiException;
 import kr.sanchaek.common.FileStore;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 /** 코스 등록 (C3-3) · 내 코스 수정 · 삭제 (P3). GPX 파일은 업로드 폴더에 그대로 저장하고, 한 번 읽은 결과를 DB에 저장한다. */
 @Service
 public class CourseService {
     private static final int MAX_NAME_LENGTH = 20;
+    private static final int MAX_DESCRIPTION_LENGTH = 20000;
+    private static final int TEXT_MAX_BYTES = 65_535; // description 은 TEXT 컬럼
+    /** courses.distance_km 이 DECIMAL(5,2) */
+    private static final double MAX_DISTANCE_KM = 999.99;
 
     private final CourseRepository courses;
     private final GpxService gpx;
@@ -35,17 +38,19 @@ public class CourseService {
         String level = validLevel(form.level());
         String visibility = validVisibility(form.visibility());
         List<String> facilities = parseFacilities(form.facilities());
+        String description = validDescription(form.description());
         GpxService.Result route = gpx.parse(file);
+        if (route.distanceKm() > MAX_DISTANCE_KM) {
+            throw ApiException.badRequest("코스 거리는 999.99km 이하여야 해요.");
+        }
 
-        long courseId = courses.insert(new CourseRepository.NewCourse(userId, name, blankToNull(form.description()),
-                Geo.area(route.start().get(0), route.start().get(1)), level, route.distanceKm(),
-                route.durationMin(), route.start().get(0), route.start().get(1), toJson(route.path()),
-                visibility));
+        long courseId = courses.insert(new CourseRepository.NewCourse(userId, name, description,
+                route.area(), level, route.distanceKm(), route.durationMin(), route.start().get(0),
+                route.start().get(1), toJson(route.path()), visibility));
         courses.replaceFacilities(courseId, facilities);
 
         String gpxPath = "gpx/course-" + courseId + ".gpx";
-        files.save(file, gpxPath);
-        deleteIfRolledBack(gpxPath);
+        files.saveInTransaction(file, gpxPath);
         courses.setGpxPath(courseId, gpxPath);
         return courseId;
     }
@@ -64,7 +69,7 @@ public class CourseService {
         String level = request.level() == null ? null : validLevel(request.level());
         String visibility = request.visibility() == null ? null : validVisibility(request.visibility());
         List<String> facilities = request.facilities() == null ? null : validFacilities(request.facilities());
-        String description = blankToNull(request.description());
+        String description = validDescription(request.description());
         boolean clearDescription = request.description() != null && description == null;
         courses.update(courseId, name, description, clearDescription, level, visibility);
         if (facilities != null) {
@@ -100,6 +105,16 @@ public class CourseService {
         return visibility;
     }
 
+    /** 앞뒤 공백을 지우고, 비어 있으면 null. 20000자 또는 TEXT 컬럼 한도(65,535바이트)를 넘으면 400 */
+    static String validDescription(String description) {
+        String value = blankToNull(description);
+        if (value != null && (value.codePointCount(0, value.length()) > MAX_DESCRIPTION_LENGTH
+                || value.getBytes(StandardCharsets.UTF_8).length > TEXT_MAX_BYTES)) {
+            throw ApiException.badRequest("코스 소개는 20000자 이하로 입력해 주세요.");
+        }
+        return value;
+    }
+
     /** "TOILET,BENCH" → [BENCH, TOILET]. 비어 있으면 빈 목록 */
     static List<String> parseFacilities(String value) {
         if (value == null || value.isBlank()) {
@@ -123,20 +138,5 @@ public class CourseService {
     private static String toJson(List<List<Double>> path) {
         return path.stream().map(p -> "[" + p.get(0) + "," + p.get(1) + "]")
                 .collect(Collectors.joining(",", "[", "]"));
-    }
-
-    /** DB 저장이 취소되면(롤백) 방금 저장한 파일도 지운다 */
-    private void deleteIfRolledBack(String path) {
-        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-            return;
-        }
-        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
-            @Override
-            public void afterCompletion(int status) {
-                if (status != STATUS_COMMITTED) {
-                    files.delete(path);
-                }
-            }
-        });
     }
 }

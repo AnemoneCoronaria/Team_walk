@@ -38,6 +38,13 @@ public class LandmarkRepository {
         return jdbc.queryForObject("SELECT COUNT(*) FROM landmarks", new MapSqlParameterSource(), Long.class);
     }
 
+    /** 위치 정보 동의 여부 (잠그지 않음). 회원이 없으면 null */
+    public Boolean agreeLocation(long userId) {
+        List<Boolean> rows = jdbc.queryForList("SELECT agree_location FROM users WHERE user_id = :userId",
+                new MapSqlParameterSource("userId", userId), Boolean.class);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
     /** 위치 정보 동의 여부. 같은 사람이 동시에 인증하지 않도록 회원 행을 잠근다. 회원이 없으면 null */
     public Boolean agreeLocationForUpdate(long userId) {
         List<Boolean> rows = jdbc.queryForList("SELECT agree_location FROM users WHERE user_id = :userId FOR UPDATE",

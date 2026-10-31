@@ -28,6 +28,19 @@ class CourseServiceTest {
         for (int i = 0; i < 25; i++) {
             points.append("<trkpt lat='37.35272' lon='").append(126.709915 + i * 0.0002).append("'/>");
         }
+        return gpxOf(points);
+    }
+
+    /** 위도 0.45도(약 50km)씩 25점 → 약 1,200km */
+    static MockMultipartFile longGpx() {
+        StringBuilder points = new StringBuilder();
+        for (int i = 0; i < 25; i++) {
+            points.append("<trkpt lat='").append(27.0 + i * 0.45).append("' lon='126.709915'/>");
+        }
+        return gpxOf(points);
+    }
+
+    private static MockMultipartFile gpxOf(CharSequence points) {
         byte[] xml = ("<gpx><trk><trkseg>" + points + "</trkseg></trk></gpx>").getBytes(StandardCharsets.UTF_8);
         return new MockMultipartFile("file", "route.gpx", "application/gpx+xml", xml);
     }
@@ -79,11 +92,14 @@ class CourseServiceTest {
         assertTrue(courses.mine(author, 1, 20).items().stream().anyMatch(c -> c.courseId() == 1 && c.visibility() != null));
         assertEquals(403, assertThrows(ApiException.class, () -> service().delete(author + 1, 1)).getStatus());
         long reviews = jdbc.queryForObject("SELECT COUNT(*) FROM reviews WHERE course_id=1", Long.class);
+        long matches = jdbc.queryForObject("SELECT COUNT(*) FROM matches WHERE course_id=1", Long.class);
         service().delete(author, 1);
         assertEquals(mineBefore - 1, courses.mine(author, 1, 20).total());
         assertThrows(ApiException.class, () -> courses.detail(1, author));
         assertEquals(404, assertThrows(ApiException.class, () -> service().delete(author, 1)).getStatus());
         assertEquals(reviews, jdbc.queryForObject("SELECT COUNT(*) FROM reviews WHERE course_id=1", Long.class));
+        // 명세: 코스를 지워도 그 코스로 잡힌 동행은 남김 (schema.sql courses 주석)
+        assertEquals(matches, jdbc.queryForObject("SELECT COUNT(*) FROM matches WHERE course_id=1", Long.class));
         assertEquals(1, jdbc.queryForObject("SELECT COUNT(*) FROM courses WHERE course_id=1", Long.class));
     }
 
@@ -103,5 +119,30 @@ class CourseServiceTest {
                 new CourseService.NewCourseForm("코스", "EASY", null, null, "PUBLIC")));
         assertEquals("INVALID_FORMAT", e.getCode());
         assertEquals(before, jdbc.queryForObject("SELECT COUNT(*) FROM courses", Long.class));
+    }
+
+    @Test void rejectsRouteLongerThanDistanceColumn() {
+        long before = jdbc.queryForObject("SELECT COUNT(*) FROM courses", Long.class);
+        var e = assertThrows(ApiException.class, () -> service().register(4L, longGpx(),
+                new CourseService.NewCourseForm("긴 코스", "HARD", null, null, "PUBLIC")));
+        assertEquals(400, e.getStatus());
+        assertEquals("INVALID_INPUT", e.getCode());
+        assertEquals(before, jdbc.queryForObject("SELECT COUNT(*) FROM courses", Long.class));
+    }
+
+    @Test void limitsDescriptionTo20000Characters() {
+        long before = jdbc.queryForObject("SELECT COUNT(*) FROM courses", Long.class);
+        var tooLong = "가".repeat(20001);
+        var e = assertThrows(ApiException.class, () -> service().register(4L, gpx(),
+                new CourseService.NewCourseForm("코스", "EASY", tooLong, null, "PUBLIC")));
+        assertEquals("INVALID_INPUT", e.getCode());
+        assertEquals(before, jdbc.queryForObject("SELECT COUNT(*) FROM courses", Long.class));
+
+        long author = jdbc.queryForObject("SELECT author_id FROM courses WHERE course_id=1", Long.class);
+        var update = assertThrows(ApiException.class, () -> service().update(author, 1,
+                new CourseService.UpdateCourseRequest(null, tooLong, null, null, null)));
+        assertEquals(400, update.getStatus());
+        service().update(author, 1, new CourseService.UpdateCourseRequest(null, "가".repeat(20000), null, null, null));
+        assertEquals(20000, courses.detail(1, author).description().length());
     }
 }
