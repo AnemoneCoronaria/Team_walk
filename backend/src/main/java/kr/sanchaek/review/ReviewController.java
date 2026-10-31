@@ -3,7 +3,9 @@ package kr.sanchaek.review;
 import java.util.List;
 import kr.sanchaek.common.ApiResponse;
 import kr.sanchaek.common.LoginUser;
+import kr.sanchaek.common.PageResult;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -43,5 +45,18 @@ public class ReviewController {
             @RequestParam(defaultValue = "1") int page,
             @RequestParam(defaultValue = "10") int size) {
         return ApiResponse.ok(service.courseReviews(id, userId, sort, photo, page, size));
+    }
+
+    @GetMapping("/api/users/me/reviews")
+    public ApiResponse<PageResult<ReviewRepository.MyReview>> myReviews(@LoginUser Long userId,
+            @RequestParam(defaultValue = "1") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ApiResponse.ok(service.myReviews(userId, page, size));
+    }
+
+    @DeleteMapping("/api/reviews/{id}")
+    public ApiResponse<Void> delete(@PathVariable long id, @LoginUser Long userId) {
+        service.delete(userId, id);
+        return ApiResponse.ok();
     }
 }

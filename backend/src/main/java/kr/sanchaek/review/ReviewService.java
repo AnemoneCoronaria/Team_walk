@@ -16,7 +16,7 @@ import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
-/** 후기 작성 (R1) · 코스 후기 목록 (C2, C4) */
+/** 후기 작성 (R1) · 코스 후기 목록 (C2, C4) · 내 후기 · 삭제 (P4) */
 @Service
 public class ReviewService {
     private static final int MAX_PHOTOS = 5;
@@ -80,6 +80,26 @@ public class ReviewService {
         courses.checkVisible(courseId, userId);
         PageResult<ReviewRepository.Review> result = reviews.courseReviews(courseId, order, photoOnly, page, size);
         return new ReviewRepository.ReviewPage(result.items(), page, size, result.total(), reviews.avgRating(courseId));
+    }
+
+    @Transactional(readOnly = true)
+    public PageResult<ReviewRepository.MyReview> myReviews(long userId, int page, int size) {
+        checkPage(page, size);
+        return reviews.userReviews(userId, page, size);
+    }
+
+    @Transactional
+    public void delete(long userId, long reviewId) {
+        Long author = reviews.authorForUpdate(reviewId);
+        if (author == null) {
+            throw ApiException.notFound("후기를 찾을 수 없어요.");
+        }
+        if (author != userId) {
+            throw ApiException.forbidden("내가 쓴 후기만 지울 수 있어요.");
+        }
+        List<String> paths = reviews.photoPaths(reviewId);
+        reviews.delete(reviewId);
+        deleteAfterCommit(paths);
     }
 
     static void checkPage(int page, int size) {
@@ -154,6 +174,20 @@ public class ReviewService {
             return ".png";
         }
         throw new ApiException(400, "INVALID_FORMAT", "사진은 jpg · png 파일만 올릴 수 있어요.");
+    }
+
+    /** 삭제가 확정(커밋)된 뒤에 사진 파일을 지운다 */
+    private void deleteAfterCommit(List<String> paths) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            paths.forEach(files::delete);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                paths.forEach(files::delete);
+            }
+        });
     }
 
     /** DB 저장이 취소되면(롤백) 방금 저장한 사진도 지운다 */

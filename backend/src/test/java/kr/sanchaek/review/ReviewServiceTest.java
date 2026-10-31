@@ -69,6 +69,26 @@ class ReviewServiceTest {
                 () -> service().courseReviews(9999, null, "recent", false, 1, 10)).getStatus());
     }
 
+    @Test void listsMyReviewsWithCourseAndDeletesOnlyOwnReview() throws Exception {
+        // 민서(2): 후기 1번(코스 3, 사진 2장). 승민(6): 후기 4번은 관리자가 숨김
+        var mine = service().myReviews(2, 1, 10);
+        assertEquals(1, mine.total());
+        assertEquals(new ReviewRepository.CourseRef(3, courses.detail(3, null).name()), mine.items().get(0).course());
+        assertEquals(2, mine.items().get(0).photos().size());
+        assertEquals(0, service().myReviews(6, 1, 10).total());
+
+        Files.createDirectories(uploadDir.resolve("reviews"));
+        Files.write(uploadDir.resolve("reviews/1-1.jpg"), JPG);
+        assertEquals(403, assertThrows(ApiException.class, () -> service().delete(3, 1)).getStatus());
+        assertEquals(404, assertThrows(ApiException.class, () -> service().delete(2, 9999)).getStatus());
+        service().delete(2, 1);
+        assertEquals(0, service().myReviews(2, 1, 10).total());
+        assertEquals(0, jdbc.queryForObject("SELECT COUNT(*) FROM review_photos WHERE review_id=1", Long.class));
+        assertEquals(1, service().courseReviews(3, null, "recent", false, 1, 10).total());
+        // 파일은 커밋 뒤에 지우므로, 롤백되는 테스트에서는 그대로 남음
+        assertTrue(Files.exists(uploadDir.resolve("reviews/1-1.jpg")));
+    }
+
     @Test void rejectsInvalidReviews() {
         record Case(long user, ReviewService.NewReview form, List<MockMultipartFile> photos, int status) {}
         var fakeJpg = new MockMultipartFile("photos", "x.jpg", "image/jpeg", "not an image".getBytes());

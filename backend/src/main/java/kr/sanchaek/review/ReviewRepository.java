@@ -88,6 +88,45 @@ public class ReviewRepository {
                 new MapSqlParameterSource("id", reviewId).addValue("path", filePath).addValue("order", order));
     }
 
+    public record CourseRef(long courseId, String name) {}
+    /** P4 내 후기: 코스 후기 목록과 같은 모양 + course */
+    public record MyReview(long reviewId, Author author, int rating, String content, List<String> photos,
+            boolean withMatch, LocalDateTime createdAt, CourseRef course) {}
+
+    /** 관리자가 숨긴 후기는 빼고 최신순. 코스가 지워졌어도 후기는 보여 준다 */
+    public PageResult<MyReview> userReviews(long userId, int page, int size) {
+        String where = " FROM reviews r JOIN users u ON u.user_id = r.user_id "
+                + "JOIN courses c ON c.course_id = r.course_id WHERE r.user_id = :userId AND r.is_hidden = FALSE";
+        MapSqlParameterSource params = new MapSqlParameterSource("userId", userId);
+        long total = jdbc.queryForObject("SELECT COUNT(*)" + where, params, Long.class);
+        params.addValue("size", size).addValue("offset", PageResult.offset(page, size));
+        List<MyReview> items = jdbc.query("SELECT " + COLUMNS + ", c.course_id, c.name AS course_name" + where
+                + " ORDER BY r.created_at DESC, r.review_id DESC LIMIT :size OFFSET :offset", params, (rs, n) -> {
+                    Review r = review(rs);
+                    return new MyReview(r.reviewId(), r.author(), r.rating(), r.content(), r.photos(),
+                            r.withMatch(), r.createdAt(), new CourseRef(rs.getLong("course_id"),
+                                    rs.getString("course_name")));
+                });
+        return new PageResult<>(items, page, size, total);
+    }
+
+    /** 후기 작성자. 없으면 null. 삭제 전에 행을 잠근다 */
+    public Long authorForUpdate(long reviewId) {
+        List<Long> rows = jdbc.queryForList("SELECT user_id FROM reviews WHERE review_id = :id FOR UPDATE",
+                new MapSqlParameterSource("id", reviewId), Long.class);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    public List<String> photoPaths(long reviewId) {
+        return jdbc.queryForList("SELECT file_path FROM review_photos WHERE review_id = :id ORDER BY sort_order",
+                new MapSqlParameterSource("id", reviewId), String.class);
+    }
+
+    /** 후기는 실제로 삭제 (사진 행은 ON DELETE CASCADE) */
+    public void delete(long reviewId) {
+        jdbc.update("DELETE FROM reviews WHERE review_id = :id", new MapSqlParameterSource("id", reviewId));
+    }
+
     private List<String> photos(long reviewId) {
         return jdbc.queryForList("SELECT file_path FROM review_photos WHERE review_id = :id ORDER BY sort_order",
                 new MapSqlParameterSource("id", reviewId), String.class)
