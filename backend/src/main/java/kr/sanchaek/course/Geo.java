@@ -1,11 +1,12 @@
 package kr.sanchaek.course;
 
-final class Geo {
+/** 두 좌표 사이 거리 · 지역 계산. 코스 상세의 랜드마크와 랜드마크 인증이 같은 코드를 쓴다 */
+public final class Geo {
     private static final double EARTH_RADIUS_METERS = 6_371_000;
 
     private Geo() {}
 
-    static double meters(double lat1, double lon1, double lat2, double lon2) {
+    public static double meters(double lat1, double lon1, double lat2, double lon2) {
         double dLat = Math.toRadians(lat2 - lat1);
         double dLon = Math.toRadians(lon2 - lon1);
         double a = Math.pow(Math.sin(dLat / 2), 2) + Math.cos(Math.toRadians(lat1))
