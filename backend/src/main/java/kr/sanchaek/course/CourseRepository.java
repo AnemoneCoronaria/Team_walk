@@ -11,6 +11,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import kr.sanchaek.common.ApiException;
@@ -43,9 +45,10 @@ public class CourseRepository {
                 )
             )
             """;
-    private static final Set<String> AREAS = Set.of("OKGU", "JEONGWANG", "BAEGOT", "SIHWA");
-    private static final Set<String> LEVELS = Set.of("EASY", "NORMAL", "HARD");
-    private static final Set<String> FACILITIES = Set.of("TOILET", "BENCH", "PARKING", "SEA_VIEW");
+    static final Set<String> AREAS = Set.of("OKGU", "JEONGWANG", "BAEGOT", "SIHWA");
+    static final Set<String> LEVELS = Set.of("EASY", "NORMAL", "HARD");
+    static final Set<String> FACILITIES = Set.of("TOILET", "BENCH", "PARKING", "SEA_VIEW");
+    static final Set<String> VISIBILITIES = Set.of("PUBLIC", "MATCH_ONLY", "PRIVATE");
     private static final Pattern PATH_POINT = Pattern.compile("\\[\\s*([-+0-9.eE]+)\\s*,\\s*([-+0-9.eE]+)\\s*\\]");
 
     public CourseRepository(NamedParameterJdbcTemplate jdbc) {
@@ -72,6 +75,41 @@ public class CourseRepository {
         if (updated != 1) {
             throw ApiException.notFound("코스를 찾을 수 없습니다.");
         }
+    }
+
+    public record NewCourse(long authorId, String name, String description, String area, String level,
+            double distanceKm, int durationMin, double startLat, double startLng, String pathJson,
+            String visibility) {}
+
+    public long insert(NewCourse course) {
+        MapSqlParameterSource params = new MapSqlParameterSource()
+                .addValue("authorId", course.authorId()).addValue("name", course.name())
+                .addValue("description", course.description()).addValue("area", course.area())
+                .addValue("level", course.level()).addValue("distanceKm", course.distanceKm())
+                .addValue("durationMin", course.durationMin()).addValue("startLat", course.startLat())
+                .addValue("startLng", course.startLng()).addValue("pathJson", course.pathJson())
+                .addValue("visibility", course.visibility());
+        KeyHolder key = new GeneratedKeyHolder();
+        jdbc.update("""
+                INSERT INTO courses (author_id, name, description, area, level, distance_km, duration_min,
+                                     start_lat, start_lng, path_json, visibility)
+                VALUES (:authorId, :name, :description, :area, :level, :distanceKm, :durationMin,
+                        :startLat, :startLng, :pathJson, :visibility)
+                """, params, key, new String[] {"course_id"});
+        return key.getKey().longValue();
+    }
+
+    public void replaceFacilities(long id, List<String> facilities) {
+        jdbc.update("DELETE FROM course_facilities WHERE course_id=:id", new MapSqlParameterSource("id", id));
+        for (String facility : facilities) {
+            jdbc.update("INSERT INTO course_facilities (course_id, facility) VALUES (:id, :facility)",
+                    new MapSqlParameterSource("id", id).addValue("facility", facility));
+        }
+    }
+
+    public void setGpxPath(long id, String gpxPath) {
+        jdbc.update("UPDATE courses SET gpx_path=:path WHERE course_id=:id",
+                new MapSqlParameterSource("id", id).addValue("path", gpxPath));
     }
 
     @Transactional(readOnly = true)
