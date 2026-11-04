@@ -7,6 +7,9 @@ import M1Main from './pages/M1Main.jsx'
 import C1CourseList from './pages/C1CourseList.jsx'
 import C2CourseDetail from './pages/C2CourseDetail.jsx'
 import W1MatchList from './pages/W1MatchList.jsx'
+import W2MatchDetail from './pages/W2MatchDetail.jsx'
+import W3MatchWrite from './pages/W3MatchWrite.jsx'
+import C3CourseUpload from './pages/C3CourseUpload.jsx'
 import Placeholder from './pages/Placeholder.jsx'
 import A1Login from './pages/A1Login.jsx'
 import Signup from './pages/Signup.jsx'
@@ -14,7 +17,7 @@ import X1NotFound from './pages/X1NotFound.jsx'
 import X2ServerError from './pages/X2ServerError.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
-//   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/new
+//   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/:id/edit, /matches/new
 //   승민: /login, /signup, /mypage, /500, 없는 주소(*) … (/mypage 는 아직 자리만)
 export default function App() {
   return (
@@ -29,12 +32,13 @@ export default function App() {
         <Route path="/courses" element={<C1CourseList />} />
         <Route path="/courses/:courseId" element={<C2CourseDetail />} />
         <Route path="/courses/:courseId/reviews" element={<Placeholder id="C4" title="코스 후기 전체 보기" owner="승민" />} />
-        <Route path="/courses/new" element={<Placeholder id="C3-1 ~ C3-3" title="GPX로 코스 등록" owner="동훈 · 2주차" />} />
+        <Route path="/courses/new" element={<C3CourseUpload />} />
 
         {/* 동행 */}
         <Route path="/matches" element={<W1MatchList />} />
-        <Route path="/matches/new" element={<Placeholder id="W3" title="모집 글 쓰기" owner="동훈 · 2주차" />} />
-        <Route path="/matches/:matchId" element={<Placeholder id="W2 · W4" title="동행 상세" owner="동훈 · 2주차" />} />
+        <Route path="/matches/new" element={<W3MatchWrite />} />
+        <Route path="/matches/:matchId" element={<W2MatchDetail />} />
+        <Route path="/matches/:matchId/edit" element={<W3MatchWrite />} />
 
         {/* 계정 · 마이페이지 (승민) */}
         <Route path="/login" element={<A1Login />} />
