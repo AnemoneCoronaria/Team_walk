@@ -1,5 +1,5 @@
 // 가짜 데이터용 GPX 분석 — 백엔드 GpxService(동언)와 같은 규칙을 브라우저에서 흉내 냄
-// 실제 서버 모드(VITE_USE_MOCK=false)에서는 쓰지 않고 POST /api/gpx/parse 를 부릅니다.
+// 실제 서버 모드(npm run dev)에서는 쓰지 않고 POST /api/gpx/parse 를 부릅니다.
 //   - .gpx 가 아니거나 좌표가 없으면 400 INVALID_FORMAT
 //   - 5MB 초과 400 TOO_LARGE
 //   - 경로 300m 미만 또는 점 20개 미만 400 TOO_SHORT
