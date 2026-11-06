@@ -4,6 +4,10 @@
 //   POST /api/auth/login      (백엔드: 정란) — A1 로그인
 //   GET  /api/users/check-id  (백엔드: 정란) — A3 아이디 중복 확인
 //   POST /api/users           (백엔드: 정란) — A4 회원가입 (A3 + A4 값을 한 번에)
+//   PUT  /api/users/me        (백엔드: 정란) — P2 프로필 · 태그 수정
+//   PUT  /api/users/me/password · DELETE /api/users/me (정란) — P5 비밀번호 변경 · P5-1 탈퇴
+//   POST /api/auth/logout     (백엔드: 정란) — 마이페이지 메뉴의 로그아웃
+//   PUT  /api/users/me/consents (정란) — R1-1 위치 정보 이용 동의
 // 로그인 · 회원가입 등 나머지 계정 API는 승민 담당 화면에서 이 파일에 추가하면 됩니다.
 import { USE_MOCK, request, mockResponse, mockError } from './client.js'
 import { ME, MY_STAMPS, USERS, LOGIN_IDS, MOCK_PASSWORD } from '../mocks/users.js'
@@ -33,6 +37,72 @@ export function getMe() {
 export function getMyStamps() {
   if (USE_MOCK) return mockResponse(MY_STAMPS)
   return request('/api/users/me/stamps')
+}
+
+/**
+ * 내 프로필 · 태그 수정 (P2) — PUT /api/users/me (정란), body: { nickname, ageGroup, avatar, styles[], languages[], mbti }
+ * 부분 수정: null 인 칸은 "안 보낸 칸"이라 그대로 둠. MBTI 를 지우려면(선택 안 함) mbti: ''
+ * 응답 모양에 기대지 않고, 저장한 뒤 화면에서 refresh() 로 GET /api/users/me 를 다시 불러옴
+ */
+export function updateMe(body) {
+  if (USE_MOCK) {
+    const next = { ...body }
+    if (next.mbti === '') next.mbti = null // 서버처럼 ''는 MBTI 지우기
+    Object.assign(ME, next) // 가짜 데이터: 새로고침하면 처음으로 돌아감
+    return mockResponse(null)
+  }
+  return request('/api/users/me', { method: 'PUT', body })
+}
+
+/**
+ * 비밀번호 변경 (P5) — 지금 비밀번호가 틀리면 400
+ */
+export function changePassword(currentPassword, newPassword) {
+  if (USE_MOCK) {
+    return currentPassword === MOCK_PASSWORD
+      ? mockResponse(null)
+      : mockError(400, 'WRONG_PASSWORD', '지금 비밀번호가 맞지 않아요.')
+  }
+  return request('/api/users/me/password', { method: 'PUT', body: { currentPassword, newPassword } })
+}
+
+/** 회원 탈퇴 (P5-1) — 비밀번호를 한 번 더 확인. 성공하면 서버가 세션도 끝냄 */
+export function withdraw(password) {
+  if (USE_MOCK) {
+    if (password !== MOCK_PASSWORD) return mockError(400, 'WRONG_PASSWORD', '비밀번호가 맞지 않아요.')
+    setMockGuest()
+    return mockResponse(null)
+  }
+  return request('/api/users/me', { method: 'DELETE', body: { password } })
+}
+
+/** 로그아웃 (마이페이지 메뉴) */
+export function logout() {
+  if (USE_MOCK) {
+    setMockGuest()
+    return mockResponse(null, 100)
+  }
+  return request('/api/auth/logout', { method: 'POST' })
+}
+
+/**
+ * 위치 정보 이용 동의 (R1-1) — 랜드마크 인증 전에 한 번. 동의하면 GET /api/users/me 의 agreeLocation 이 true
+ */
+export function updateConsents(agreeLocation) {
+  if (USE_MOCK) {
+    ME.agreeLocation = agreeLocation
+    return mockResponse(null)
+  }
+  return request('/api/users/me/consents', { method: 'PUT', body: { agreeLocation } })
+}
+
+// 가짜 데이터: 로그아웃 · 탈퇴하면 "로그인 전" 상태로 (다시 로그인하면 풀림)
+function setMockGuest() {
+  try {
+    localStorage.setItem('mockGuest', '1')
+  } catch {
+    // 저장소를 못 쓰는 브라우저면 무시
+  }
 }
 
 /**

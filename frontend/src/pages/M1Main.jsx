@@ -139,7 +139,7 @@ export default function M1Main() {
       {/* 시흥 랜드마크 스탬프 배너 → 스탬프 화면(R2, 승민)으로 */}
       <section className="m1-stamp">
         <div className="wrap">
-          <Link className="m1-stamp-banner" to="/mypage">
+          <Link className="m1-stamp-banner" to="/stamps">
             <div className="col g8 nowrap">
               <p className="t-h20 c-green">시흥 랜드마크 스탬프</p>
               <p className="t-b14 c-body">오이도 빨강등대 · 옥구공원 · 배곧한울공원에서 인증하고 배지를 모아보세요</p>

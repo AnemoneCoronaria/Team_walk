@@ -1,0 +1,42 @@
+/* 마이페이지 오른쪽 내용 (P1 · P3 · P5) — 왼쪽 틀은 components/MyPageLayout.css */
+
+/* P1 통계 카드 */
+.mypage-stat { display: flex; flex-direction: column; gap: 2px; flex: 1 0 0; min-width: 1px; padding: 20px; white-space: nowrap; }
+
+/* P1 동행 한 줄 */
+.mypage-row { padding: 20px; }
+
+/* 목록이 비었을 때 */
+.mypage-empty {
+  align-self: stretch;
+  padding: 40px 20px;
+  border: 1px dashed var(--border-default);
+  border-radius: 16px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+/* P3 코스 한 줄 (썸네일 · 정보 · 버튼) */
+.mypage-course { display: flex; align-items: center; gap: 16px; padding: 12px; }
+.mypage-thumb { flex-shrink: 0; }
+
+/* P5 설정 상자 · 한 줄 */
+.mypage-box { display: flex; flex-direction: column; gap: 14px; padding: 24px; }
+.mypage-setting { display: flex; align-items: center; justify-content: space-between; min-height: 48px; }
+.mypage-setting-label { width: 100px; flex-shrink: 0; color: var(--text-muted); font-size: 14px; font-weight: 500; line-height: 1.5; }
+.mypage-danger { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; border: 1px solid var(--border-default); border-radius: 16px; }
+
+/* 마이페이지 창 (P3 코스 수정 · 삭제, P5 비밀번호 변경, P5-1 탈퇴): 왼쪽 정렬 */
+.modal.mypage-modal { align-items: stretch; text-align: left; }
+.mypage-notice {
+  margin: 0;
+  padding: 16px 16px 16px 32px;
+  border-radius: 10px;
+  background: var(--status-danger-soft);
+  color: var(--status-danger);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.mypage-textarea { height: 96px; padding: 12px 16px; resize: vertical; }

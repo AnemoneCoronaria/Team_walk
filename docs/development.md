@@ -134,6 +134,7 @@ public record Match(long matchId, String title, LocalDateTime meetAt, String sta
 
 1. 백엔드가 아직이면 `src/api/`의 함수가 `src/mocks/`의 가짜 데이터를 돌려주게 만들고 화면부터 완성
 2. 백엔드 API가 develop에 합쳐지면 **`src/api/`의 함수만** 실제 `fetch('/api/…')`로 교체 (화면 코드는 그대로)
+   - `npm run dev`는 실제 API, `npm run dev:mock`은 가짜 데이터입니다
 3. 공통 부품은 담당자(동훈: 지도·헤더·카드 / 승민: 버튼·입력창·모달)가 만들고 서로 가져다 씀
 
 - 백엔드 응답은 항상 `{ success, data }` 또는 `{ success: false, error: { code, message } }` 입니다. 오류도 JSON이라 `res.json()`으로 읽고 `error.message`를 토스트로 보여 주면 됩니다.

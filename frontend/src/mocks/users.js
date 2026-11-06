@@ -1,5 +1,5 @@
 // 가짜 회원 — db/seed.sql 의 회원과 같은 번호 · 닉네임 · 아바타
-// 실제 서버(VITE_USE_MOCK=false)로 바꿔도 같은 사람이 보이도록 맞춰 둠
+// 실제 서버(npm run dev)로 바꿔도 같은 사람이 보이도록 맞춰 둠
 
 export const USERS = {
   1: { userId: 1, nickname: '관리자', avatar: 'sogeumi' },

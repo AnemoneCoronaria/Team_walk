@@ -21,3 +21,9 @@
   background: var(--bg-surface);
   text-align: center;
 }
+
+/* 입력 칸이 있는 창은 왼쪽 정렬: <Modal className="modal-left"> */
+.modal.modal-left { align-items: stretch; text-align: left; }
+
+/* 창 안의 안내 목록 (· 로 시작하는 줄) */
+.modal-notes { margin: 0; padding: 14px 16px 14px 32px; border-radius: 10px; background: var(--bg-subtle); color: var(--text-body); font-size: 14px; line-height: 1.7; }

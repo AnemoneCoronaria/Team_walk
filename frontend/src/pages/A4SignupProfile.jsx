@@ -1,27 +1,17 @@
 import { useState } from 'react'
-import Avatar from '../components/Avatar.jsx'
 import Button from '../components/Button.jsx'
-import Chip from '../components/Chip.jsx'
 import Input from '../components/Input.jsx'
+import { AgeGroupChips, AvatarPicker, LanguageChips, MbtiPicker, StyleChips } from '../components/ProfileFields.jsx'
 import { login, signup } from '../api/userApi.js'
 import { useAuth } from '../auth/authContext.js'
-import { AGE_LABELS, AVATAR_LABELS, LANGUAGE_LABELS, STYLE_LABELS } from '../constants/labels.js'
+import { MAX_STYLES, NO_MBTI, isProfileReady, lettersToMbti } from '../utils/profile.js'
 import { showToast } from '../utils/toast.js'
 import { validateNickname } from '../utils/validate.js'
-
-const MAX_STYLES = 3
-// MBTI 는 쌍마다 한 글자씩 골라 4글자 (예: ENFP). 하나도 안 고르면 "선택 안 함" → null 로 보냄
-const MBTI_PAIRS = [
-  ['E', 'I'],
-  ['N', 'S'],
-  ['T', 'F'],
-  ['J', 'P'],
-]
-const NO_MBTI = ['', '', '', '']
 
 // A4 회원가입 2단계 · 프로필 · 태그 (Signup.jsx 안에서 보임)
 // API: POST /api/users (A3 계정 정보 + 여기 값을 한 번에) → 이어서 POST /api/auth/login
 //      (가입 API는 로그인까지 해 주지 않아서, 같은 아이디 · 비밀번호로 바로 로그인)
+// 고르는 부품(아바타 · 칩 · MBTI)은 P2 프로필 수정과 같이 씀 → components/ProfileFields.jsx
 export default function A4SignupProfile({ account, initial, onBack, onDone }) {
   const { refresh } = useAuth()
   const [nickname, setNickname] = useState(initial?.nickname ?? '')
@@ -34,32 +24,11 @@ export default function A4SignupProfile({ account, initial, onBack, onDone }) {
   const [submitting, setSubmitting] = useState(false)
 
   const nicknameError = nicknameTouched ? validateNickname(nickname) : ''
-  const mbtiCount = mbti.filter(Boolean).length
-  const mbtiPartial = mbtiCount > 0 && mbtiCount < MBTI_PAIRS.length
-  const canSubmit = !validateNickname(nickname) && ageGroup !== '' && languages.length > 0 && !mbtiPartial && !submitting
+  const canSubmit = isProfileReady({ nickname, ageGroup, languages, mbti }) && !submitting
 
   // 지금 입력한 값 (이전 단계로 갈 때 들고 가고, A5 에서 보여 줌)
   function values() {
     return { nickname: nickname.trim(), ageGroup, avatar, styles, languages, mbti }
-  }
-
-  function toggleStyle(code) {
-    if (styles.includes(code)) {
-      setStyles(styles.filter((s) => s !== code))
-    } else if (styles.length >= MAX_STYLES) {
-      showToast(`산책 스타일은 ${MAX_STYLES}개까지 고를 수 있어요.`, 'info')
-    } else {
-      setStyles([...styles, code])
-    }
-  }
-
-  function toggleLanguage(code) {
-    setLanguages(languages.includes(code) ? languages.filter((l) => l !== code) : [...languages, code])
-  }
-
-  // 같은 글자를 다시 누르면 그 쌍은 선택 해제
-  function pickMbti(pairIndex, letter) {
-    setMbti(mbti.map((v, i) => (i === pairIndex ? (v === letter ? '' : letter) : v)))
   }
 
   async function onSubmit(e) {
@@ -75,7 +44,7 @@ export default function A4SignupProfile({ account, initial, onBack, onDone }) {
         avatar,
         styles,
         languages,
-        mbti: mbtiCount === MBTI_PAIRS.length ? mbti.join('') : null,
+        mbti: lettersToMbti(mbti),
       })
     } catch (err) {
       setSubmitting(false)
@@ -116,73 +85,30 @@ export default function A4SignupProfile({ account, initial, onBack, onDone }) {
           <span className="t-b14m c-strong">연령대</span>
           <span className="t-c12 c-muted">나이는 공개되지 않고 연령대만 보여요</span>
         </p>
-        <div className="row fwrap g6">
-          {Object.entries(AGE_LABELS).map(([code, label]) => (
-            <Chip key={code} tone="neutral" selected={ageGroup === code} onClick={() => setAgeGroup(code)}>
-              {label}
-            </Chip>
-          ))}
-        </div>
+        <AgeGroupChips value={ageGroup} onChange={setAgeGroup} />
       </div>
 
-      <div className="signup-field">
+      <div className="account-field">
         <p className="t-b14m c-strong">아바타 캐릭터 (시흥 테마)</p>
-        <div className="row fwrap g12">
-          {Object.entries(AVATAR_LABELS).map(([code, label]) => (
-            <button
-              key={code}
-              className={`signup-avatar${avatar === code ? ' is-selected' : ''}`}
-              type="button"
-              aria-pressed={avatar === code}
-              onClick={() => setAvatar(code)}
-            >
-              <Avatar avatar={code} size={48} />
-              {label}
-            </button>
-          ))}
-        </div>
+        <AvatarPicker value={avatar} onChange={setAvatar} />
       </div>
 
-      <div className="signup-field">
+      <div className="account-field">
         <p className="t-b14m c-strong">산책 스타일 (최대 {MAX_STYLES}개)</p>
-        <div className="row fwrap g8">
-          {Object.entries(STYLE_LABELS).map(([code, label]) => (
-            <Chip key={code} selected={styles.includes(code)} onClick={() => toggleStyle(code)}>
-              {label}
-            </Chip>
-          ))}
-        </div>
+        <StyleChips value={styles} onChange={setStyles} />
       </div>
 
-      <div className="signup-field">
+      <div className="account-field">
         <p className="row ai-c g8">
           <span className="t-b14m c-strong">함께 쓰고 싶은 언어</span>
           <span className="t-c12 c-muted">1개 이상</span>
         </p>
-        <div className="row fwrap g8">
-          {Object.entries(LANGUAGE_LABELS).map(([code, label]) => (
-            <Chip key={code} tone="blue" selected={languages.includes(code)} onClick={() => toggleLanguage(code)}>
-              {label}
-            </Chip>
-          ))}
-        </div>
+        <LanguageChips value={languages} onChange={setLanguages} />
       </div>
 
-      <div className="signup-field">
+      <div className="account-field">
         <p className="t-b14m c-strong">MBTI (선택 · 재미용)</p>
-        <div className="row fwrap g8">
-          <Chip tone="neutral" selected={mbtiCount === 0} onClick={() => setMbti(NO_MBTI)}>
-            선택 안 함
-          </Chip>
-          {MBTI_PAIRS.map((pair, i) =>
-            pair.map((letter) => (
-              <Chip key={letter} tone="neutral" selected={mbti[i] === letter} onClick={() => pickMbti(i, letter)}>
-                {letter}
-              </Chip>
-            )),
-          )}
-        </div>
-        {mbtiPartial && <p className="t-c12 c-danger">E/I · N/S · T/F · J/P 에서 하나씩, 4글자를 모두 골라 주세요</p>}
+        <MbtiPicker value={mbti} onChange={setMbti} />
       </div>
 
       <p className="signup-note">언어 태그는 내 · 외국인 주민이 서로 편한 언어로 만날 수 있게 도와줘요</p>

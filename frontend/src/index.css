@@ -212,5 +212,8 @@ button.chip { cursor: pointer; }
 .grow { flex: 1 0 0; min-width: 1px; }  /* row 안에서 남는 폭 차지하기 */
 .noshrink { flex-shrink: 0; }
 .g2 { gap: 2px; } .g4 { gap: 4px; } .g6 { gap: 6px; } .g8 { gap: 8px; } .g12 { gap: 12px; }
-.g16 { gap: 16px; } .g20 { gap: 20px; } .g24 { gap: 24px; } .g32 { gap: 32px; }
+.g10 { gap: 10px; } .g14 { gap: 14px; } .g16 { gap: 16px; } .g20 { gap: 20px; } .g24 { gap: 24px; } .g32 { gap: 32px; }
 .p16 { padding: 16px; } .p20 { padding: 20px; } .p24 { padding: 24px; }
+
+/* 가짜 데이터로 볼 때(npm run dev:mock) 화면 구석 표시 */
+.mock-badge { position: fixed; right: 12px; bottom: 12px; z-index: 9999; padding: 4px 10px; border-radius: 999px; background: var(--status-danger); color: #fff; font-size: 12px; font-weight: 700; pointer-events: none; }

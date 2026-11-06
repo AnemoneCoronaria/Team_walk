@@ -79,4 +79,44 @@ public class UserService {
         }
         return new LoginResult(user.userId(), user.nickname(), user.avatar(), user.role());
     }
+
+    /** 프로필 · 태그 수정 (보낸 값만) */
+    public void updateProfile(long userId, ProfileUpdateRequest req) {
+        String nickname = null;
+        if (req.nickname() != null) {
+            nickname = req.nickname().trim();
+            if (nickname.length() < 2) {
+                throw ApiException.badRequest("닉네임은 2~10자예요.");
+            }
+        }
+        String mbti = req.mbti() == null ? null : req.mbti().toUpperCase(Locale.ROOT);
+        List<String> styles = req.styles() == null ? null : req.styles().stream().distinct().toList();
+        List<String> languages = req.languages() == null ? null : req.languages().stream().distinct().toList();
+        repo.updateProfile(userId, nickname, req.avatar(), req.ageGroup(), mbti, styles, languages);
+    }
+
+    /** 비밀번호 변경. 현재 비밀번호가 틀리면 400 WRONG_PASSWORD */
+    public void changePassword(long userId, PasswordChangeRequest req) {
+        checkPassword(userId, req.currentPassword());
+        repo.updatePassword(userId, passwordEncoder.encode(req.newPassword()));
+    }
+
+    /** 회원 탈퇴. 비밀번호 확인 → 내가 연 동행이 진행 중(모집 중 · 정원 참 · 마감)이면 409 HAS_OPEN_MATCH */
+    public void withdraw(long userId, WithdrawRequest req) {
+        checkPassword(userId, req.password());
+        if (repo.hasOpenMatch(userId)) {
+            throw ApiException.conflict("HAS_OPEN_MATCH", "진행 중인 동행이 있어요. 먼저 모집을 취소해 주세요.");
+        }
+        repo.withdraw(userId);
+    }
+
+    private void checkPassword(long userId, String password) {
+        String hash = repo.findPasswordHash(userId);
+        if (hash == null) {
+            throw ApiException.loginRequired();   // 세션은 있는데 회원이 없거나 탈퇴함
+        }
+        if (!passwordEncoder.matches(password, hash)) {
+            throw new ApiException(400, "WRONG_PASSWORD", "현재 비밀번호가 맞지 않아요.");
+        }
+    }
 }
