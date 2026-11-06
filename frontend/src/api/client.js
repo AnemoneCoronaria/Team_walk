@@ -7,6 +7,7 @@
 // 응답 형식 (API 명세 공통 규칙)
 //   성공 { success: true, data }  → data 만 돌려줌
 //   실패 { success: false, error: { code, message } } → ApiError 를 던짐
+//   body 에 FormData 를 넣으면 multipart/form-data 로 보냄 (GPX 업로드, 모집 글 쓰기)
 
 export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
 
@@ -41,8 +42,9 @@ export async function request(path, { method = 'GET', params, body } = {}) {
     res = await fetch(path + toQuery(params), {
       method,
       credentials: 'include', // 로그인 세션 쿠키(JSESSIONID)를 같이 보냄
-      headers: body ? { 'Content-Type': 'application/json' } : undefined,
-      body: body ? JSON.stringify(body) : undefined,
+      // FormData(파일 업로드)는 브라우저가 multipart 형식을 알아서 붙이므로 Content-Type 을 비워 둠
+      headers: body && !(body instanceof FormData) ? { 'Content-Type': 'application/json' } : undefined,
+      body: body instanceof FormData ? body : body ? JSON.stringify(body) : undefined,
     })
   } catch {
     throw new ApiError(0, 'NETWORK', '서버에 연결할 수 없어요.')

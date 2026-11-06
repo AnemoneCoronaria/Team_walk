@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import MatchCard from '../components/MatchCard.jsx'
 import { getMatches } from '../api/matchApi.js'
-import { useAuth } from '../auth/authContext.js'
 import { useAsync } from '../utils/useAsync.js'
 import { toDateParam } from '../utils/format.js'
 import {
@@ -62,7 +61,6 @@ function dateLabel(date) {
  * 왼쪽 필터는 "적용"을 눌러야 검색됨. 적용된 필터는 주소에 남아서 뒤로 가기 · 새로고침에도 유지
  */
 export default function W1MatchList() {
-  const { user } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
   const applied = readFilter(searchParams)
   const sort = searchParams.get('sort') ?? 'deadline'
@@ -92,7 +90,7 @@ export default function W1MatchList() {
     setSearchParams(next)
   }
 
-  const writeLink = user ? '/matches/new' : '/login' // 로그인 전이면 G1(로그인 필요) → 지금은 로그인 화면으로
+  const writeLink = '/matches/new' // 로그인 전이면 W3 화면이 G1 로그인 필요 모달을 띄움
   const chips = appliedChips(applied, (filter) => writeParams(filter))
   const items = data?.items ?? []
   const totalPages = data ? Math.max(1, Math.ceil(data.total / PAGE_SIZE)) : 1

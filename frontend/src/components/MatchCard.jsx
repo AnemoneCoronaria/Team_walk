@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import LoginRequiredModal from './LoginRequiredModal.jsx'
 import { useAuth } from '../auth/authContext.js'
 import { LANGUAGE_LABELS, MATCH_STATUS_LABELS, STYLE_LABELS, avatarSrc } from '../constants/labels.js'
 import { formatKm, formatMeetAt } from '../utils/format.js'
@@ -10,11 +12,12 @@ import './MatchCard.css'
  *
  * 참여자 아바타: 목록 응답에는 참여자 목록이 없어서 모집자 아바타만 보여 줍니다.
  *   (가짜 데이터에는 participants 를 넣어 두어 디자인처럼 여러 명이 보임)
- * 참여하기: 로그인 전이면 로그인(G1 모달은 승민 담당 → 지금은 /login 으로),
- *   로그인했으면 동행 상세(W2)로 가서 참여 확인 모달(W2-1)을 띄움 (2주차)
+ * 참여하기: 로그인 전이면 G1 로그인 필요 모달(승민),
+ *   로그인했으면 동행 상세(W2)로 가서 참여 확인 모달(W2-1)을 띄움 (?join=1)
  */
 export default function MatchCard({ match, className = '' }) {
   const { user } = useAuth()
+  const [askLogin, setAskLogin] = useState(false)
   const open = match.status === 'OPEN'
   const people = match.participants ?? [match.host]
 
@@ -57,11 +60,12 @@ export default function MatchCard({ match, className = '' }) {
             참여하기
           </Link>
         ) : (
-          <Link className="btn btn-primary" to="/login">
+          <button type="button" className="btn btn-primary" onClick={() => setAskLogin(true)}>
             참여하기
-          </Link>
+          </button>
         )}
       </div>
+      <LoginRequiredModal open={askLogin} onClose={() => setAskLogin(false)} />
     </div>
   )
 }

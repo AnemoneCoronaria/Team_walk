@@ -1,0 +1,39 @@
+/* C3-1 ~ C3-3 코스 등록 · C3-1E */
+.c3 { display: flex; flex-direction: column; align-items: center; gap: 24px; padding: 40px 0 64px; }
+
+/* 단계 표시 1 — 2 — 3 */
+.c3-steps { display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.c3-step-num { display: flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 12px; background: var(--bg-subtle); color: var(--text-muted); font-size: 12px; font-weight: 700; line-height: 1.45; }
+.c3-step-label { font-size: 14px; font-weight: 500; line-height: 1.5; color: var(--text-muted); }
+.c3-step-line { width: 32px; height: 2px; background: var(--border-default); }
+.c3-step-num.is-on { background: var(--brand-green); color: var(--text-inverse); }
+.c3-step-label.is-on { color: var(--text-strong); }
+.c3-step-line.is-on { background: var(--brand-green); }
+
+.c3-card { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; width: 880px; padding: 40px; }
+
+/* 파일 끌어다 놓는 곳 */
+.c3-drop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  height: 260px;
+  border: 2px dashed var(--border-default);
+  border-radius: 16px;
+  background: var(--bg-page);
+}
+.c3-drop.is-over { border-color: var(--brand-green); background: var(--brand-green-soft); }
+.c3-drop.is-error { border-color: var(--status-danger); background: var(--status-danger-soft); }
+
+/* 안내 상자 (파랑: 받는 법, 빨강: 업로드할 수 없는 경우) */
+.c3-box { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; width: 100%; padding: 16px 20px; border-radius: 12px; font-size: 14px; line-height: 1.5; }
+.c3-box-blue { background: var(--brand-blue-soft); color: var(--brand-blue); }
+.c3-box-red { background: var(--status-danger-soft); color: var(--status-danger); }
+
+.c3-map { width: 800px; height: 340px; }
+.c3-stats { display: flex; gap: 12px; width: 100%; white-space: nowrap; }
+.c3-stat { flex: 1 0 0; display: flex; flex-direction: column; gap: 2px; padding: 16px; border: 1px solid var(--border-default); border-radius: 16px; background: var(--bg-surface); }
+.c3-buttons { display: flex; justify-content: flex-end; gap: 12px; width: 100%; }
