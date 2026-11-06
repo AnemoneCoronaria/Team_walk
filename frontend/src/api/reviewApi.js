@@ -1,6 +1,8 @@
-// 후기 API (백엔드 담당: 동언, PR #20) — R1 후기 쓰기 · C4 후기 전체 보기
-//   POST /api/reviews                 multipart: courseId, matchId(동행으로 걸었을 때만), rating, content, photos(최대 5장)
-//   GET  /api/courses/{id}/reviews    ?sort=recent|rating &photo=true &page &size → { items, page, size, total, avgRating }
+// 후기 API (백엔드 담당: 동언, PR #20) — R1 후기 쓰기 · C4 후기 전체 보기 · P4 내 후기
+//   POST   /api/reviews                 multipart: courseId, matchId(동행으로 걸었을 때만), rating, content, photos(최대 5장)
+//   GET    /api/courses/{id}/reviews    ?sort=recent|rating &photo=true &page &size → { items, page, size, total, avgRating }
+//   GET    /api/users/me/reviews        ?page &size → { items(코스 후기 칸 + course: { courseId, name }), page, size, total }
+//   DELETE /api/reviews/{id}            내가 쓴 후기만 (남의 것은 403)
 // C2 의 후기 미리보기는 courseApi.js 의 getCourseReviews 를 그대로 씀 (같은 주소)
 import { USE_MOCK, request, mockResponse, mockError, paginate } from './client.js'
 import { ME } from '../mocks/users.js'
@@ -60,11 +62,44 @@ function mockCreateReview({ courseId, matchId, rating, content, photos }) {
     withMatch: Boolean(matchId),
     createdAt: new Date().toISOString().slice(0, 19),
   })
-  const course = COURSES.find((c) => c.courseId === id)
-  if (course) {
-    const mine = REVIEWS.filter((r) => r.courseId === id)
-    course.reviewCount = mine.length
-    course.rating = Math.round((mine.reduce((s, r) => s + r.rating, 0) / mine.length) * 10) / 10
-  }
+  updateMockRating(id)
   return mockResponse({ reviewId })
+}
+
+// 가짜 데이터: 코스 상세의 별점 · 후기 수를 후기 목록에 맞춰 다시 계산
+function updateMockRating(courseId) {
+  const course = COURSES.find((c) => c.courseId === courseId)
+  if (!course) return
+  const list = REVIEWS.filter((r) => r.courseId === courseId)
+  course.reviewCount = list.length
+  course.rating = list.length ? Math.round((list.reduce((s, r) => s + r.rating, 0) / list.length) * 10) / 10 : 0
+}
+
+/** 내가 쓴 후기 (P4) — 최신순 */
+export function getMyReviews({ page = 1, size = 10 } = {}) {
+  if (USE_MOCK) {
+    const mine = REVIEWS.filter((r) => r.author.userId === ME.userId)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+      .map((r) => {
+        const course = COURSES.find((c) => c.courseId === r.courseId)
+        const copy = { ...r, course: { courseId: r.courseId, name: course?.name ?? '삭제된 코스' } }
+        delete copy.courseId
+        delete copy.matchId
+        return copy
+      })
+    return mockResponse(paginate(mine, page, size))
+  }
+  return request('/api/users/me/reviews', { params: { page, size } })
+}
+
+/** 후기 삭제 (P4) — 사진도 같이 지워짐 */
+export function deleteReview(reviewId) {
+  if (USE_MOCK) {
+    const i = REVIEWS.findIndex((r) => r.reviewId === Number(reviewId))
+    if (i < 0) return mockError(404, 'NOT_FOUND', '후기를 찾을 수 없어요.')
+    const [removed] = REVIEWS.splice(i, 1)
+    updateMockRating(removed.courseId)
+    return mockResponse(null)
+  }
+  return request(`/api/reviews/${reviewId}`, { method: 'DELETE' })
 }

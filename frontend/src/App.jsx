@@ -26,6 +26,8 @@ import AD1Reports from './pages/admin/AD1Reports.jsx'
 import AD2Users from './pages/admin/AD2Users.jsx'
 import AD3Matches from './pages/admin/AD3Matches.jsx'
 import AD4Courses from './pages/admin/AD4Courses.jsx'
+import P4MyReviews from './pages/P4MyReviews.jsx'
+import R2StampTour from './pages/R2StampTour.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/:id/edit, /matches/new
@@ -58,12 +60,15 @@ export default function App() {
         <Route path="/mypage" element={<MyPageLayout />}>
           <Route index element={<P1MyPage />} />
           <Route path="courses" element={<P3MyCourses />} />
+          <Route path="reviews" element={<P4MyReviews />} />
           <Route path="settings" element={<P5AccountSettings />} />
         </Route>
         <Route path="/mypage/profile" element={<P2ProfileEdit />} />
 
         {/* 후기 쓰기 (승민) — C4 · P1 지난 동행에서 들어옴 */}
         <Route path="/courses/:courseId/review" element={<R1ReviewWrite />} />
+        {/* 랜드마크 스탬프 투어 (승민) — M1 배너 · P4 · 인증 성공 창에서 들어옴 */}
+        <Route path="/stamps" element={<R2StampTour />} />
 
         {/* 관리자 (정란 AD1 · AD2 · AD4, 민서 AD3) — 관리자 계정이 아니면 A1 로그인으로 */}
         <Route path="/admin" element={<AdminLayout />}>

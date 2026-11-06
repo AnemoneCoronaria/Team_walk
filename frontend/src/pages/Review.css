@@ -30,6 +30,21 @@
 
 .review-actions { display: flex; gap: 12px; align-self: flex-end; }
 
+/* 랜드마크 인증 상자 (초록) */
+.review-landmark { display: flex; align-items: flex-start; gap: 16px; align-self: stretch; padding: 20px; border-radius: 16px; background: var(--brand-green-soft); }
+.review-landmark-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border: 1.5px solid var(--brand-green);
+  border-radius: 24px;
+  background: var(--bg-surface);
+  font-size: 24px;
+}
+
 /* ---------- C4 ---------- */
 .review-list-page { padding: 40px 0 64px; }
 .review-list { display: flex; flex-direction: column; align-self: stretch; }
