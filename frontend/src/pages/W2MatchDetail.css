@@ -17,6 +17,9 @@
 .w2-note-blue { background: var(--brand-blue-soft); color: var(--brand-blue); }
 .w2-note-red { background: var(--status-danger-soft); color: var(--status-danger); }
 
+/* 참여 취소한 사람 (모집자 화면) */
+.w2-left { padding-top: 12px; border-top: 1px solid var(--border-default); }
+
 /* 공지 · 댓글 */
 .w2-notice { display: flex; flex-direction: column; gap: 4px; align-self: stretch; padding: 12px 16px; border-radius: 10px; background: var(--brand-green-soft); }
 .w2-check { cursor: pointer; }

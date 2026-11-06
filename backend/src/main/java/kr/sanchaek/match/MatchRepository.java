@@ -24,6 +24,7 @@ import kr.sanchaek.match.MatchDtos.AdminMatchCounts;
 import kr.sanchaek.match.MatchDtos.AdminMatchItem;
 import kr.sanchaek.match.MatchDtos.Author;
 import kr.sanchaek.match.MatchDtos.CommentItem;
+import kr.sanchaek.match.MatchDtos.LeftParticipant;
 
 @Repository         // 여기는 DB 건드는 곳...
 public class MatchRepository {
@@ -526,6 +527,22 @@ public class MatchRepository {
     // ---------------------------------------------------------------------
     // 3주차: 댓글 · 공지 (W4)
     // ---------------------------------------------------------------------
+
+    /** 참여를 취소한 사람들 (최근 순). 다시 참여하면 JOINED 로 돌아가므로 빠짐, 내보낸 사람(KICKED)은 포함 안 함 */
+    public List<LeftParticipant> findLeftParticipants(long matchId) {
+        return jdbc.query("""
+            SELECT u.user_id, u.nickname, u.avatar, u.status AS user_status, p.leave_reason, p.updated_at
+            FROM match_participants p
+            JOIN users u ON u.user_id = p.user_id
+            WHERE p.match_id = ? AND p.status = 'LEFT'
+            ORDER BY p.updated_at DESC, u.user_id
+            """, (rs, i) -> new LeftParticipant(
+                rs.getLong("user_id"),
+                displayName(rs),
+                rs.getString("avatar"),
+                rs.getString("leave_reason"),
+                rs.getObject("updated_at", LocalDateTime.class)), matchId);
+    }
 
     /** 댓글 목록 (쓴 순서) */
     public PageResult<CommentItem> findComments(long matchId, int page, int size) {

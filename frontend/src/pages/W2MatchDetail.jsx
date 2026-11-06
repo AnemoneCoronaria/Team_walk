@@ -31,7 +31,7 @@ import {
   STYLE_LABELS,
   TARGET_LABELS,
 } from '../constants/labels.js'
-import { daysLeftLabel, formatKm, formatMeetAtLong, formatMeetAtShort } from '../utils/format.js'
+import { daysLeftLabel, formatKm, formatMeetAtLong, formatMeetAtShort, formatMonthDay } from '../utils/format.js'
 import './W2MatchDetail.css'
 
 // 참여할 수 없는 이유 (상세 응답의 reason → 버튼 아래 안내. Figma W2-2 · W4-1)
@@ -224,6 +224,17 @@ export default function W2MatchDetail() {
                 <p className="t-b14 c-muted">빈 자리</p>
               </div>
             ))}
+            {/* 참여 취소한 사람 · 사유 (모집자에게만 서버가 보내 줌) */}
+            {m.leftParticipants?.length > 0 && (
+              <div className="col g4 fill w2-left">
+                <p className="t-c12b c-muted">참여 취소 {m.leftParticipants.length}명</p>
+                {m.leftParticipants.map((p) => (
+                  <p key={p.userId} className="t-c12 c-body">
+                    {p.nickname} · {p.reason ?? '사유 없음'} · {formatMonthDay(p.leftAt)}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 주요 버튼 */}
