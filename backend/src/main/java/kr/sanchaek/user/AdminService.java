@@ -71,8 +71,8 @@ public class AdminService {
                     }
                 }
                 case "SUSPEND" -> {
-                    if (owner == adminId) {
-                        throw ApiException.badRequest("관리자 자신은 정지할 수 없어요.");
+                    if (repo.isAdmin(owner)) {
+                        throw ApiException.badRequest("관리자 계정은 정지할 수 없어요.");
                     }
                     if (repo.suspendUser(owner) == 0) {
                         throw ApiException.badRequest("탈퇴한 회원이라 정지할 수 없어요.");
@@ -107,14 +107,14 @@ public class AdminService {
                 repo.countUsers(keyword, s));
     }
 
-    /** SUSPENDED → 7일 정지, ACTIVE → 정지 풀기. 탈퇴 회원 · 관리자 자신은 400 */
+    /** SUSPENDED → 7일 정지, ACTIVE → 정지 풀기. 탈퇴 회원 · 관리자 계정은 400 */
     public UserStatusResult changeUserStatus(long userId, String status, long adminId) {
         String[] roleAndStatus = repo.findRoleAndStatus(userId);
         if (roleAndStatus == null) {
             throw ApiException.notFound("회원을 찾을 수 없어요.");
         }
-        if (userId == adminId) {
-            throw ApiException.badRequest("관리자 자신의 상태는 바꿀 수 없어요.");
+        if ("ADMIN".equals(roleAndStatus[0])) {
+            throw ApiException.badRequest("관리자 계정의 상태는 바꿀 수 없어요.");
         }
         if ("WITHDRAWN".equals(roleAndStatus[1])) {
             throw ApiException.badRequest("탈퇴한 회원의 상태는 바꿀 수 없어요.");

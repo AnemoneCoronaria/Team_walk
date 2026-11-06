@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,6 +28,12 @@ class ReviewServiceTest {
     @Autowired CourseRepository courses;
     @Autowired JdbcTemplate jdbc;
     @TempDir Path uploadDir;
+
+    /** 시드 날짜가 지나도 결과가 같게: 끝난 동행은 6번뿐으로 맞춤 (테스트가 끝나면 되돌림) */
+    @BeforeEach void onlyMatch6IsDone() {
+        jdbc.update("UPDATE matches SET meet_at = NOW() + INTERVAL 7 DAY WHERE match_id <> 6");
+        jdbc.update("UPDATE matches SET meet_at = NOW() - INTERVAL 7 DAY WHERE match_id = 6");
+    }
 
     ReviewService service() {
         return new ReviewService(reviews, courses, new FileStore(uploadDir.toString()));

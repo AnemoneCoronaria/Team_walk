@@ -183,6 +183,11 @@ public class AdminRepository {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
+    public boolean isAdmin(long userId) {
+        String[] roleAndStatus = findRoleAndStatus(userId);
+        return roleAndStatus != null && "ADMIN".equals(roleAndStatus[0]);
+    }
+
     /** 정지 풀기 */
     public void activateUser(long userId) {
         jdbc.update("UPDATE users SET status = 'ACTIVE', suspended_until = NULL WHERE user_id = ? AND status <> 'WITHDRAWN'", userId);

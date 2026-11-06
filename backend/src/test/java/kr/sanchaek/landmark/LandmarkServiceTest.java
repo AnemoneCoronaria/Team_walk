@@ -6,6 +6,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -34,6 +35,12 @@ class LandmarkServiceTest {
 
     private static List<String> codes(List<LandmarkService.Badge> badges) {
         return badges.stream().map(LandmarkService.Badge::code).toList();
+    }
+
+    /** 시드 날짜가 지나도 결과가 같게: 끝난 동행은 6번뿐으로 맞춤 (테스트가 끝나면 되돌림) */
+    @BeforeEach void onlyMatch6IsDone() {
+        jdbc.update("UPDATE matches SET meet_at = NOW() + INTERVAL 7 DAY WHERE match_id <> 6");
+        jdbc.update("UPDATE matches SET meet_at = NOW() - INTERVAL 7 DAY WHERE match_id = 6");
     }
 
     @Test void listsLandmarksWithMyStamps() {
