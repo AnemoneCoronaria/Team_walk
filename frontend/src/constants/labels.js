@@ -77,6 +77,18 @@ export const MATCH_STATUS_LABELS = {
   DONE: '끝남',
 }
 
+// 랜드마크 번호 → 아이콘 (Figma R2 · R2-1, 번호는 db/seed.sql)
+export const LANDMARK_ICONS = { 1: '🌲', 2: '🗼', 3: '⚓', 4: '🏺', 5: '🌳', 6: '🌊', 7: '🐢', 8: '🐠' }
+
+// 배지 5개 (Figma R2 순서). 받는 조건은 서버가 계산 (db/schema.sql user_stamps 주석)
+export const BADGES = [
+  { code: 'FIRST_WALK', name: '첫 산책', icon: '🥾', hint: '랜드마크 1곳 인증' },
+  { code: 'FIRST_MATCH', name: '첫 동행', icon: '🤝', hint: '동행 1번 함께 걷기' },
+  { code: 'EXCHANGE_3', name: '내 · 외국인 교류 3회', icon: '🌏', hint: '교류 동행 3번' },
+  { code: 'LANDMARK_3', name: '랜드마크 3곳', icon: '🗺', hint: '랜드마크 3곳 인증' },
+  { code: 'SIHEUNG_MASTER', name: '시흥 산책 마스터', icon: '🏅', hint: '랜드마크 8곳 모두 인증' },
+]
+
 // 아바타 코드 → 이름 (Figma Avatar 8종, A4에서 고르는 순서)
 export const AVATAR_LABELS = {
   seagull: '갈매기',

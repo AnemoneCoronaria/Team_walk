@@ -7,6 +7,7 @@
 //   PUT  /api/users/me        (백엔드: 정란, 2주차 · 아직 없음) — P2 프로필 · 태그 수정
 //   PUT  /api/users/me/password · DELETE /api/users/me (정란, 2주차 · 아직 없음) — P5 비밀번호 변경 · P5-1 탈퇴
 //   POST /api/auth/logout     (백엔드: 정란) — 마이페이지 메뉴의 로그아웃
+//   PUT  /api/users/me/consents (정란, 3주차 · 아직 없음) — R1-1 위치 정보 이용 동의
 // 로그인 · 회원가입 등 나머지 계정 API는 승민 담당 화면에서 이 파일에 추가하면 됩니다.
 import { USE_MOCK, request, mockResponse, mockError } from './client.js'
 import { ME, MY_STAMPS, USERS, LOGIN_IDS, MOCK_PASSWORD } from '../mocks/users.js'
@@ -81,6 +82,18 @@ export function logout() {
     return mockResponse(null, 100)
   }
   return request('/api/auth/logout', { method: 'POST' })
+}
+
+/**
+ * 위치 정보 이용 동의 (R1-1) — 랜드마크 인증 전에 한 번. 동의하면 GET /api/users/me 의 agreeLocation 이 true
+ * 정란 API가 아직 없어서 칸 이름(agreeLocation)은 API 명세가 나오면 확인
+ */
+export function updateConsents(agreeLocation) {
+  if (USE_MOCK) {
+    ME.agreeLocation = agreeLocation
+    return mockResponse(null)
+  }
+  return request('/api/users/me/consents', { method: 'PUT', body: { agreeLocation } })
 }
 
 // 가짜 데이터: 로그아웃 · 탈퇴하면 "로그인 전" 상태로 (다시 로그인하면 풀림)
