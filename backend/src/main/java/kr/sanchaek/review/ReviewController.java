@@ -28,34 +28,34 @@ public class ReviewController {
     @PostMapping("/api/reviews")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Created> create(@LoginUser Long userId,
-            @RequestParam(required = false) Long courseId,
-            @RequestParam(required = false) Long matchId,
-            @RequestParam(required = false) Integer rating,
-            @RequestParam(required = false) String content,
+            @RequestParam(name = "courseId", required = false) Long courseId,
+            @RequestParam(name = "matchId", required = false) Long matchId,
+            @RequestParam(name = "rating", required = false) Integer rating,
+            @RequestParam(name = "content", required = false) String content,
             @RequestPart(value = "photos", required = false) List<MultipartFile> photos) {
         var form = new ReviewService.NewReview(courseId, matchId, rating, content);
         return ApiResponse.ok(new Created(service.create(userId, form, photos)));
     }
 
     @GetMapping("/api/courses/{id}/reviews")
-    public ApiResponse<ReviewRepository.ReviewPage> courseReviews(@PathVariable long id,
+    public ApiResponse<ReviewRepository.ReviewPage> courseReviews(@PathVariable("id") long id,
             @LoginUser(required = false) Long userId,
-            @RequestParam(defaultValue = "recent") String sort,
-            @RequestParam(defaultValue = "false") boolean photo,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(name = "sort", defaultValue = "recent") String sort,
+            @RequestParam(name = "photo", defaultValue = "false") boolean photo,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
         return ApiResponse.ok(service.courseReviews(id, userId, sort, photo, page, size));
     }
 
     @GetMapping("/api/users/me/reviews")
     public ApiResponse<PageResult<ReviewRepository.MyReview>> myReviews(@LoginUser Long userId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "10") int size) {
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size) {
         return ApiResponse.ok(service.myReviews(userId, page, size));
     }
 
     @DeleteMapping("/api/reviews/{id}")
-    public ApiResponse<Void> delete(@PathVariable long id, @LoginUser Long userId) {
+    public ApiResponse<Void> delete(@PathVariable("id") long id, @LoginUser Long userId) {
         service.delete(userId, id);
         return ApiResponse.ok();
     }

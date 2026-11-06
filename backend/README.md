@@ -84,6 +84,10 @@
 2. ⌘⇧P (윈도우 Ctrl+Shift+P) → **Java: Clean Java Language Server Workspace** → **Restart and delete**
 3. 오른쪽 아래 진행 표시가 끝난 뒤 `bin/main/kr/sanchaek/SanchaekApplication.class`가 생겼는지 확인 → **Run**
 
+> [!IMPORTANT]
+> **`@RequestParam` · `@PathVariable`에는 이름을 꼭 적습니다.** 예) `@PathVariable("id") long id`, `@RequestParam(name = "q", required = false) String q`<br>
+> VS Code 자바 확장이 컴파일한 클래스에는 변수 이름 정보가 없어서, 이름을 안 적으면 그 API만 **500**이 납니다 (`bootRun`으로 켰어도 VS Code가 다시 컴파일하면 같음). `ControllerParamNameTest`가 빠뜨린 곳을 알려 줍니다.
+
 > 💡 `backend` 안에 `.project`, `.classpath`, `.settings`, `bin` 이 생기는 건 VS Code 자바 확장이 만든 파일입니다 (속에서 이클립스 엔진을 씀). `.gitignore`에 있어서 깃허브에 안 올라갑니다.
 
 ---
@@ -102,20 +106,24 @@ backend/
    │  │  ├─ SanchaekApplication.java   시작점
    │  │  ├─ common/      공통 코드 (민서) · ★ HelloController (/api/hello)
    │  │  │                 ApiResponse · ApiException · LoginUser · FileStore … (쓰는 법: docs/development.md)
-   │  │  ├─ match/       동행 · 관리자 AD3 (민서)
+   │  │  ├─ match/       동행 · 댓글 · 내 동행 · 관리자 AD3 (민서)
    │  │  ├─ user/        계정 · 신고 · 관리자 AD1 · AD2 · AD4 (정란)
-   │  │  └─ course/      코스 · GPX · 후기 · 랜드마크 (동언)
+   │  │  ├─ course/      코스 · GPX (동언)
+   │  │  ├─ review/      후기 (동언)
+   │  │  └─ landmark/    랜드마크 · 스탬프 · 배지 (동언)
    │  └─ resources/
    │     ├─ application.properties                 공통 설정 (깃허브에 올라감)
    │     ├─ application-local.properties.example   각자 설정 예시
    │     └─ application-local.properties           각자 설정 (비밀번호, 깃허브에 안 올라감)
    └─ test/java/kr/sanchaek/
-      └─ SanchaekApplicationTests.java    서버가 뜨는지만 보는 기본 테스트
+      ├─ SanchaekApplicationTests.java    서버가 뜨는지 보는 기본 테스트
+      ├─ common/    ControllerParamNameTest (파라미터 이름 검사)
+      └─ course/ · landmark/ · match/ · review/    기능별 테스트
 ```
 
-- `match/`, `user/`, `course/` 폴더는 각자 첫 API를 만들 때 생깁니다.
 - **★ `HelloController`는 환경 확인용이라 지우지 않습니다.**
-- `./gradlew build`(또는 `test`)는 기본 테스트가 DB 설정을 읽으므로 `application-local.properties`가 있어야 통과합니다. `bootRun`은 테스트를 돌리지 않습니다.
+- `./gradlew build`(또는 `test`)는 테스트가 실제 DB를 쓰므로 `application-local.properties`가 있어야 합니다. `bootRun`은 테스트를 돌리지 않습니다.
+- 테스트는 **`seed.sql`을 새로 넣은 DB**를 기준으로 합니다. 시드 날짜가 지나면(5일쯤) 실패하는 테스트가 있으니, 그때는 `schema.sql` → `seed.sql`을 다시 실행합니다. 테스트가 바꾼 데이터는 끝나면 되돌립니다.
 
 ---
 
@@ -128,14 +136,9 @@ backend/
 | `spring-boot-starter-validation` | 입력값 검사 (`@NotBlank`, `@Size` 등) |
 | `mysql-connector-j` | MySQL 접속 |
 | `spring-boot-devtools` | 개발 편의 기능 (IDE의 ▶ 로 실행할 때 저장하면 자동 재시작. `bootRun`에서는 껐다 켜기) |
+| `spring-security-crypto` | 비밀번호 BCrypt 암호화 |
 
-**나중에 추가할 것**
-
-- 회원가입 · 로그인을 만들 때 (정란): `dependencies { … }` 안에 아래 한 줄을 추가합니다.
-  ```groovy
-  implementation 'org.springframework.security:spring-security-crypto'
-  ```
-  비밀번호를 BCrypt로 암호화하는 작은 라이브러리입니다. **Spring Security 전체(`spring-boot-starter-security`)는 넣지 않습니다.** 넣으면 모든 API에 기본 로그인 화면이 걸려서 React 요청이 전부 막힙니다.
+> **Spring Security 전체(`spring-boot-starter-security`)는 넣지 않습니다.** 넣으면 모든 API에 기본 로그인 화면이 걸려서 React 요청이 전부 막힙니다.
 
 ---
 

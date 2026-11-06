@@ -37,6 +37,8 @@
 | 인터넷 예제를 붙였더니 **`javax.servlet … cannot be resolved`** | 스프링부트 2 시절 예제 | `javax.`를 `jakarta.`로 바꾸기. 스프링부트 3 · 4 예제를 찾기 |
 | 인터넷 예제의 **`com.fasterxml.jackson.databind … cannot be resolved`** (`ObjectMapper` 등) | 스프링부트 4는 Jackson 3을 써서 패키지 이름이 바뀜 | `tools.jackson.databind.…` 로 바꾸기 (어노테이션 `com.fasterxml.jackson.annotation`은 그대로) |
 | `build.gradle`에 **`spring-boot-starter-web`** 을 넣었더니 경고 | 스프링부트 4에서 이름이 바뀜 | `spring-boot-starter-webmvc` 로 (Initializr로 만들면 알아서 들어감) |
+| 일부 API만 **500**, 로그에 **`Name for argument of type [...] not specified`** (실제로 겪음) | `@RequestParam` · `@PathVariable`에 이름을 안 적음. VS Code가 컴파일한 클래스에는 변수 이름 정보가 없음 (`bootRun`으로 켰어도 VS Code가 다시 컴파일하면 발생) | 이름 적기: `@PathVariable("id") long id`, `@RequestParam(name = "q", required = false) String q`. 급하면 `./gradlew clean bootRun` |
+| **모든 API가 404**, `/api/hello`도 404 (실제로 겪음) | 8080에 **다른 스프링 프로젝트**가 켜져 있음. VS Code에서 다른 프로젝트를 실행해 둔 경우 | 그 프로젝트를 끄고 `bootRun`. `/api/hello`에 `"landmarks":8`이 나오면 산책시루 서버 |
 | 고친 코드가 반영이 안 됨 | 서버가 예전 코드로 계속 돌고 있음 | Ctrl+C로 끄고 다시 `bootRun` |
 | `bootRun`이 **`80% EXECUTING`** 에서 멈춤 | 멈춘 게 아니라 서버가 켜져 있는 상태 (실제로 겪음) | 로그에 `Started SanchaekApplication`이 있으면 정상. 그대로 두고 브라우저에서 확인, 끌 때 Ctrl+C |
 | VS Code ▶ Run에서 **`ClassNotFoundException: kr.sanchaek.SanchaekApplication`** | VS Code 자바 확장이 컴파일을 못 함 (Gradle 9.8과 잘 안 맞음, 맥에서 실제로 겪음) | Gradle `bootRun`으로 실행. ▶ 를 쓰려면 [backend/README.md](../backend/README.md#vs-code의--run-버튼) |
@@ -47,7 +49,11 @@
 
 | 증상 | 원인 | 해결 |
 | --- | --- | --- |
-| 5173 화면에 **`❌ 연결 실패`** | 백엔드(8080)가 꺼져 있음 | 백엔드를 켜고 `localhost:8080/api/hello`가 열리는지 먼저 확인. 스프링부트 전환 전에는 실패가 정상 |
+| `/health` 화면에 **`❌ 연결 실패`** | 백엔드(8080)가 꺼져 있음 | 백엔드를 켜고 `localhost:8080/api/hello`가 열리는지 먼저 확인 |
+| **아무 아이디로 로그인해도 민서로 들어감**, 오른쪽 아래 `MOCK` 배지 | `npm run dev:mock`(가짜 데이터)으로 켰음 | 실제 API는 `npm run dev` |
+| 화면이 전부 오류, 전에는 됐음 | `npm run dev`가 실제 API를 쓰도록 바뀜. 백엔드가 꺼져 있음 | 백엔드를 켜거나, 백엔드 없이 볼 때는 `npm run dev:mock` |
+| 동행 목록이 비어 있음 | 테스트 동행 날짜가 지나서 끝난 글이 됨 (시드는 실행한 날 기준) | `schema.sql` → `seed.sql` 다시 실행 ([DB 안내 4)](../db/README.md#4-확인)) |
+| 지도 자리에 **지도를 불러오지 못했어요** | `.env.local`에 카카오 키가 없거나 `localhost:5173`이 카카오 콘솔에 없음 | [프론트 안내](../frontend/README.md#envlocal-각자-만들기-깃허브에-안-올라감) |
 | `npm run dev` 에서 버전 오류 | Node가 22.12보다 낮음 | `node -v` 확인 → nodejs.org에서 LTS 다시 설치 |
 | PowerShell에서 **`npm.ps1 … 이 시스템에서 스크립트를 실행할 수 없으므로`** | 윈도우 PowerShell 보안 정책 | **Git Bash**나 명령 프롬프트(cmd)에서 실행. 또는 PowerShell에서 `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned` |
 | 처음 실행할 때 **윈도우 방화벽 경고** | Node · Java가 네트워크를 쓰려고 함 | "개인 네트워크" 허용 |

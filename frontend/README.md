@@ -4,13 +4,14 @@
 
 ```bash
 npm install     # 처음 한 번, 또는 package.json이 바뀌었을 때
-npm run dev     # 개발 서버 → http://localhost:5173
+npm run dev     # 개발 서버 (실제 API, 백엔드 필요) → http://localhost:5173
+npm run dev:mock  # 개발 서버 (가짜 데이터, 백엔드 없이)
 npm run lint    # 코드 검사 (ESLint)
 npm run build   # 빌드가 되는지 확인 → dist/ (배포는 하지 않음)
 ```
 
 - `/api/…`, `/files/…` 요청은 `vite.config.js`의 프록시 설정으로 백엔드(`localhost:8080`)에 전달됩니다.
-- 환경 확인용 테스트 화면은 **`/health`** 주소로 옮겼습니다 (`src/pages/HealthCheck.jsx`). 지우지 마세요.
+- 환경 확인용 테스트 화면은 **`/health`** 주소입니다 (`src/pages/HealthCheck.jsx`). 지우지 마세요.
 
 ## `.env.local` (각자 만들기, 깃허브에 안 올라감)
 
@@ -42,7 +43,8 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 | 폴더 | 내용 |
 | --- | --- |
 | `src/pages/` | 화면 (Figma 화면 ID로 시작: `M1Main.jsx`, `C1CourseList.jsx` …) |
-| `src/components/` | 공통 부품: `Header`, `Footer`, `KakaoMap`, `MatchCard`, `CourseCard`, `Layout` (동훈) · `Button`, `Input`, `Chip`, `Avatar`, `Modal`, `Toast` (승민, 사용법은 각 파일 맨 위 주석) |
+| `src/pages/admin/` | 관리자 화면 AD1 · AD2 · AD4 (정란), AD3 (민서), 공통 틀 `AdminLayout` · `AdminParts` |
+| `src/components/` | 공통 부품: `Header`, `Footer`, `KakaoMap`, `MatchCard`, `CourseCard`, `Layout` (동훈) · `Button`, `Input`, `Chip`, `Avatar`, `Modal`, `Toast`, `ReportModal`, `LandmarkVerify`, `MyPageLayout` (승민, 사용법은 각 파일 맨 위 주석) |
 | `src/api/` | 백엔드 호출 함수 (`client.js` 공통, 도메인별 파일) |
 | `src/mocks/` | 가짜 데이터 |
 | `src/auth/` | 로그인 상태 (`useAuth()`) |
@@ -71,6 +73,10 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 | `/mypage/profile` | P2 프로필 · 태그 수정 (로그인 필요, 저장하면 P1 으로) | 승민 |
 | `/courses/:id/review` | R1 후기 쓰기 (동행 후기면 `?matchId=`) + 랜드마크 GPX 인증 (R1-1 동의 · R2-1 성공 · R1-2 실패 창) | 승민 |
 | `/stamps` | R2 랜드마크 스탬프 투어 (지도 · 8곳 · 배지 · GPX 인증). 가짜 데이터에서는 `db/sample-uploads/gpx/course-3.gpx` 로 인증 성공 | 승민 |
+| `/admin/reports` | AD1 신고 처리 (관리자 계정만, 아니면 로그인 화면으로) | 정란 |
+| `/admin/users` | AD2 회원 관리 | 정란 |
+| `/admin/matches` | AD3 모집 글 관리 (모집 중 · 마감 · 숨김 탭, 숨김 · 복구) | 민서 |
+| `/admin/courses` | AD4 코스 관리 | 정란 |
 | `/500` | X2 서버 오류 (확인 · 시연용. 화면에서 API 5xx 일 때 `<X2ServerError />` 를 보여 주면 됨) | 승민 |
 | 그 밖의 주소 | X1 404 (상세 화면에서 API 404 일 때도 `<X1NotFound />`) | 승민 |
 | `/health` | 환경 확인 | - |

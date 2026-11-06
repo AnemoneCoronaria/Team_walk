@@ -268,8 +268,8 @@ static double meters(double lat1, double lng1, double lat2, double lng2) {
 
 ## 처음 세팅 (윈도우, 한 번만)
 
-> **누가:** 1주차에는 **백엔드 3명(민서 · 정란 · 동언)** 이 꼭 해야 합니다.
-> 프론트 2명(동훈 · 승민)은 2주차에 실제 API로 같이 테스트할 때 하면 됩니다. 그 전에는 가짜 데이터(mock)로 개발합니다.
+> **누가:** 전원 합니다. `npm run dev`는 실제 API를 쓰므로 프론트도 백엔드와 DB가 있어야 합니다.
+> 백엔드 없이 화면만 볼 때는 `npm run dev:mock`(가짜 데이터)을 씁니다.
 
 ### 1) MySQL 8.4 설치
 
