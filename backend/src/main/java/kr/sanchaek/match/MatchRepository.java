@@ -1,6 +1,8 @@
 package kr.sanchaek.match;
 
 import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -21,6 +23,19 @@ import kr.sanchaek.common.PageResult;
 
 @Repository         // 여기는 DB 건드는 곳...
 public class MatchRepository {
+    // 목록 한 줄을 만드는 칸 (toSummary 가 읽음)
+    private static final String SUMMARY_COLUMNS = "m.match_id, m.title, m.meet_at, m.target, m.capacity,"
+            + " s.current_count, s.status,"
+            + " c.course_id, c.name AS course_name, c.distance_km, c.level,"
+            + " u.user_id, u.nickname, u.avatar, u.status AS user_status";
+    private static final String SUMMARY_FROM = " FROM matches m"
+            + " JOIN v_match_status s ON s.match_id = m.match_id"
+            + " JOIN courses c ON c.course_id = m.course_id"
+            + " JOIN users u ON u.user_id = m.host_id";
+    // 내가 참여 중인 글 (? 자리는 내 번호)
+    private static final String JOINED_BY_ME = "EXISTS (SELECT 1 FROM match_participants p"
+            + " WHERE p.match_id = m.match_id AND p.user_id = ? AND p.status = 'JOINED')";
+
     private final JdbcTemplate jdbc;        // jdbc 사용
     private final JsonMapper jsonMapper;    // path_json(문자열)을 [[위도, 경도], ...] 목록으로 바꿀 때 사용
 
@@ -83,55 +98,85 @@ public class MatchRepository {
             args.add(q.courseId());
         }
 
-        String from = " FROM matches m"
-                + " JOIN v_match_status s ON s.match_id = m.match_id"
-                + " JOIN courses c ON c.course_id = m.course_id"
-                + " JOIN users u ON u.user_id = m.host_id";
-
         // 2) 전체 개수
-        Long total = jdbc.queryForObject("SELECT COUNT(*)" + from + where, Long.class, args.toArray());
+        Long total = jdbc.queryForObject("SELECT COUNT(*)" + SUMMARY_FROM + where, Long.class, args.toArray());
 
         // 3) 이번 페이지 (정렬 값은 고정된 문장만 씀)
         String orderBy = "recent".equals(q.sort()) ? " ORDER BY m.match_id DESC" : " ORDER BY m.meet_at, m.match_id";
-        String sql = "SELECT m.match_id, m.title, m.meet_at, m.target, m.capacity,"
-                + " s.current_count, s.status,"
-                + " c.course_id, c.name AS course_name, c.distance_km, c.level,"
-                + " u.user_id, u.nickname, u.avatar"
-                + from + where + orderBy + " LIMIT ? OFFSET ?";
+        String sql = "SELECT " + SUMMARY_COLUMNS + SUMMARY_FROM + where + orderBy + " LIMIT ? OFFSET ?";
         List<Object> pageArgs = new ArrayList<>(args);
         pageArgs.add(q.size());
         pageArgs.add(PageResult.offset(q.page(), q.size()));
 
-        List<Map<String, Object>> items = jdbc.query(sql, (rs, i) -> {
-            Map<String, Object> m = new LinkedHashMap<>();
-            m.put("matchId", rs.getLong("match_id"));
-            m.put("title", rs.getString("title"));
-            m.put("meetAt", rs.getObject("meet_at", LocalDateTime.class));
-
-            Map<String, Object> course = new LinkedHashMap<>();
-            course.put("courseId", rs.getLong("course_id"));
-            course.put("name", rs.getString("course_name"));
-            course.put("distanceKm", rs.getBigDecimal("distance_km"));
-            course.put("level", rs.getString("level"));
-            m.put("course", course);
-
-            m.put("target", rs.getString("target"));
-            m.put("styles", new ArrayList<String>());       // 아래에서 태그를 읽어 채움
-            m.put("languages", new ArrayList<String>());
-            m.put("current", rs.getInt("current_count"));
-            m.put("capacity", rs.getInt("capacity"));
-            m.put("status", rs.getString("status"));
-
-            Map<String, Object> host = new LinkedHashMap<>();
-            host.put("userId", rs.getLong("user_id"));
-            host.put("nickname", rs.getString("nickname"));
-            host.put("avatar", rs.getString("avatar"));
-            m.put("host", host);
-            return m;
-        }, pageArgs.toArray());
+        List<Map<String, Object>> items = jdbc.query(sql, (rs, i) -> toSummary(rs), pageArgs.toArray());
 
         attachTags(items);
         return new PageResult<>(items, q.page(), q.size(), total == null ? 0 : total);
+    }
+
+    /**
+     * 내 동행 (P1 탭). 목록과 같은 칸 + role(HOST 모집자 · PARTICIPANT 참여), past 탭은 reviewed(후기를 썼는지) 추가.
+     * - upcoming: 내가 참여 중(JOINED)이고 아직 안 끝난 글 (모집자로 연 글 포함), 가까운 날짜 순
+     * - hosting : 내가 연 글 중 취소하지 않은 것 (끝난 글 포함), 가까운 날짜 순
+     * - past    : 내가 참여 중(JOINED)이었고 끝난(DONE) 글, 최근 날짜 순
+     */
+    public PageResult<Map<String, Object>> findMyMatches(long userId, String tab, int page, int size) {
+        String where = " WHERE m.is_hidden = FALSE AND " + switch (tab) {
+            case "hosting" -> "m.host_id = ? AND s.status <> 'CANCELED'";
+            case "past" -> JOINED_BY_ME + " AND s.status = 'DONE'";
+            default -> JOINED_BY_ME + " AND s.status NOT IN ('DONE', 'CANCELED')";
+        };
+        String orderBy = "past".equals(tab) ? " ORDER BY m.meet_at DESC, m.match_id DESC" : " ORDER BY m.meet_at, m.match_id";
+
+        Long total = jdbc.queryForObject("SELECT COUNT(*)" + SUMMARY_FROM + where, Long.class, userId);
+        List<Map<String, Object>> items = jdbc.query(
+                "SELECT " + SUMMARY_COLUMNS + ", EXISTS (SELECT 1 FROM reviews r WHERE r.user_id = ? AND r.match_id = m.match_id) AS reviewed"
+                        + SUMMARY_FROM + where + orderBy + " LIMIT ? OFFSET ?",
+                (rs, i) -> {
+                    Map<String, Object> m = toSummary(rs);
+                    m.put("role", rs.getLong("user_id") == userId ? "HOST" : "PARTICIPANT");
+                    if ("past".equals(tab)) {
+                        m.put("reviewed", rs.getBoolean("reviewed"));
+                    }
+                    return m;
+                }, userId, userId, size, PageResult.offset(page, size));
+
+        attachTags(items);
+        return new PageResult<>(items, page, size, total == null ? 0 : total);
+    }
+
+    /** 목록 한 줄 (GET /api/matches · 내 동행 공통). SUMMARY_COLUMNS 를 읽어서 만듦, 태그는 attachTags 로 채움 */
+    private static Map<String, Object> toSummary(ResultSet rs) throws SQLException {
+        Map<String, Object> m = new LinkedHashMap<>();
+        m.put("matchId", rs.getLong("match_id"));
+        m.put("title", rs.getString("title"));
+        m.put("meetAt", rs.getObject("meet_at", LocalDateTime.class));
+
+        Map<String, Object> course = new LinkedHashMap<>();
+        course.put("courseId", rs.getLong("course_id"));
+        course.put("name", rs.getString("course_name"));
+        course.put("distanceKm", rs.getBigDecimal("distance_km"));
+        course.put("level", rs.getString("level"));
+        m.put("course", course);
+
+        m.put("target", rs.getString("target"));
+        m.put("styles", new ArrayList<String>());       // 아래에서 태그를 읽어 채움
+        m.put("languages", new ArrayList<String>());
+        m.put("current", rs.getInt("current_count"));
+        m.put("capacity", rs.getInt("capacity"));
+        m.put("status", rs.getString("status"));
+
+        Map<String, Object> host = new LinkedHashMap<>();
+        host.put("userId", rs.getLong("user_id"));
+        host.put("nickname", displayName(rs));
+        host.put("avatar", rs.getString("avatar"));
+        m.put("host", host);
+        return m;
+    }
+
+    /** 탈퇴한 회원은 이름 대신 "탈퇴한 회원" (db/README "지우지 않습니다"). 쿼리에 nickname, user_status 칸이 있어야 함 */
+    private static String displayName(ResultSet rs) throws SQLException {
+        return "WITHDRAWN".equals(rs.getString("user_status")) ? "탈퇴한 회원" : rs.getString("nickname");
     }
 
     /** 태그 하나라도 겹치는 글만 (예: style=SLOW,CHAT) */
@@ -182,7 +227,7 @@ public class MatchRepository {
                    s.current_count, s.status,
                    c.course_id, c.name AS course_name, c.distance_km, c.level, c.duration_min,
                    c.start_lat, c.start_lng, c.path_json AS course_path,
-                   u.user_id, u.nickname, u.avatar
+                   u.user_id, u.nickname, u.avatar, u.status AS user_status
             FROM matches m
             JOIN v_match_status s ON s.match_id = m.match_id
             JOIN courses c ON c.course_id = m.course_id
@@ -235,7 +280,7 @@ public class MatchRepository {
 
             Map<String, Object> host = new LinkedHashMap<>();
             host.put("userId", rs.getLong("user_id"));
-            host.put("nickname", rs.getString("nickname"));
+            host.put("nickname", displayName(rs));
             host.put("avatar", rs.getString("avatar"));
             m.put("host", host);
             return m;
@@ -303,7 +348,7 @@ public class MatchRepository {
     @SuppressWarnings("unchecked")
     private List<Map<String, Object>> findParticipants(Long matchId) {
         List<Map<String, Object>> list = jdbc.query("""
-            SELECT u.user_id, u.nickname, u.avatar, (u.user_id = m.host_id) AS is_host
+            SELECT u.user_id, u.nickname, u.avatar, u.status AS user_status, (u.user_id = m.host_id) AS is_host
             FROM match_participants p
             JOIN matches m ON m.match_id = p.match_id
             JOIN users u ON u.user_id = p.user_id
@@ -312,7 +357,7 @@ public class MatchRepository {
             """, (rs, i) -> {
             Map<String, Object> p = new LinkedHashMap<>();
             p.put("userId", rs.getLong("user_id"));
-            p.put("nickname", rs.getString("nickname"));
+            p.put("nickname", displayName(rs));
             p.put("avatar", rs.getString("avatar"));
             p.put("languages", new ArrayList<String>());
             p.put("isHost", rs.getBoolean("is_host"));

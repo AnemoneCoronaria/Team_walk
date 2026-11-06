@@ -69,9 +69,7 @@ public class MatchController {
         if (!sort.equals("deadline") && !sort.equals("recent")) {
             throw ApiException.badRequest("sort 는 deadline · recent 중 하나예요.");
         }
-        if (page < 1 || size < 1 || size > 100) {
-            throw ApiException.badRequest("page 는 1 이상, size 는 1~100 이어야 해요.");
-        }
+        checkPage(page, size);
 
         MatchSearch q = new MatchSearch(status, from, to, timeSlot, split(style), split(lang),
                 target, age, area, courseId, sort, page, size);
@@ -79,6 +77,13 @@ public class MatchController {
     }
 
     private static final Set<String> STATUSES = Set.of("OPEN", "FULL", "CLOSED", "CANCELED", "DONE");
+    private static final Set<String> MY_TABS = Set.of("upcoming", "hosting", "past");
+
+    private static void checkPage(int page, int size) {
+        if (page < 1 || size < 1 || size > 100) {
+            throw ApiException.badRequest("page 는 1 이상, size 는 1~100 이어야 해요.");
+        }
+    }
 
     /** "SLOW,CHAT" → ["SLOW", "CHAT"]. 비어 있으면 null */
     private static List<String> split(String csv) {
@@ -86,6 +91,20 @@ public class MatchController {
             return null;
         }
         return Arrays.stream(csv.split(",")).map(String::trim).filter(s -> !s.isEmpty()).distinct().toList();
+    }
+
+
+    // 내 동행 (P1 탭, 로그인 필요). tab: upcoming 참여 예정 · hosting 내가 모집한 글 · past 지난 동행
+    @GetMapping("/api/users/me/matches")
+    public ApiResponse<PageResult<Map<String, Object>>> myMatches(@LoginUser Long userId,
+            @RequestParam(value = "tab", defaultValue = "upcoming") String tab,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        if (!MY_TABS.contains(tab)) {
+            throw ApiException.badRequest("tab 은 upcoming · hosting · past 중 하나예요.");
+        }
+        checkPage(page, size);
+        return ApiResponse.ok(repo.findMyMatches(userId, tab, page, size));
     }
 
 
