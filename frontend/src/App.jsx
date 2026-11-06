@@ -16,6 +16,7 @@ import P2ProfileEdit from './pages/P2ProfileEdit.jsx'
 import MyPageLayout from './components/MyPageLayout.jsx'
 import P1MyPage from './pages/P1MyPage.jsx'
 import P3MyCourses from './pages/P3MyCourses.jsx'
+import P5AccountSettings from './pages/P5AccountSettings.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/new
@@ -46,6 +47,7 @@ export default function App() {
         <Route path="/mypage" element={<MyPageLayout />}>
           <Route index element={<P1MyPage />} />
           <Route path="courses" element={<P3MyCourses />} />
+          <Route path="settings" element={<P5AccountSettings />} />
         </Route>
         <Route path="/mypage/profile" element={<P2ProfileEdit />} />
 

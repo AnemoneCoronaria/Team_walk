@@ -5,6 +5,7 @@
 //   GET  /api/users/check-id  (백엔드: 정란) — A3 아이디 중복 확인
 //   POST /api/users           (백엔드: 정란) — A4 회원가입 (A3 + A4 값을 한 번에)
 //   PUT  /api/users/me        (백엔드: 정란, 2주차 · 아직 없음) — P2 프로필 · 태그 수정
+//   PUT  /api/users/me/password · DELETE /api/users/me (정란, 2주차 · 아직 없음) — P5 비밀번호 변경 · P5-1 탈퇴
 //   POST /api/auth/logout     (백엔드: 정란) — 마이페이지 메뉴의 로그아웃
 // 로그인 · 회원가입 등 나머지 계정 API는 승민 담당 화면에서 이 파일에 추가하면 됩니다.
 import { USE_MOCK, request, mockResponse, mockError } from './client.js'
@@ -48,6 +49,29 @@ export function updateMe(body) {
     return mockResponse(null)
   }
   return request('/api/users/me', { method: 'PUT', body })
+}
+
+/**
+ * 비밀번호 변경 (P5) — 지금 비밀번호가 틀리면 400
+ * 정란 API가 아직 없어서 칸 이름(currentPassword, newPassword)은 API 명세가 나오면 확인
+ */
+export function changePassword(currentPassword, newPassword) {
+  if (USE_MOCK) {
+    return currentPassword === MOCK_PASSWORD
+      ? mockResponse(null)
+      : mockError(400, 'WRONG_PASSWORD', '지금 비밀번호가 맞지 않아요.')
+  }
+  return request('/api/users/me/password', { method: 'PUT', body: { currentPassword, newPassword } })
+}
+
+/** 회원 탈퇴 (P5-1) — 비밀번호를 한 번 더 확인. 성공하면 서버가 세션도 끝냄 */
+export function withdraw(password) {
+  if (USE_MOCK) {
+    if (password !== MOCK_PASSWORD) return mockError(400, 'WRONG_PASSWORD', '비밀번호가 맞지 않아요.')
+    setMockGuest()
+    return mockResponse(null)
+  }
+  return request('/api/users/me', { method: 'DELETE', body: { password } })
 }
 
 /** 로그아웃 (마이페이지 메뉴) */
