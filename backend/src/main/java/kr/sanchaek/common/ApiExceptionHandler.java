@@ -42,13 +42,21 @@ public class ApiExceptionHandler {
         return fail(e.getStatus(), e.getCode(), e.getMessage());
     }
 
-    /** @Valid 를 붙인 요청 본문(record)의 검사 실패 → 첫 번째 메시지를 보여 줌 */
+    /**
+     * @Valid 를 붙인 요청 본문(record)의 검사 실패 → 첫 번째 메시지를 보여 줌.
+     * multipart 칸(@ModelAttribute)에서 숫자 · 날짜 형식이 틀린 경우는 스프링의 영어 문장 대신 "형식" 안내로
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleInvalidBody(MethodArgumentNotValidException e) {
         FieldError field = e.getBindingResult().getFieldError();
-        String message = field != null
-                ? field.getField() + ": " + field.getDefaultMessage()
-                : "요청 값을 확인해 주세요.";
+        String message;
+        if (field == null) {
+            message = "요청 값을 확인해 주세요.";
+        } else if (field.isBindingFailure()) {
+            message = field.getField() + ": 형식이 올바르지 않아요.";
+        } else {
+            message = field.getField() + ": " + field.getDefaultMessage();
+        }
         return fail(400, "INVALID_INPUT", message);
     }
 
