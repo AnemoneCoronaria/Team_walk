@@ -172,7 +172,7 @@ export default function W2MatchDetail() {
           </div>
           {m.description && <p className="t-b16 c-body w2-desc">{m.description}</p>}
 
-          <KakaoMap className="w2-map" path={m.path} showEnds fit />
+          {m.path.length > 0 && <KakaoMap className="w2-map" path={m.path} showEnds fit />}
 
           {showComments && <Comments matchId={m.matchId} isHost={m.isHost} />}
         </div>

@@ -2,6 +2,7 @@ package kr.sanchaek.match;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,7 +10,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 import kr.sanchaek.common.ApiException;
 import kr.sanchaek.common.FileStore;
+import kr.sanchaek.common.PageResult;
 import kr.sanchaek.course.GpxService;
+import kr.sanchaek.match.MatchDtos.AdminMatchCounts;
+import kr.sanchaek.match.MatchDtos.AdminMatchPage;
+import kr.sanchaek.match.MatchDtos.CommentItem;
+import kr.sanchaek.match.MatchDtos.CommentRequest;
+import kr.sanchaek.match.MatchDtos.VisibilityResult;
 import tools.jackson.databind.json.JsonMapper;
 
 /**
@@ -26,6 +33,8 @@ import tools.jackson.databind.json.JsonMapper;
  */
 @Service
 public class MatchService {
+
+    private static final Set<String> ADMIN_TABS = Set.of("OPEN", "CLOSED", "HIDDEN");
 
     private final MatchRepository repo;
     private final GpxService gpxService;     // GPX 검사 · 경로 읽기는 코스 쪽 코드를 그대로 씀 (5MB, 300m, 점 20개)
@@ -49,7 +58,7 @@ public class MatchService {
      */
     @Transactional(readOnly = true)
     public Map<String, Object> detail(long matchId, Long userId) {
-        Map<String, Object> match = repo.findMatchById(matchId);
+        Map<String, Object> match = repo.findMatchById(matchId, userId);
         MatchState state = repo.findState(matchId, false);
         String myStatus = userId == null ? null : repo.findParticipantStatus(matchId, userId);
         String reason = joinBlockReason(state, userId, myStatus);
@@ -91,7 +100,10 @@ public class MatchService {
             throw ApiException.conflict("CAPACITY_TOO_SMALL",
                     "지금 참여 인원(" + state.current() + "명)보다 적게 줄일 수 없어요.");
         }
-        checkCourse(r.courseId(), userId);
+        // 코스를 바꿀 때만 검사. 코스가 나중에 비공개 · 삭제돼도 제목 같은 다른 칸은 고칠 수 있어야 함
+        if (r.courseId() != state.courseId()) {
+            checkCourse(r.courseId(), userId);
+        }
         GpxService.Result route = parseGpx(gpx);
 
         repo.updateMatch(matchId, r);
@@ -166,6 +178,60 @@ public class MatchService {
         }
         checkNotFinished(state);
         repo.updateParticipantStatus(matchId, targetUserId, "KICKED", null);
+    }
+
+    // ----- 댓글 · 공지 (W4) -----
+
+    /** 댓글 목록. 모집자와 참여 중(JOINED)인 사람만 볼 수 있음 (db/README "동행 댓글 목록") */
+    @Transactional(readOnly = true)
+    public PageResult<CommentItem> comments(long matchId, long userId, int page, int size) {
+        checkCanComment(repo.findState(matchId, false), userId);
+        return repo.findComments(matchId, page, size);
+    }
+
+    /** 댓글 쓰기. 공지(isNotice)는 모집자만 */
+    @Transactional
+    public long addComment(long matchId, long userId, CommentRequest request) {
+        MatchState state = repo.findState(matchId, false);
+        checkCanComment(state, userId);
+        boolean notice = Boolean.TRUE.equals(request.isNotice());
+        if (notice && state.hostId() != userId) {
+            throw ApiException.forbidden("공지는 모집자만 쓸 수 있어요.");
+        }
+        return repo.insertComment(matchId, userId, request.content().trim(), notice);
+    }
+
+    private void checkCanComment(MatchState state, long userId) {
+        if (state.hostId() != userId && !"JOINED".equals(repo.findParticipantStatus(state.matchId(), userId))) {
+            throw ApiException.forbidden("참여자만 볼 수 있어요.");
+        }
+    }
+
+    // ----- 관리자 AD3 모집 글 관리 -----
+
+    /** 모집 글 목록 · 검색. status(탭): OPEN 모집 중 · CLOSED 마감 · HIDDEN 숨김 */
+    @Transactional(readOnly = true)
+    public AdminMatchPage adminMatches(String q, String status, int page, int size) {
+        if (!ADMIN_TABS.contains(status)) {
+            throw ApiException.badRequest("status 는 OPEN · CLOSED · HIDDEN 중 하나예요.");
+        }
+        String keyword = q == null || q.isBlank() ? null : q.trim();
+        AdminMatchCounts counts = repo.countAdminMatches(keyword);
+        long total = switch (status) {
+            case "CLOSED" -> counts.closed();
+            case "HIDDEN" -> counts.hidden();
+            default -> counts.open();
+        };
+        return new AdminMatchPage(repo.findAdminMatches(keyword, status, size, PageResult.offset(page, size)),
+                page, size, total, counts);
+    }
+
+    /** 숨김(true) · 복구(false). 숨기면 목록에서 빠지고 상세는 404 */
+    public VisibilityResult changeHidden(long matchId, boolean hidden) {
+        if (!repo.updateHidden(matchId, hidden)) {
+            throw ApiException.notFound("동행 찾을 수 없음");
+        }
+        return new VisibilityResult(matchId, hidden);
     }
 
     // ----- 검사 도우미 -----

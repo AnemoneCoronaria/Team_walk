@@ -4,11 +4,11 @@ import { useAuth } from '../../auth/authContext.js'
 import { showToast } from '../../utils/toast.js'
 import './Admin.css'
 
-// 관리자 메뉴 (to 가 없는 것은 아직 없는 화면: AD3 모집 글 관리는 민서 담당)
+// 관리자 메뉴 (to 가 없는 것은 아직 없는 화면)
 const MENU = [
   { to: '/admin/reports', label: '신고 처리', id: 'AD1' },
   { to: '/admin/users', label: '회원 관리', id: 'AD2' },
-  { label: '모집 글 관리', id: 'AD3' },
+  { to: '/admin/matches', label: '모집 글 관리', id: 'AD3' },
   { to: '/admin/courses', label: '코스 관리', id: 'AD4' },
 ]
 

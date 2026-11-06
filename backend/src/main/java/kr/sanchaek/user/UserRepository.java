@@ -134,11 +134,14 @@ public class UserRepository {
                 agree, agree, userId);
     }
 
-    /** 내가 연 동행 중 아직 진행 중인 것(OPEN · FULL · CLOSED)이 있는지 → 있으면 탈퇴 불가. CLOSED 는 시작 전일 때만 나옴 (끝나면 DONE) */
+    /**
+     * 내가 연 동행 중 아직 진행 중인 것(OPEN · FULL · CLOSED)이 있는지 → 있으면 탈퇴 불가. CLOSED 는 시작 전일 때만 나옴 (끝나면 DONE).
+     * 관리자가 숨긴 글은 뺌: 모집자가 취소할 수 없는 글(404)이라, 세면 탈퇴를 영영 못 함
+     */
     public boolean hasOpenMatch(long userId) {
         Integer count = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM matches m JOIN v_match_status s ON s.match_id = m.match_id "
-              + "WHERE m.host_id = ? AND s.status IN ('OPEN', 'FULL', 'CLOSED')", Integer.class, userId);
+              + "WHERE m.host_id = ? AND m.is_hidden = FALSE AND s.status IN ('OPEN', 'FULL', 'CLOSED')", Integer.class, userId);
         return count != null && count > 0;
     }
 

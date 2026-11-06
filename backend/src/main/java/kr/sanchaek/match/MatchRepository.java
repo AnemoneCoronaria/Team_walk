@@ -20,6 +20,10 @@ import tools.jackson.databind.json.JsonMapper;
 
 import kr.sanchaek.common.ApiException;
 import kr.sanchaek.common.PageResult;
+import kr.sanchaek.match.MatchDtos.AdminMatchCounts;
+import kr.sanchaek.match.MatchDtos.AdminMatchItem;
+import kr.sanchaek.match.MatchDtos.Author;
+import kr.sanchaek.match.MatchDtos.CommentItem;
 
 @Repository         // 여기는 DB 건드는 곳...
 public class MatchRepository {
@@ -218,15 +222,24 @@ public class MatchRepository {
      * 없거나 숨겨진 글이면 404 (ApiException.notFound).
      * - 지도 경로(path): 모집자가 첨부한 경로(matches.path_json)가 있으면 그것, 없으면 코스 경로
      * - 만나는 좌표(meetPoint): 첨부 경로의 시작점, 없으면 코스 시작점 (저장하지 않고 계산)
+     * - 코스 경로 · 시작점은 보는 사람(viewerId, 비로그인은 null)이 그 코스를 볼 수 있을 때만 줌. 못 보면 path 는 [], meetPoint 는 null
+     *   (코스 상세의 공개 범위와 같은 규칙. 비공개 · 숨김 · 삭제된 코스의 좌표가 동행 상세로 새지 않게)
      * - 모집자 matchCount: 끝난(DONE) 동행 중 모집자가 JOINED 인 것의 수 (db/README "모임 횟수") / rating: 모집자가 연 동행들에 달린 후기 평균
      */
-    public Map<String, Object> findMatchById(Long matchId) {
+    public Map<String, Object> findMatchById(Long matchId, Long viewerId) {
+        long viewer = viewerId == null ? 0 : viewerId;
         String sql = """
             SELECT m.match_id, m.title, m.content, m.meet_at, m.meet_place, m.capacity, m.target, m.mbti,
                    m.path_json AS match_path, m.gpx_path,
                    s.current_count, s.status,
                    c.course_id, c.name AS course_name, c.distance_km, c.level, c.duration_min,
                    c.start_lat, c.start_lng, c.path_json AS course_path,
+                   (c.is_deleted = FALSE AND c.is_hidden = FALSE AND (
+                       c.visibility = 'PUBLIC' OR c.author_id = ? OR (
+                           c.visibility = 'MATCH_ONLY' AND EXISTS (
+                               SELECT 1 FROM matches m2
+                               JOIN match_participants p ON p.match_id = m2.match_id
+                               WHERE m2.course_id = c.course_id AND p.user_id = ? AND p.status = 'JOINED')))) AS can_see_course,
                    u.user_id, u.nickname, u.avatar, u.status AS user_status
             FROM matches m
             JOIN v_match_status s ON s.match_id = m.match_id
@@ -246,17 +259,19 @@ public class MatchRepository {
 
             // 경로와 만나는 좌표
             String matchPath = rs.getString("match_path");
-            List<?> path = jsonMapper.readValue(matchPath != null ? matchPath : rs.getString("course_path"), List.class);
+            boolean canSeeCourse = rs.getBoolean("can_see_course");
+            String visiblePath = matchPath != null ? matchPath : canSeeCourse ? rs.getString("course_path") : "[]";
+            List<?> path = jsonMapper.readValue(visiblePath, List.class);
             Map<String, Object> meetPoint = new LinkedHashMap<>();
             if (matchPath != null && !path.isEmpty()) {
                 List<?> first = (List<?>) path.get(0);
                 meetPoint.put("lat", first.get(0));
                 meetPoint.put("lng", first.get(1));
-            } else {
+            } else if (canSeeCourse) {
                 meetPoint.put("lat", rs.getBigDecimal("start_lat"));
                 meetPoint.put("lng", rs.getBigDecimal("start_lng"));
             }
-            m.put("meetPoint", meetPoint);
+            m.put("meetPoint", meetPoint.isEmpty() ? null : meetPoint);
             m.put("path", path);
             m.put("hasGpx", rs.getString("gpx_path") != null);
 
@@ -284,7 +299,7 @@ public class MatchRepository {
             host.put("avatar", rs.getString("avatar"));
             m.put("host", host);
             return m;
-        }, matchId);
+        }, viewer, viewer, matchId);
         if (rows.isEmpty()) {
             throw ApiException.notFound("동행 찾을 수 없음");
         }
@@ -390,7 +405,7 @@ public class MatchRepository {
      * (db/README "참여하기는 트랜잭션으로". @Transactional 안에서만 의미가 있음)
      */
     public MatchState findState(long matchId, boolean lock) {
-        String sql = "SELECT match_id, host_id, capacity, target, mbti, gpx_path FROM matches"
+        String sql = "SELECT match_id, host_id, course_id, capacity, target, mbti, gpx_path FROM matches"
                 + " WHERE match_id = ? AND is_hidden = FALSE" + (lock ? " FOR UPDATE" : "");
         List<Map<String, Object>> rows = jdbc.queryForList(sql, matchId);
         if (rows.isEmpty()) {
@@ -406,7 +421,8 @@ public class MatchRepository {
                 rs -> {
                     ("AGE_GROUP".equals(rs.getString("tag_type")) ? ageGroups : languages).add(rs.getString("tag_value"));
                 }, matchId);
-        return new MatchState(matchId, ((Number) m.get("host_id")).longValue(), ((Number) m.get("capacity")).intValue(),
+        return new MatchState(matchId, ((Number) m.get("host_id")).longValue(), ((Number) m.get("course_id")).longValue(),
+                ((Number) m.get("capacity")).intValue(),
                 (String) m.get("target"), (String) m.get("mbti"), (String) m.get("gpx_path"),
                 ((Number) s.get("current_count")).intValue(), (String) s.get("status"), ageGroups, languages);
     }
@@ -501,5 +517,117 @@ public class MatchRepository {
     public void updateParticipantStatus(long matchId, long userId, String status, String leaveReason) {
         jdbc.update("UPDATE match_participants SET status = ?, leave_reason = ? WHERE match_id = ? AND user_id = ?",
                 status, leaveReason, matchId, userId);
+    }
+
+
+    // ---------------------------------------------------------------------
+    // 3주차: 댓글 · 공지 (W4)
+    // ---------------------------------------------------------------------
+
+    /** 댓글 목록 (쓴 순서) */
+    public PageResult<CommentItem> findComments(long matchId, int page, int size) {
+        Long total = jdbc.queryForObject("SELECT COUNT(*) FROM match_comments WHERE match_id = ?", Long.class, matchId);
+        List<CommentItem> items = jdbc.query("""
+            SELECT mc.comment_id, mc.content, mc.is_notice, mc.created_at,
+                   u.user_id, u.nickname, u.avatar, u.status AS user_status
+            FROM match_comments mc
+            JOIN users u ON u.user_id = mc.user_id
+            WHERE mc.match_id = ?
+            ORDER BY mc.created_at, mc.comment_id
+            LIMIT ? OFFSET ?
+            """, (rs, i) -> new CommentItem(
+                rs.getLong("comment_id"),
+                toAuthor(rs),
+                rs.getString("content"),
+                rs.getBoolean("is_notice"),
+                rs.getObject("created_at", LocalDateTime.class)), matchId, size, PageResult.offset(page, size));
+        return new PageResult<>(items, page, size, total == null ? 0 : total);
+    }
+
+    /** 댓글 저장 → 새 comment_id */
+    public long insertComment(long matchId, long userId, String content, boolean notice) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbc.update(con -> {
+            PreparedStatement ps = con.prepareStatement(
+                    "INSERT INTO match_comments (match_id, user_id, content, is_notice) VALUES (?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1, matchId);
+            ps.setLong(2, userId);
+            ps.setString(3, content);
+            ps.setBoolean(4, notice);
+            return ps;
+        }, keyHolder);
+        return keyHolder.getKey().longValue();
+    }
+
+    private static Author toAuthor(ResultSet rs) throws SQLException {
+        return new Author(rs.getLong("user_id"), displayName(rs), rs.getString("avatar"));
+    }
+
+
+    // ---------------------------------------------------------------------
+    // 3주차: AD3 모집 글 관리 (관리자는 숨긴 글도 봄)
+    // ---------------------------------------------------------------------
+
+    // 탭 조건. 모집 중 = 아직 진행 중(정원 찬 글 포함), 마감 = 모집이 끝난 글(마감 · 취소 · 끝남), 숨김 = 상태와 상관없이 숨긴 글
+    private static final String ADMIN_OPEN = "(m.is_hidden = FALSE AND s.status IN ('OPEN', 'FULL'))";
+    private static final String ADMIN_CLOSED = "(m.is_hidden = FALSE AND s.status IN ('CLOSED', 'CANCELED', 'DONE'))";
+    private static final String ADMIN_HIDDEN = "(m.is_hidden = TRUE)";
+
+    /** 표 목록. tab: OPEN · CLOSED · HIDDEN (MatchService 에서 검사), q: 제목 · 모집자 · 코스. 최근에 올라온 글부터 */
+    public List<AdminMatchItem> findAdminMatches(String q, String tab, int size, int offset) {
+        List<Object> args = new ArrayList<>();
+        String where = " WHERE " + adminTab(tab) + adminSearch(q, args);
+        args.add(size);
+        args.add(offset);
+        return jdbc.query("SELECT " + SUMMARY_COLUMNS + ", m.is_hidden" + SUMMARY_FROM + where
+                + " ORDER BY m.match_id DESC LIMIT ? OFFSET ?", (rs, i) -> new AdminMatchItem(
+                rs.getLong("match_id"),
+                rs.getString("title"),
+                toAuthor(rs),
+                rs.getObject("meet_at", LocalDateTime.class),
+                rs.getString("target"),
+                rs.getInt("current_count"),
+                rs.getInt("capacity"),
+                rs.getString("status"),
+                rs.getBoolean("is_hidden")), args.toArray());
+    }
+
+    /** 탭별 개수 (같은 검색어 안에서) */
+    public AdminMatchCounts countAdminMatches(String q) {
+        List<Object> args = new ArrayList<>();
+        String where = " WHERE TRUE" + adminSearch(q, args);
+        return jdbc.queryForObject("SELECT COALESCE(SUM(" + ADMIN_OPEN + "), 0) AS open_count,"
+                + " COALESCE(SUM(" + ADMIN_CLOSED + "), 0) AS closed_count,"
+                + " COALESCE(SUM(" + ADMIN_HIDDEN + "), 0) AS hidden_count"
+                + SUMMARY_FROM + where, (rs, i) -> new AdminMatchCounts(
+                rs.getLong("open_count"), rs.getLong("closed_count"), rs.getLong("hidden_count")), args.toArray());
+    }
+
+    private static String adminTab(String tab) {
+        return switch (tab) {
+            case "CLOSED" -> ADMIN_CLOSED;
+            case "HIDDEN" -> ADMIN_HIDDEN;
+            default -> ADMIN_OPEN;
+        };
+    }
+
+    private static String adminSearch(String q, List<Object> args) {
+        if (q == null) {
+            return "";
+        }
+        String like = "%" + q + "%";
+        args.addAll(List.of(like, like, like));
+        return " AND (m.title LIKE ? OR u.nickname LIKE ? OR c.name LIKE ?)";
+    }
+
+    /** 숨김 · 복구. 없는 글이면 false */
+    public boolean updateHidden(long matchId, boolean hidden) {
+        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM matches WHERE match_id = ?", Integer.class, matchId);
+        if (count == null || count == 0) {
+            return false;
+        }
+        jdbc.update("UPDATE matches SET is_hidden = ? WHERE match_id = ?", hidden, matchId);
+        return true;
     }
 }

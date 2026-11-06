@@ -1,10 +1,11 @@
-// 관리자 API — AD1 신고 처리 · AD2 회원 관리 · AD4 코스 관리 (백엔드 · 화면: 정란, AD3 모집 글은 민서)
+// 관리자 API — AD1 신고 처리 · AD2 회원 관리 · AD4 코스 관리 (백엔드 · 화면: 정란), AD3 모집 글 관리 (민서)
 //   GET /api/admin/reports?status=          PUT /api/admin/reports/{id}            { action, memo }
 //   GET /api/admin/users?q=&status=         PUT /api/admin/users/{id}/status       { status }
+//   GET /api/admin/matches?q=&status=       PUT /api/admin/matches/{id}/visibility { hidden }
 //   GET /api/admin/courses?q=&tab=          PUT /api/admin/courses/{id}/visibility { hidden }
 // 관리자(role ADMIN)가 아니면 서버가 401 · 403 을 돌려줌
 import { USE_MOCK, request, mockResponse, mockError, paginate } from './client.js'
-import { ADMIN_COURSES, ADMIN_REPORTS, ADMIN_USERS } from '../mocks/admin.js'
+import { ADMIN_COURSES, ADMIN_MATCHES, ADMIN_REPORTS, ADMIN_USERS } from '../mocks/admin.js'
 
 const PAGE_SIZE = 20
 
@@ -49,6 +50,41 @@ export function changeUserStatus(userId, status) {
     return mockResponse({ userId, status, suspendedUntil: until })
   }
   return request(`/api/admin/users/${userId}/status`, { method: 'PUT', body: { status } })
+}
+
+// 가짜 데이터로 서버의 AD3 탭 나누기를 흉내 냄 (모집 중 = OPEN · FULL, 마감 = 마감 · 취소 · 끝남, 숨김 = 상태 무관)
+function adminMatchTab(m) {
+  if (m.hidden) return 'HIDDEN'
+  return m.status === 'OPEN' || m.status === 'FULL' ? 'OPEN' : 'CLOSED'
+}
+
+/**
+ * AD3 모집 글 목록 — q: 제목 · 모집자 · 코스, status: OPEN(모집 중, 기본) · CLOSED(마감) · HIDDEN(숨김)
+ * → { items, page, size, total, counts: { open, closed, hidden } } (counts 는 탭 옆 개수)
+ */
+export function getAdminMatches({ q = '', status = 'OPEN', page = 1 } = {}) {
+  if (USE_MOCK) {
+    const keyword = q.trim()
+    const found = ADMIN_MATCHES.filter(
+      (m) => !keyword || m.title.includes(keyword) || m.host.nickname.includes(keyword) || m.courseName.includes(keyword),
+    )
+    const count = (tab) => found.filter((m) => adminMatchTab(m) === tab).length
+    const items = found.filter((m) => adminMatchTab(m) === status)
+    return mockResponse({
+      ...paginate(items, page, PAGE_SIZE),
+      counts: { open: count('OPEN'), closed: count('CLOSED'), hidden: count('HIDDEN') },
+    })
+  }
+  return request('/api/admin/matches', { params: { q: q.trim(), status, page, size: PAGE_SIZE } })
+}
+
+/** AD3 모집 글 숨김(true) · 복구(false) */
+export function changeMatchHidden(matchId, hidden) {
+  if (USE_MOCK) {
+    Object.assign(ADMIN_MATCHES.find((m) => m.matchId === matchId), { hidden })
+    return mockResponse({ matchId, hidden })
+  }
+  return request(`/api/admin/matches/${matchId}/visibility`, { method: 'PUT', body: { hidden } })
 }
 
 /** AD4 코스 목록 — q: 코스 이름 · 등록자, tab: ALL(전체, 기본) · REVIEW(검토 필요) */
