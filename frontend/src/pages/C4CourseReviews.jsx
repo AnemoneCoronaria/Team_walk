@@ -4,11 +4,11 @@ import Avatar from '../components/Avatar.jsx'
 import Button from '../components/Button.jsx'
 import Chip from '../components/Chip.jsx'
 import LoginRequiredModal from '../components/LoginRequiredModal.jsx'
+import ReportModal from '../components/ReportModal.jsx'
 import { getCourse } from '../api/courseApi.js'
 import { getReviews } from '../api/reviewApi.js'
 import { useAuth } from '../auth/authContext.js'
 import { formatMonthDay, formatStars } from '../utils/format.js'
-import { showToast } from '../utils/toast.js'
 import { useAsync } from '../utils/useAsync.js'
 import X1NotFound from './X1NotFound.jsx'
 import './Review.css'
@@ -23,7 +23,7 @@ const PAGE_SIZE = 10
 
 // C4 코스 후기 전체 보기 (/courses/:courseId/reviews) — C2 "전체 보기 →"에서 들어옴
 // API: GET /api/courses/{id} (코스 이름), GET /api/courses/{id}/reviews?sort=&photo=&page=&size= (동언, PR #20)
-// 별점 분포 · 자주 나온 말 · 도움돼요는 API에 없어서 평균 별점 · 후기 수만 보여 줌. 후기 신고(W6)는 3주차
+// 별점 분포 · 자주 나온 말 · 도움돼요는 API에 없어서 평균 별점 · 후기 수만 보여 줌. 신고는 W6 신고 창 (후기 대상)
 export default function C4CourseReviews() {
   const { courseId } = useParams()
   const navigate = useNavigate()
@@ -31,6 +31,7 @@ export default function C4CourseReviews() {
   const [sort, setSort] = useState('recent')
   const [page, setPage] = useState(1)
   const [askLogin, setAskLogin] = useState(false)
+  const [reporting, setReporting] = useState(null) // 신고 창을 연 후기
   const course = useAsync(() => getCourse(courseId), `c4-course-${courseId}`)
   const params = {
     sort: sort === 'photo' ? 'recent' : sort,
@@ -49,9 +50,14 @@ export default function C4CourseReviews() {
     setPage(1)
   }
 
-  // 후기 쓰기는 로그인한 사람만 → 아니면 G1 로그인 필요 창
+  // 후기 쓰기 · 신고는 로그인한 사람만 → 아니면 G1 로그인 필요 창
   function onWrite() {
     if (user) navigate(`/courses/${courseId}/review`)
+    else setAskLogin(true)
+  }
+
+  function onReport(review) {
+    if (user) setReporting(review)
     else setAskLogin(true)
   }
 
@@ -84,7 +90,7 @@ export default function C4CourseReviews() {
       {data && data.items.length > 0 && (
         <div className="panel review-list">
           {data.items.map((r) => (
-            <ReviewItem key={r.reviewId} review={r} />
+            <ReviewItem key={r.reviewId} review={r} onReport={() => onReport(r)} />
           ))}
         </div>
       )}
@@ -104,11 +110,18 @@ export default function C4CourseReviews() {
       )}
 
       <LoginRequiredModal open={askLogin} onClose={() => setAskLogin(false)} />
+      <ReportModal
+        open={Boolean(reporting)}
+        onClose={() => setReporting(null)}
+        targetType="REVIEW"
+        targetId={reporting?.reviewId}
+        targetLabel={`${reporting?.author.nickname}님의 후기`}
+      />
     </main>
   )
 }
 
-function ReviewItem({ review: r }) {
+function ReviewItem({ review: r, onReport }) {
   return (
     <div className="review-item">
       <Avatar avatar={r.author.avatar} />
@@ -120,7 +133,7 @@ function ReviewItem({ review: r }) {
               {formatStars(r.rating)} · {formatMonthDay(r.createdAt)} · {r.withMatch ? '동행 후기' : '혼자'}
             </span>
           </p>
-          <button className="review-report t-c12 c-muted" type="button" onClick={() => showToast('후기 신고는 준비 중이에요', 'info')}>
+          <button className="review-report t-c12 c-muted" type="button" onClick={onReport}>
             신고
           </button>
         </div>
