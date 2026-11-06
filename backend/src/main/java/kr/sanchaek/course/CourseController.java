@@ -35,56 +35,56 @@ public class CourseController {
     @PostMapping("/api/courses")
     @ResponseStatus(HttpStatus.CREATED)
     public ApiResponse<Created> register(@LoginUser Long userId, @RequestPart("file") MultipartFile file,
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String level,
-            @RequestParam(required = false) String description,
-            @RequestParam(required = false) String facilities,
-            @RequestParam(required = false) String visibility) {
+            @RequestParam(name = "name", required = false) String name,
+            @RequestParam(name = "level", required = false) String level,
+            @RequestParam(name = "description", required = false) String description,
+            @RequestParam(name = "facilities", required = false) String facilities,
+            @RequestParam(name = "visibility", required = false) String visibility) {
         var form = new CourseService.NewCourseForm(name, level, description, facilities, visibility);
         return ApiResponse.ok(new Created(service.register(userId, file, form)));
     }
 
     @PutMapping("/api/courses/{id}")
-    public ApiResponse<Void> update(@PathVariable long id, @LoginUser Long userId,
+    public ApiResponse<Void> update(@PathVariable("id") long id, @LoginUser Long userId,
             @RequestBody CourseService.UpdateCourseRequest request) {
         service.update(userId, id, request);
         return ApiResponse.ok();
     }
 
     @DeleteMapping("/api/courses/{id}")
-    public ApiResponse<Void> delete(@PathVariable long id, @LoginUser Long userId) {
+    public ApiResponse<Void> delete(@PathVariable("id") long id, @LoginUser Long userId) {
         service.delete(userId, id);
         return ApiResponse.ok();
     }
 
     @GetMapping("/api/users/me/courses")
     public ApiResponse<PageResult<CourseRepository.MyCourse>> mine(@LoginUser Long userId,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         return ApiResponse.ok(courses.mine(userId, page, size));
     }
 
     @GetMapping("/api/courses")
     public ApiResponse<PageResult<CourseRepository.Summary>> list(
-            @RequestParam(required = false) String q,
-            @RequestParam(required = false) String area,
-            @RequestParam(required = false) Double minDistance,
-            @RequestParam(required = false) Double maxDistance,
-            @RequestParam(required = false) String level,
-            @RequestParam(required = false) String facility,
-            @RequestParam(defaultValue = "distance") String sort,
-            @RequestParam(defaultValue = "1") int page,
-            @RequestParam(defaultValue = "20") int size) {
+            @RequestParam(name = "q", required = false) String q,
+            @RequestParam(name = "area", required = false) String area,
+            @RequestParam(name = "minDistance", required = false) Double minDistance,
+            @RequestParam(name = "maxDistance", required = false) Double maxDistance,
+            @RequestParam(name = "level", required = false) String level,
+            @RequestParam(name = "facility", required = false) String facility,
+            @RequestParam(name = "sort", defaultValue = "distance") String sort,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
         return ApiResponse.ok(courses.list(q, area, minDistance, maxDistance, level, facility, sort, page, size));
     }
 
     @GetMapping("/api/courses/{id}")
-    public ApiResponse<CourseRepository.Detail> detail(@PathVariable long id, @LoginUser(required = false) Long userId) {
+    public ApiResponse<CourseRepository.Detail> detail(@PathVariable("id") long id, @LoginUser(required = false) Long userId) {
         return ApiResponse.ok(courses.detail(id, userId));
     }
 
     @GetMapping("/api/courses/{id}/gpx")
-    public ResponseEntity<Resource> download(@PathVariable long id, @LoginUser(required = false) Long userId,
+    public ResponseEntity<Resource> download(@PathVariable("id") long id, @LoginUser(required = false) Long userId,
             HttpServletRequest request) {
         return downloads.download(id, userId, request.getMethod(), request.getHeader("Range"));
     }

@@ -40,6 +40,7 @@ API · 화면 만드는 법, 백엔드 공통 코드, 브랜치 · PR 규칙, **
 | DB 접근 | `…Repository` + `JdbcTemplate` (SQL은 직접 작성) | `MatchRepository` |
 | 데이터 묶음 | `record` 또는 클래스. **필드 이름이 그대로 JSON 이름**이 되니 camelCase로 | `Match` (`meetAt`, `currentCount`) |
 | 응답 | 공통 응답 `ApiResponse` (아래 표) | 아래 예시 |
+| 파라미터 | **이름을 꼭 적기** (안 적으면 VS Code 컴파일로 돌 때 500) | `@PathVariable("id") long id`<br>`@RequestParam(name = "q", required = false) String q` |
 
 - 응답 형식, 오류 JSON, 로그인 확인, 비밀번호, 파일 저장은 **공통 코드(`kr.sanchaek.common`)를 가져다 씁니다.** 각자 따로 만들지 않습니다.
 - 다 만들면 브라우저나 `curl`로 호출해서 **API 명세의 응답 예시와 모양이 같은지** 확인합니다.
@@ -55,13 +56,14 @@ API · 화면 만드는 법, 백엔드 공통 코드, 브랜치 · PR 규칙, **
 | DB 조회 · 저장 | `JdbcTemplate`을 생성자로 받아서 사용 | (스프링부트 기본) |
 | 성공 응답 | `return ApiResponse.ok(data);` → `{ "success": true, "data": … }`<br>돌려줄 값이 없으면 `ApiResponse.ok()` → `{ "success": true }` | `ApiResponse` |
 | 새로 만들기 성공 (201) | 메서드에 `@ResponseStatus(HttpStatus.CREATED)` | |
-| 목록 응답 | `new PageResult<>(items, page, size, total)` → `{ "items", "page", "size", "total" }`<br>SQL `LIMIT ? OFFSET ?` 의 OFFSET은 `PageResult.offset(page, size)` | `PageResult` |
+| 목록 응답 | `new PageResult<>(items, page, size, total)` → `{ "items", "page", "size", "total" }`<br>먼저 `PageResult.validate(page, size)` 로 값 검사 (잘못되면 400)<br>SQL `LIMIT ? OFFSET ?` 의 OFFSET은 `PageResult.offset(page, size)` | `PageResult` |
 | 실패 응답 | `throw ApiException.notFound("코스를 찾을 수 없어요.");`<br>`badRequest`(400) · `forbidden`(403) · `notFound`(404) · `conflict("FULL", …)`(409)<br>그 밖의 코드는 `throw new ApiException(401, "LOGIN_FAILED", "…");` | `ApiException` |
 | 오류를 JSON으로 | 자동. 없는 주소 404, `@Valid` 검사 실패 · JSON 형식 오류 400, 업로드 용량 초과 400 `TOO_LARGE`, 그 밖의 예외 500 (원인은 서버 로그에) | `ApiExceptionHandler` |
 | 로그인한 사람 번호 | 파라미터에 `@LoginUser Long userId` → 로그인 안 했으면 **자동으로 401**<br>로그인 선택 API는 `@LoginUser(required = false) Long userId` (안 했으면 `null`) | `LoginUser` |
 | 관리자 API | 주소를 `/api/admin/…`로 만들면 자동 검사 (로그인 안 함 401, 관리자 아님 403) | `AdminInterceptor` |
+| 탈퇴 · 정지 회원의 남은 세션 | 자동. `/api/**` 요청마다 확인해서 세션을 끝냄 → 이후 로그인 안 한 것으로 처리. 정지 기간이 지났으면 통과 | `SessionCheckInterceptor` |
 | 로그인 · 로그아웃 (정란) | `SessionUtil.login(request, userId, role)` · `SessionUtil.logout(request)`<br>컨트롤러 파라미터에 `HttpServletRequest request` 를 받아서 사용 | `SessionUtil` |
-| 비밀번호 (정란) | `BCryptPasswordEncoder` — `build.gradle`에 `spring-security-crypto` 한 줄 추가 후 사용 ([backend/README.md](../backend/README.md#라이브러리-buildgradle)). **SQL로 비교하지 않기** | 로그인 만들 때 |
+| 비밀번호 (정란) | `BCryptPasswordEncoder` (`spring-security-crypto`). **SQL로 비교하지 않기** | `UserService` |
 | 사진 · GPX 저장 | `fileStore.save(file, "reviews/88-1.jpg")` → DB에는 이 경로만 저장<br>응답 주소는 `FileStore.url(path)` → `"/files/reviews/88-1.jpg"` (이 주소로 파일이 열림) | `FileStore` |
 | GPX 다운로드 | `return fileStore.download(gpxPath, "코스이름.gpx");` (파일 없으면 404) | `FileStore` |
 
@@ -77,7 +79,7 @@ public class MatchController {
     }
 
     @GetMapping("/api/matches/{id}")
-    public ApiResponse<Match> detail(@PathVariable long id) {
+    public ApiResponse<Match> detail(@PathVariable("id") long id) {
         Match match = repo.findById(id);
         if (match == null) {
             throw ApiException.notFound("모집 글을 찾을 수 없어요.");
@@ -86,7 +88,7 @@ public class MatchController {
     }
 
     @PostMapping("/api/matches/{id}/join")              // 로그인 "필요" API
-    public ApiResponse<Void> join(@PathVariable long id, @LoginUser Long userId) {
+    public ApiResponse<Void> join(@PathVariable("id") long id, @LoginUser Long userId) {
         // 여기까지 왔으면 userId 는 항상 있음 (로그인 안 했으면 이미 401)
         repo.join(id, userId);
         return ApiResponse.ok();
@@ -130,11 +132,11 @@ public record Match(long matchId, String title, LocalDateTime meetAt, String sta
 | `src/pages/` | 화면 하나 = 파일 하나. **Figma 화면 ID**를 이름 앞에 | `W1MatchList.jsx`, `C2CourseDetail.jsx` |
 | `src/components/` | 여러 화면이 같이 쓰는 부품 | `Header.jsx`, `CourseCard.jsx`, `KakaoMap.jsx` |
 | `src/api/` | 백엔드 호출 함수 (도메인별 한 파일) | `matchApi.js`의 `getMatches()` |
-| `src/mocks/` | 백엔드 완성 전 가짜 데이터 (API 명세의 응답 예시 복사) | `matches.json` |
+| `src/mocks/` | 가짜 데이터 (API 명세의 응답 예시 복사). `npm run dev:mock` 일 때만 씀 | `matches.js` |
 
 1. 백엔드가 아직이면 `src/api/`의 함수가 `src/mocks/`의 가짜 데이터를 돌려주게 만들고 화면부터 완성
-2. 백엔드 API가 develop에 합쳐지면 **`src/api/`의 함수만** 실제 `fetch('/api/…')`로 교체 (화면 코드는 그대로)
-   - `npm run dev`는 실제 API, `npm run dev:mock`은 가짜 데이터입니다
+2. 백엔드 API가 develop에 합쳐지면 **`src/api/`의 함수만** 실제 `request('/api/…')`로 교체 (화면 코드는 그대로)
+   - `npm run dev`는 실제 API, `npm run dev:mock`은 가짜 데이터(`MOCK` 배지)입니다. 배포 빌드에서는 가짜 데이터가 켜지지 않습니다
 3. 공통 부품은 담당자(동훈: 지도·헤더·카드 / 승민: 버튼·입력창·모달)가 만들고 서로 가져다 씀
 
 - 백엔드 응답은 항상 `{ success, data }` 또는 `{ success: false, error: { code, message } }` 입니다. 오류도 JSON이라 `res.json()`으로 읽고 `error.message`를 토스트로 보여 주면 됩니다.
@@ -143,7 +145,7 @@ public record Match(long matchId, String title, LocalDateTime meetAt, String sta
 ### 같이 테스트하는 법
 
 1. 백엔드 실행 (스프링부트, 8080)
-2. `frontend`에서 `npm run dev` (5173)
+2. `frontend`에서 `npm run dev` (5173). `npm run dev:mock`은 백엔드를 부르지 않으니 같이 테스트할 때 쓰지 않습니다
 3. 브라우저는 항상 **`localhost:5173`** 으로 접속
 
 ### DB
