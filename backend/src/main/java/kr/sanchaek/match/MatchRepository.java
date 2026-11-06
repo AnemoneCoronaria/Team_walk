@@ -122,7 +122,7 @@ public class MatchRepository {
     /**
      * 내 동행 (P1 탭). 목록과 같은 칸 + role(HOST 모집자 · PARTICIPANT 참여), past 탭은 reviewed(후기를 썼는지) 추가.
      * - upcoming: 내가 참여 중(JOINED)이고 아직 안 끝난 글 (모집자로 연 글 포함), 가까운 날짜 순
-     * - hosting : 내가 연 글 중 취소하지 않은 것 (끝난 글 포함), 가까운 날짜 순
+     * - hosting : 내가 연 글 중 취소하지 않은 것 (끝난 글은 맨 뒤), 가까운 날짜 순
      * - past    : 내가 참여 중(JOINED)이었고 끝난(DONE) 글, 최근 날짜 순
      */
     public PageResult<Map<String, Object>> findMyMatches(long userId, String tab, int page, int size) {
@@ -131,7 +131,11 @@ public class MatchRepository {
             case "past" -> JOINED_BY_ME + " AND s.status = 'DONE'";
             default -> JOINED_BY_ME + " AND s.status NOT IN ('DONE', 'CANCELED')";
         };
-        String orderBy = "past".equals(tab) ? " ORDER BY m.meet_at DESC, m.match_id DESC" : " ORDER BY m.meet_at, m.match_id";
+        String orderBy = switch (tab) {
+            case "past" -> " ORDER BY m.meet_at DESC, m.match_id DESC";
+            case "hosting" -> " ORDER BY (s.status = 'DONE'), m.meet_at, m.match_id";   // 끝난 글은 뒤로
+            default -> " ORDER BY m.meet_at, m.match_id";
+        };
 
         Long total = jdbc.queryForObject("SELECT COUNT(*)" + SUMMARY_FROM + where, Long.class, userId);
         List<Map<String, Object>> items = jdbc.query(
