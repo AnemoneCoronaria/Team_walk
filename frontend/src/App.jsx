@@ -10,11 +10,17 @@ import W1MatchList from './pages/W1MatchList.jsx'
 import W2MatchDetail from './pages/W2MatchDetail.jsx'
 import W3MatchWrite from './pages/W3MatchWrite.jsx'
 import C3CourseUpload from './pages/C3CourseUpload.jsx'
-import Placeholder from './pages/Placeholder.jsx'
 import A1Login from './pages/A1Login.jsx'
 import Signup from './pages/Signup.jsx'
 import X1NotFound from './pages/X1NotFound.jsx'
 import X2ServerError from './pages/X2ServerError.jsx'
+import P2ProfileEdit from './pages/P2ProfileEdit.jsx'
+import MyPageLayout from './components/MyPageLayout.jsx'
+import P1MyPage from './pages/P1MyPage.jsx'
+import P3MyCourses from './pages/P3MyCourses.jsx'
+import P5AccountSettings from './pages/P5AccountSettings.jsx'
+import R1ReviewWrite from './pages/R1ReviewWrite.jsx'
+import C4CourseReviews from './pages/C4CourseReviews.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/:id/edit, /matches/new
@@ -31,7 +37,7 @@ export default function App() {
         {/* 코스 */}
         <Route path="/courses" element={<C1CourseList />} />
         <Route path="/courses/:courseId" element={<C2CourseDetail />} />
-        <Route path="/courses/:courseId/reviews" element={<Placeholder id="C4" title="코스 후기 전체 보기" owner="승민" />} />
+        <Route path="/courses/:courseId/reviews" element={<C4CourseReviews />} />
         <Route path="/courses/new" element={<C3CourseUpload />} />
 
         {/* 동행 */}
@@ -43,7 +49,15 @@ export default function App() {
         {/* 계정 · 마이페이지 (승민) */}
         <Route path="/login" element={<A1Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/mypage" element={<Placeholder id="P1" title="마이페이지" owner="승민" />} />
+        <Route path="/mypage" element={<MyPageLayout />}>
+          <Route index element={<P1MyPage />} />
+          <Route path="courses" element={<P3MyCourses />} />
+          <Route path="settings" element={<P5AccountSettings />} />
+        </Route>
+        <Route path="/mypage/profile" element={<P2ProfileEdit />} />
+
+        {/* 후기 쓰기 (승민) — C4 · P1 지난 동행에서 들어옴 */}
+        <Route path="/courses/:courseId/review" element={<R1ReviewWrite />} />
 
         {/* 오류 화면 (승민): X2 500 은 확인 · 시연용 주소, 없는 주소 → X1 404 */}
         <Route path="/500" element={<X2ServerError />} />

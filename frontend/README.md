@@ -54,13 +54,17 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 | `/courses` | C1 코스 찾기 (C5 결과 없음, L1 로딩) | 동훈 |
 | `/courses/:id` | C2 코스 상세 | 동훈 |
 | `/courses/new` | C3-1 ~ C3-3 코스 등록 (C3-1E 업로드 오류) — 한 주소에서 단계만 바뀜 | 동훈 |
-| `/courses/:id/reviews` | C4 후기 전체 (자리만) | 승민 |
+| `/courses/:id/reviews` | C4 후기 전체 (최신 · 별점 · 사진 후기, 페이지 넘기기) | 승민 |
 | `/matches` | W1 동행 찾기 (E1 결과 없음) | 동훈 |
 | `/matches/:id` | W2 동행 상세 (W2-1 참여 확인, W5 참여 취소). 내가 모집자면 W4 (마감 · 취소 · 내보내기 · 공지 · 댓글) | 동훈 |
 | `/matches/new`, `/matches/:id/edit` | W3 모집 글 쓰기 · 수정 | 동훈 |
 | `/login` | A1 로그인 (실패하면 A2 오류 상태). 가짜 데이터에서는 `db/seed.sql` 테스트 계정 + `test1234!` | 승민 |
 | `/signup` | A3 계정 정보 → A4 프로필 · 태그 → A5 완료 (한 주소에서 단계만 바뀜) | 승민 |
-| `/mypage` | P1 마이페이지 (2주차, 자리만) | 승민 |
+| `/mypage` | P1 마이페이지 · 내 동행 (참여 예정 · 내가 모집한 글 · 지난 동행). 왼쪽 프로필 · 메뉴 · 로그아웃은 `MyPageLayout` | 승민 |
+| `/mypage/courses` | P3 내가 올린 코스 (정보 수정 · GPX · 삭제) | 승민 |
+| `/mypage/settings` | P5 계정 설정 (비밀번호 변경 창, P5-1 회원 탈퇴 창) | 승민 |
+| `/mypage/profile` | P2 프로필 · 태그 수정 (로그인 필요, 저장하면 P1 으로) | 승민 |
+| `/courses/:id/review` | R1 후기 쓰기 (동행 후기면 `?matchId=`). 랜드마크 인증은 3주차 | 승민 |
 | `/500` | X2 서버 오류 (확인 · 시연용. 화면에서 API 5xx 일 때 `<X2ServerError />` 를 보여 주면 됨) | 승민 |
 | 그 밖의 주소 | X1 404 (상세 화면에서 API 404 일 때도 `<X1NotFound />`) | 승민 |
 | `/health` | 환경 확인 | - |
