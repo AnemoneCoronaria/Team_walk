@@ -47,6 +47,13 @@ export const FACILITY_LABELS = {
   SEA_VIEW: '바다 뷰',
 }
 
+// 코스 공개 범위 (Figma C3-3 · P3)
+export const VISIBILITY_LABELS = {
+  PUBLIC: '전체 공개',
+  MATCH_ONLY: '동행 참여자만',
+  PRIVATE: '나만 보기',
+}
+
 export const TARGET_LABELS = {
   ANYONE: '누구나',
   EXCHANGE: '내 · 외국인 교류',
