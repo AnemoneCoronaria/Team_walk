@@ -118,12 +118,15 @@ backend/
    └─ test/java/kr/sanchaek/
       ├─ SanchaekApplicationTests.java    서버가 뜨는지 보는 기본 테스트
       ├─ common/    ControllerParamNameTest (파라미터 이름 검사)
-      └─ course/ · landmark/ · match/ · review/    기능별 테스트
+      ├─ match/     규칙 표 · 목록 필터 · 동시 참여 · HTTP 요청 · 댓글 · AD3
+      ├─ user/      계정 · 신고 · 관리자 AD1 · AD2 · AD4
+      └─ course/ · landmark/ · review/    기능별 테스트
 ```
 
 - **★ `HelloController`는 환경 확인용이라 지우지 않습니다.**
 - `./gradlew build`(또는 `test`)는 테스트가 실제 DB를 쓰므로 `application-local.properties`가 있어야 합니다. `bootRun`은 테스트를 돌리지 않습니다.
-- 테스트는 **`seed.sql`을 새로 넣은 DB**를 기준으로 합니다. 시드 날짜가 지나면(5일쯤) 실패하는 테스트가 있으니, 그때는 `schema.sql` → `seed.sql`을 다시 실행합니다. 테스트가 바꾼 데이터는 끝나면 되돌립니다.
+- 테스트는 **`seed.sql`을 넣은 DB**를 기준으로 합니다. 시드 날짜가 지나도 통과하지만, 시드 내용을 많이 바꿨으면 `schema.sql` → `seed.sql`을 다시 실행합니다. 테스트가 바꾼 데이터는 끝나면 되돌립니다. (동시 참여 테스트만 글을 실제로 만들고 지웁니다)
+- 합치기 전과 시연 전날에 **`./gradlew test`** 를 돌립니다. 버그를 고칠 때는 그 버그를 잡는 테스트를 같이 추가합니다.
 
 ---
 
