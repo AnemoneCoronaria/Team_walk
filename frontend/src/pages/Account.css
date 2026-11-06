@@ -47,26 +47,8 @@
   line-height: 1.5;
 }
 
-/* A4 항목 하나 (제목 + 칩 목록) */
-.signup-field { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; align-self: stretch; }
-
-/* A4 아바타 고르기 */
-.signup-avatar {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: var(--text-body);
-  font-size: 12px;
-  line-height: normal;
-  cursor: pointer;
-}
-.signup-avatar .avatar { border: 3px solid transparent; }
-.signup-avatar.is-selected { color: var(--brand-green); font-weight: 700; }
-.signup-avatar.is-selected .avatar { border-color: var(--brand-green); }
+/* A4 · P2 항목 하나 (제목 + 칩 목록) */
+.account-field { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; align-self: stretch; }
 
 /* A4 언어 태그 안내 (파란 상자) */
 .signup-note {
