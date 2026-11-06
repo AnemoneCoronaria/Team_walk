@@ -53,7 +53,7 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 | `/courses` | C1 코스 찾기 (C5 결과 없음, L1 로딩) | 동훈 |
 | `/courses/:id` | C2 코스 상세 | 동훈 |
 | `/courses/new` | C3 코스 등록 (2주차, 지금은 자리만) | 동훈 |
-| `/courses/:id/reviews` | C4 후기 전체 (자리만) | 승민 |
+| `/courses/:id/reviews` | C4 후기 전체 (최신 · 별점 · 사진 후기, 페이지 넘기기) | 승민 |
 | `/matches` | W1 동행 찾기 (E1 결과 없음) | 동훈 |
 | `/matches/:id`, `/matches/new` | W2 · W4, W3 (2주차, 자리만) | 동훈 |
 | `/login` | A1 로그인 (실패하면 A2 오류 상태). 가짜 데이터에서는 `db/seed.sql` 테스트 계정 + `test1234!` | 승민 |

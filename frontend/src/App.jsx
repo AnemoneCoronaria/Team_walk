@@ -18,6 +18,7 @@ import P1MyPage from './pages/P1MyPage.jsx'
 import P3MyCourses from './pages/P3MyCourses.jsx'
 import P5AccountSettings from './pages/P5AccountSettings.jsx'
 import R1ReviewWrite from './pages/R1ReviewWrite.jsx'
+import C4CourseReviews from './pages/C4CourseReviews.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/new
@@ -34,7 +35,7 @@ export default function App() {
         {/* 코스 */}
         <Route path="/courses" element={<C1CourseList />} />
         <Route path="/courses/:courseId" element={<C2CourseDetail />} />
-        <Route path="/courses/:courseId/reviews" element={<Placeholder id="C4" title="코스 후기 전체 보기" owner="승민" />} />
+        <Route path="/courses/:courseId/reviews" element={<C4CourseReviews />} />
         <Route path="/courses/new" element={<Placeholder id="C3-1 ~ C3-3" title="GPX로 코스 등록" owner="동훈 · 2주차" />} />
 
         {/* 동행 */}
