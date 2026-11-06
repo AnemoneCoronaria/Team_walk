@@ -445,12 +445,15 @@ public class MatchRepository {
     record Viewer(String ageGroup, String mbti, List<String> languages) {
     }
 
-    /** 모집 글에 고를 수 있는 코스: 삭제 · 숨김이 아니고, 전체 공개이거나 내가 올린 코스 (W3 "코스 검색 · 내가 올린 코스") */
+    /**
+     * 모집 글에 고를 수 있는 코스: 삭제 · 숨김이 아니고, 전체 공개이거나 내가 올린 동행 공개(MATCH_ONLY) 코스.
+     * 나만 보기(PRIVATE)는 내 코스여도 안 됨: 참여자가 코스를 볼 수 없음
+     */
     public boolean isCourseSelectable(long courseId, long userId) {
         Integer count = jdbc.queryForObject("""
             SELECT COUNT(*) FROM courses
             WHERE course_id = ? AND is_deleted = FALSE AND is_hidden = FALSE
-              AND (visibility = 'PUBLIC' OR author_id = ?)
+              AND (visibility = 'PUBLIC' OR (visibility = 'MATCH_ONLY' AND author_id = ?))
             """, Integer.class, courseId, userId);
         return count != null && count > 0;
     }

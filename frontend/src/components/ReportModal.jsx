@@ -15,7 +15,7 @@ const MAX_DETAIL = 300
 //                targetType="MATCH" targetId={match.matchId} targetLabel="하늘 · 11/11 옥구공원 동행" />
 //   targetType: MATCH(동행 글) · USER(사용자) · REVIEW(후기) → W6 사유, COURSE → C2-1 사유
 // 로그인한 사람만 신고할 수 있으니, 로그인 안 했으면 화면에서 LoginRequiredModal 을 먼저 띄워 주세요.
-// API: POST /api/reports (정란 · 아직 없음). "이 사용자 차단하기"는 2순위라 없음
+// API: POST /api/reports (정란). "이 사용자 차단하기"는 2순위라 없음
 export default function ReportModal({ open, ...props }) {
   if (!open) return null
   return <ReportForm {...props} /> // 열 때마다 새로 만들어서 고른 사유 · 내용이 남지 않게

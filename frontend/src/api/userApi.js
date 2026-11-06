@@ -4,10 +4,10 @@
 //   POST /api/auth/login      (백엔드: 정란) — A1 로그인
 //   GET  /api/users/check-id  (백엔드: 정란) — A3 아이디 중복 확인
 //   POST /api/users           (백엔드: 정란) — A4 회원가입 (A3 + A4 값을 한 번에)
-//   PUT  /api/users/me        (백엔드: 정란, 2주차 · 아직 없음) — P2 프로필 · 태그 수정
-//   PUT  /api/users/me/password · DELETE /api/users/me (정란, 2주차 · 아직 없음) — P5 비밀번호 변경 · P5-1 탈퇴
+//   PUT  /api/users/me        (백엔드: 정란) — P2 프로필 · 태그 수정
+//   PUT  /api/users/me/password · DELETE /api/users/me (정란) — P5 비밀번호 변경 · P5-1 탈퇴
 //   POST /api/auth/logout     (백엔드: 정란) — 마이페이지 메뉴의 로그아웃
-//   PUT  /api/users/me/consents (정란, 3주차 · 아직 없음) — R1-1 위치 정보 이용 동의
+//   PUT  /api/users/me/consents (정란) — R1-1 위치 정보 이용 동의
 // 로그인 · 회원가입 등 나머지 계정 API는 승민 담당 화면에서 이 파일에 추가하면 됩니다.
 import { USE_MOCK, request, mockResponse, mockError } from './client.js'
 import { ME, MY_STAMPS, USERS, LOGIN_IDS, MOCK_PASSWORD } from '../mocks/users.js'
@@ -56,7 +56,6 @@ export function updateMe(body) {
 
 /**
  * 비밀번호 변경 (P5) — 지금 비밀번호가 틀리면 400
- * 정란 API가 아직 없어서 칸 이름(currentPassword, newPassword)은 API 명세가 나오면 확인
  */
 export function changePassword(currentPassword, newPassword) {
   if (USE_MOCK) {
@@ -88,7 +87,6 @@ export function logout() {
 
 /**
  * 위치 정보 이용 동의 (R1-1) — 랜드마크 인증 전에 한 번. 동의하면 GET /api/users/me 의 agreeLocation 이 true
- * 정란 API가 아직 없어서 칸 이름(agreeLocation)은 API 명세가 나오면 확인
  */
 export function updateConsents(agreeLocation) {
   if (USE_MOCK) {

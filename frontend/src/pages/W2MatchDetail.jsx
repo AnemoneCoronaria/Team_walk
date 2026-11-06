@@ -6,6 +6,7 @@ import Chip from '../components/Chip.jsx'
 import KakaoMap from '../components/KakaoMap.jsx'
 import LoginRequiredModal from '../components/LoginRequiredModal.jsx'
 import Modal from '../components/Modal.jsx'
+import ReportModal from '../components/ReportModal.jsx'
 import X1NotFound from './X1NotFound.jsx'
 import X2ServerError from './X2ServerError.jsx'
 import {
@@ -62,7 +63,7 @@ export default function W2MatchDetail() {
   const { data: m, error } = useAsync(() => getMatch(matchId), `${matchId}-${version}-${user?.userId}`)
   const reload = () => setVersion((v) => v + 1)
 
-  const [modal, setModal] = useState(null) // 'join' | 'leave' | 'close' | 'cancel' | 'login' | { kick: participant }
+  const [modal, setModal] = useState(null) // 'join' | 'leave' | 'close' | 'cancel' | 'login' | 'report' | { kick: participant }
 
   if (error?.status === 404) return <X1NotFound />
   if (error) return <X2ServerError onRetry={reload} />
@@ -282,8 +283,7 @@ export default function W2MatchDetail() {
                 모집 취소
               </Button>
             ) : (
-              // 신고 모달(W6)은 승민 담당 — 3주차에 연결
-              <Button variant="danger" onClick={() => showToast('신고는 준비 중이에요', 'info')}>
+              <Button variant="danger" onClick={() => setModal(user ? 'report' : 'login')}>
                 신고
               </Button>
             )}
@@ -335,6 +335,13 @@ export default function W2MatchDetail() {
         onConfirm={() => run(() => kickParticipant(m.matchId, openModal.kick.userId), '참여자를 내보냈어요')}
       />
       <LoginRequiredModal open={openModal === 'login'} onClose={closeModal} />
+      <ReportModal
+        open={openModal === 'report'}
+        onClose={closeModal}
+        targetType="MATCH"
+        targetId={m.matchId}
+        targetLabel={`${m.host.nickname}님의 모집 글 · ${m.title}`}
+      />
     </main>
   )
 }
@@ -462,7 +469,7 @@ function ConfirmModal({ open, title, desc, okLabel, danger = false, onClose, onC
   )
 }
 
-// W4 공지 · 댓글 (참여자 · 모집자만). 댓글 API 는 민서 일정상 3주차 → 서버에 없으면 안내만
+// W4 공지 · 댓글 (참여자 · 모집자만)
 function Comments({ matchId, isHost }) {
   const [version, setVersion] = useState(0)
   const { data, error } = useAsync(() => getComments(matchId), `${matchId}-${version}`)

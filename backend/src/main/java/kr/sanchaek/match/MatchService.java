@@ -311,7 +311,7 @@ public class MatchService {
 
     private void checkCourse(long courseId, long userId) {
         if (!repo.isCourseSelectable(courseId, userId)) {
-            throw ApiException.badRequest("고를 수 없는 코스예요.");
+            throw ApiException.badRequest("고를 수 없는 코스예요. 나만 보기 코스는 공개 범위를 바꾼 뒤 골라 주세요.");
         }
     }
 

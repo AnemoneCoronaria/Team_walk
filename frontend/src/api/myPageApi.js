@@ -1,5 +1,5 @@
 // 마이페이지 API — P1 내 동행 (백엔드: 민서), P3 내가 올린 코스 (백엔드: 동언)
-//   GET    /api/users/me/matches?tab=  (민서, 3주차 · 아직 없음) — tab: upcoming 참여 예정 · hosting 내가 모집한 글 · past 지난 동행
+//   GET    /api/users/me/matches?tab=  (민서) — tab: upcoming 참여 예정 · hosting 내가 모집한 글 · past 지난 동행
 //   GET    /api/users/me/courses       (동언, PR #20)
 //   PUT    /api/courses/{id}           (동언, PR #20) — 코스 정보 수정 (GPX 경로는 그대로)
 //   DELETE /api/courses/{id}           (동언, PR #20)
@@ -12,7 +12,6 @@ import { COURSES, REVIEWS, toCourseSummary } from '../mocks/courses.js'
  * 내 동행 (P1 탭) — { items, page, size, total }
  * items 한 줄 = 동행 목록(GET /api/matches)과 같은 칸 + role(HOST 모집자 · PARTICIPANT 참여),
  *              지난 동행(past)이면 reviewed(후기를 썼는지)
- * ※ 민서 API가 아직 없어서 모양은 가짜 데이터로 먼저 정함 → API 명세가 나오면 확인
  */
 export function getMyMatches(tab) {
   if (USE_MOCK) return mockResponse(paginate(mockMyMatches(tab), 1, 50))

@@ -145,4 +145,14 @@ class MatchCommentAdminTest {
         jdbc.update("UPDATE courses SET visibility = 'PRIVATE' WHERE course_id = 4");
         assertEquals(400, statusOf(() -> service.update(1, MINSEO, request(4), null)));
     }
+
+    @Test void privateCourseCannotBeUsedForNewMatch() {
+        // 코스 3 의 작성자는 정란(3)
+        jdbc.update("UPDATE courses SET visibility = 'PRIVATE' WHERE course_id = 3");
+        assertEquals(400, statusOf(() -> service.create(JEONGRAN, request(3), null)));   // 내 코스여도 나만 보기는 안 됨
+
+        jdbc.update("UPDATE courses SET visibility = 'MATCH_ONLY' WHERE course_id = 3");
+        assertEquals(400, statusOf(() -> service.create(MINSEO, request(3), null)));     // 남의 동행 공개 코스
+        assertTrue(service.create(JEONGRAN, request(3), null) > 0);                      // 내 동행 공개 코스
+    }
 }

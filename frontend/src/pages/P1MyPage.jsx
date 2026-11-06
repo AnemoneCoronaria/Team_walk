@@ -23,7 +23,7 @@ const EMPTY = {
 
 // P1 마이페이지 · 내 동행 (/mypage) — 왼쪽 프로필 · 메뉴는 components/MyPageLayout.jsx
 // API: GET /api/users/me (통계: 함께 걸은 동행 · 올린 코스 · 총 거리), GET /api/users/me/stamps (랜드마크 n / 8),
-//      GET /api/users/me/matches?tab= (탭 3개 · 민서 3주차 → 지금은 가짜 데이터)
+//      GET /api/users/me/matches?tab= (탭 3개 · 민서)
 // 참여 취소(W5)는 동행 상세(W2)에 있어서 상세로 보냄. 지난 동행의 출석 확인 · 설문(P1-1)은 2순위
 export default function P1MyPage() {
   const { user } = useAuth()
