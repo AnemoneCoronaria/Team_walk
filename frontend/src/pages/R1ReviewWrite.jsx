@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react'
 import { Navigate, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Chip from '../components/Chip.jsx'
+import LandmarkVerify from '../components/LandmarkVerify.jsx'
 import { getCourse } from '../api/courseApi.js'
 import { createReview } from '../api/reviewApi.js'
 import { useAuth } from '../auth/authContext.js'
+import { LANDMARK_ICONS } from '../constants/labels.js'
 import { showToast } from '../utils/toast.js'
 import { useAsync } from '../utils/useAsync.js'
 import X1NotFound from './X1NotFound.jsx'
@@ -18,7 +20,8 @@ const MIN_CONTENT = 10
 // 들어오는 곳: C4 "후기 쓰기", P1 지난 동행 "후기 쓰기" — 로그인해야 쓸 수 있음
 // API: GET /api/courses/{id} (코스 이름), POST /api/reviews (동언, PR #20) → 등록하면 C2 로 + 토스트
 // 규칙은 서버와 같게: 별점 1~5, 후기 10자 이상, 사진 jpg · png 한 장 5MB 이하 최대 5장
-// 랜드마크 인증(GPX · 사진)은 3주차, 함께 걸은 동행 평가는 2순위라 아직 없음
+// 코스가 지나는 랜드마크가 있으면 아래에 GPX 인증 상자 (후기 등록과는 따로 동작 → components/LandmarkVerify.jsx)
+// 사진으로 인증 · 함께 걸은 동행 평가는 2순위라 없음
 export default function R1ReviewWrite() {
   const { user, loading } = useAuth()
   const location = useLocation()
@@ -135,6 +138,8 @@ function ReviewForm() {
           </div>
         </div>
 
+        {course.data?.landmarks.length > 0 && <LandmarkBox landmarks={course.data.landmarks} />}
+
         <div className="review-actions">
           <Button variant="secondary" onClick={() => navigate(-1)} disabled={submitting}>
             나중에
@@ -145,6 +150,26 @@ function ReviewForm() {
         </div>
       </form>
     </main>
+  )
+}
+
+// 랜드마크 인증 상자 (Figma R1 아래쪽 초록 상자)
+function LandmarkBox({ landmarks }) {
+  const names = landmarks.map((l) => l.name)
+  return (
+    <div className="review-landmark">
+      <span className="review-landmark-icon">{LANDMARK_ICONS[landmarks[0].landmarkId] ?? '📍'}</span>
+      <div className="col g8 grow">
+        <p className="t-b16m c-green">랜드마크 인증 가능: {names.join(', ')}</p>
+        <p className="t-b14 c-body">
+          오늘 걸은 GPX를 올리면 경로가 랜드마크 근처(300m)를 지났는지 자동으로 확인해 스탬프를 드려요.
+        </p>
+        <LandmarkVerify target={names[0]} />
+        <p className="t-c12 c-muted">
+          집에 돌아와서 해도 돼요 · 산책 중에 사이트를 켤 필요가 없어요 · GPX 위치 정보는 인증에만 쓰여요
+        </p>
+      </div>
+    </div>
   )
 }
 

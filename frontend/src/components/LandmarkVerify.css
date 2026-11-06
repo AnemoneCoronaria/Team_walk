@@ -1,0 +1,6 @@
+/* 랜드마크 GPX 인증 창 (R1-1 · R2-1 · R1-2) */
+
+.verify-icon { font-size: 48px; line-height: 1.2; }
+
+.verify-check { display: inline-flex; align-items: center; gap: 8px; color: var(--text-strong); font-size: 14px; font-weight: 500; line-height: 1.5; cursor: pointer; }
+.verify-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--brand-green); cursor: pointer; }
