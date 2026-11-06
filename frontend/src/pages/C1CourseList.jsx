@@ -14,7 +14,7 @@ const DISTANCES = {
   ge5: { label: '5km~', params: { minDistance: 5 } },
 }
 const LEVELS = ['EASY', 'NORMAL', 'HARD']
-const FACILITIES = ['TOILET', 'BENCH', 'PARKING']
+const FACILITIES = ['TOILET', 'BENCH', 'PARKING', 'SEA_VIEW'] // 코스 등록(C3-3)과 같은 4개
 
 /**
  * C1 코스 찾기 (지도 + 목록) · C5 검색 결과 없음 · L1 로딩

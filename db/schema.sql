@@ -178,8 +178,7 @@ CREATE TABLE matches (
     meet_at     DATETIME      NOT NULL                 COMMENT '만나는 일시 (시간대 MORNING · AFTERNOON · EVENING · NIGHT 는 이 값으로 계산)',
     meet_place  VARCHAR(100)  NOT NULL                 COMMENT '만남 장소 설명 (예: 옥구공원 정문 주차장 앞)',
     capacity    TINYINT       NOT NULL                 COMMENT '정원 2~6 (모집자 포함, Figma W3)',
-    target      VARCHAR(20)   NOT NULL                 COMMENT 'ANYONE 누구나, EXCHANGE 내·외국인 교류, SAME_LANGUAGE 같은 언어끼리, MBTI MBTI 맞춤 (Figma W3)',
-    mbti        CHAR(4)       NULL                     COMMENT 'target 이 MBTI 일 때만 (그 외에는 NULL)',
+    mbti        CHAR(4)       NULL                     COMMENT '모집 대상에 MBTI 맞춤(match_tags TARGET = MBTI)이 있을 때만 (그 외에는 NULL)',
     path_json   JSON          NULL                     COMMENT '첨부한 GPX의 경로 좌표. NULL 이면 코스 경로를 씀',
     gpx_path    VARCHAR(100)  NULL                     COMMENT '첨부한 GPX 파일 경로 (예: gpx/match-1.gpx). 없으면 코스 GPX',
     status      VARCHAR(10)   NOT NULL DEFAULT 'OPEN'  COMMENT 'OPEN, CLOSED 마감, CANCELED 모집 취소 (화면에 보낼 상태는 v_match_status)',
@@ -193,21 +192,20 @@ CREATE TABLE matches (
     CONSTRAINT fk_matches_host   FOREIGN KEY (host_id)   REFERENCES users (user_id),
     CONSTRAINT fk_matches_course FOREIGN KEY (course_id) REFERENCES courses (course_id),
     CONSTRAINT chk_matches_capacity CHECK (capacity BETWEEN 2 AND 6),
-    CONSTRAINT chk_matches_target   CHECK (target IN ('ANYONE','EXCHANGE','SAME_LANGUAGE','MBTI')),
-    CONSTRAINT chk_matches_mbti     CHECK ((target = 'MBTI' AND mbti IS NOT NULL) OR (target <> 'MBTI' AND mbti IS NULL)),
     CONSTRAINT chk_matches_status   CHECK (status IN ('OPEN','CLOSED','CANCELED'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='동행 모집 글 (담당: 민서)';
 
 
 -- ---------------------------------------------------------------------
--- 동행이 원하는 스타일 · 언어 · 연령대 (담당: 민서)
+-- 동행이 원하는 스타일 · 언어 · 연령대 · 모집 대상 (담당: 민서)
 -- 값 하나당 한 줄. "中文(ZH) 가능한 동행만" 같은 필터에 씁니다.
 -- 코드는 user_tags 와 같고, 연령대는 users.age_group 과 같은 값 (20s, 30s, 40s, 50s+)
+-- 모집 대상(TARGET)은 여러 개 고를 수 있고, 하나도 없으면 "누구나" (참여할 때는 고른 조건을 모두 만족해야 함)
 -- ---------------------------------------------------------------------
 CREATE TABLE match_tags (
     match_id   BIGINT       NOT NULL,
-    tag_type   VARCHAR(10)  NOT NULL COMMENT 'STYLE, LANGUAGE, AGE_GROUP',
+    tag_type   VARCHAR(10)  NOT NULL COMMENT 'STYLE, LANGUAGE, AGE_GROUP, TARGET',
     tag_value  VARCHAR(30)  NOT NULL COMMENT '영어 코드 (SLOW, KO, 20s …)',
     PRIMARY KEY (match_id, tag_type, tag_value),
     KEY idx_match_tags_value (tag_type, tag_value),
@@ -215,7 +213,8 @@ CREATE TABLE match_tags (
     CONSTRAINT chk_match_tags_value CHECK (
         (tag_type = 'STYLE'     AND tag_value IN ('SLOW','FAST','QUIET','CHAT','PHOTO','SUNRISE_SUNSET','DOG'))
      OR (tag_type = 'LANGUAGE'  AND tag_value IN ('KO','ZH','EN','VI','RU'))
-     OR (tag_type = 'AGE_GROUP' AND tag_value IN ('20s','30s','40s','50s+')))
+     OR (tag_type = 'AGE_GROUP' AND tag_value IN ('20s','30s','40s','50s+'))
+     OR (tag_type = 'TARGET'    AND tag_value IN ('EXCHANGE','SAME_LANGUAGE','MBTI')))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='동행 태그 (담당: 민서)';
 

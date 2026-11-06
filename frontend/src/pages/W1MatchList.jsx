@@ -11,24 +11,27 @@ import {
   STYLE_LABELS,
   TARGET_LABELS,
   TIME_SLOT_LABELS,
+  toggleStyle,
 } from '../constants/labels.js'
 import './W1MatchList.css'
 
 const PAGE_SIZE = 20
 // W1 필터에 보이는 칩 (Figma W1 · 명세 값 약속)
-const STYLE_CHIPS = ['SLOW', 'FAST', 'QUIET', 'CHAT', 'PHOTO']
-const LANG_CHIPS = ['KO', 'ZH', 'EN', 'VI']
+const STYLE_CHIPS = ['SLOW', 'FAST', 'QUIET', 'CHAT', 'PHOTO', 'SUNRISE_SUNSET', 'DOG'] // 프로필 · 글쓰기와 같은 7개. 천천히 ↔ 빠르게, 조용히 ↔ 수다는 하나만
+const TARGET_CHIPS = ['EXCHANGE', 'SAME_LANGUAGE', 'MBTI'] // '누구나'는 기본값이라 칩 없음
+const LANG_CHIPS = ['KO', 'ZH', 'EN', 'VI', 'RU'] // 프로필 · 글쓰기와 같은 5개
 
 // 주소(?date=weekend&style=SLOW,CHAT) ↔ 필터 값
 function readFilter(sp) {
-  const list = (k) => (sp.get(k) ? sp.get(k).split(',') : [])
+  // 칩에 없는 값(예: 예전 주소의 target=ANYONE)은 버림 → '적용된 필터'에 이상한 칩이 안 생기게
+  const list = (k, allowed) => (sp.get(k) ? sp.get(k).split(',').filter((v) => allowed.includes(v)) : [])
   return {
     date: sp.get('date') ?? '',
     timeSlot: sp.get('timeSlot') ?? '',
-    style: list('style'),
-    lang: list('lang'),
-    target: sp.get('target') ?? '',
-    age: sp.get('age') ?? '',
+    style: list('style', STYLE_CHIPS),
+    lang: list('lang', LANG_CHIPS),
+    target: list('target', TARGET_CHIPS),
+    age: list('age', Object.keys(AGE_LABELS)),
     area: sp.get('area') ?? '',
   }
 }
@@ -205,6 +208,7 @@ function FilterPanel({ applied, onApply, onReset }) {
   const single = (key, value) => setDraft((d) => ({ ...d, [key]: d[key] === value ? '' : value }))
   const multi = (key, value) =>
     setDraft((d) => ({ ...d, [key]: d[key].includes(value) ? d[key].filter((v) => v !== value) : [...d[key], value] }))
+  const pickStyle = (code) => setDraft((d) => ({ ...d, style: toggleStyle(d.style, code) }))
 
   function pickPreset(value) {
     setPickDate(false)
@@ -250,7 +254,7 @@ function FilterPanel({ applied, onApply, onReset }) {
 
       <Group title="산책 스타일">
         {STYLE_CHIPS.map((code) => (
-          <Chip key={code} tone="green" on={draft.style.includes(code)} onClick={() => multi('style', code)}>
+          <Chip key={code} tone="green" on={draft.style.includes(code)} onClick={() => pickStyle(code)}>
             {STYLE_LABELS[code]}
           </Chip>
         ))}
@@ -264,17 +268,23 @@ function FilterPanel({ applied, onApply, onReset }) {
         ))}
       </Group>
 
+      {/* 모집 대상: '누구나'는 칩 대신 기본값(아무것도 안 고름 = 모든 글).
+          고르면 "내가 맞출 수 있는 조건" → 글의 대상이 모두 이 안에 있는 글 + 누구나 글 */}
       <Group title="모집 대상">
-        {Object.entries(TARGET_LABELS).map(([code, label]) => (
-          <Chip key={code} on={draft.target === code} onClick={() => single('target', code)}>
-            {label}
+        {TARGET_CHIPS.map((code) => (
+          <Chip key={code} on={draft.target.includes(code)} onClick={() => multi('target', code)}>
+            {TARGET_LABELS[code]}
           </Chip>
         ))}
       </Group>
 
+      {/* 연령대: W3 글쓰기와 같게 '무관' + 여러 개. 무관 = 아무것도 안 고름 */}
       <Group title="연령대">
+        <Chip on={draft.age.length === 0} onClick={() => setDraft((d) => ({ ...d, age: [] }))}>
+          무관
+        </Chip>
         {Object.entries(AGE_LABELS).map(([code, label]) => (
-          <Chip key={code} on={draft.age === code} onClick={() => single('age', code)}>
+          <Chip key={code} on={draft.age.includes(code)} onClick={() => multi('age', code)}>
             {label}
           </Chip>
         ))}
@@ -333,8 +343,8 @@ function appliedChips(filter, write) {
   if (filter.timeSlot) add('timeSlot', filter.timeSlot, TIME_SLOT_LABELS[filter.timeSlot])
   filter.style.forEach((s) => add('style', s, STYLE_LABELS[s] ?? s, 'green'))
   filter.lang.forEach((l) => add('lang', l, LANGUAGE_LABELS[l] ?? l, 'blue'))
-  if (filter.target) add('target', filter.target, TARGET_LABELS[filter.target])
-  if (filter.age) add('age', filter.age, AGE_LABELS[filter.age])
+  filter.target.forEach((t) => add('target', t, TARGET_LABELS[t]))
+  filter.age.forEach((a) => add('age', a, AGE_LABELS[a]))
   if (filter.area) add('area', filter.area, AREA_LABELS[filter.area])
   return chips
 }

@@ -29,13 +29,13 @@ class MatchRulesTest {
         jdbc.update("UPDATE matches SET meet_at = NOW() - INTERVAL 7 DAY WHERE match_id = 6");
     }
 
-    private static MatchRequest form(String target, String mbti, int capacity, long courseId) {
-        return new MatchRequest("  같이 걸어요  ", courseId, LocalDateTime.now().plusDays(3), capacity, " 정문 ", target, mbti,
+    private static MatchRequest form(List<String> targets, String mbti, int capacity, long courseId) {
+        return new MatchRequest("  같이 걸어요  ", courseId, LocalDateTime.now().plusDays(3), capacity, " 정문 ", targets, mbti,
                 List.of("20s", "20s"), List.of("SLOW", "CHAT"), List.of("KO"), "   ", null);
     }
 
     private static MatchRequest form() {
-        return form("ANYONE", null, 4, 1);
+        return form(List.of(), null, 4, 1);
     }
 
     private static ApiException fail(Runnable action) {
@@ -76,13 +76,13 @@ class MatchRulesTest {
     }
 
     @Test void mbtiIsUpperCasedAndOnlyKeptForMbtiTarget() {
-        assertEquals("ISFP", service.detail(service.create(MINSEO, form("MBTI", "isfp", 4, 1), null), MINSEO).get("mbti"));
-        assertNull(service.detail(service.create(MINSEO, form("ANYONE", "ISFP", 4, 1), null), MINSEO).get("mbti"));
-        assertEquals(400, fail(() -> service.create(MINSEO, form("MBTI", null, 4, 1), null)).getStatus());
+        assertEquals("ISFP", service.detail(service.create(MINSEO, form(List.of("MBTI"), "isfp", 4, 1), null), MINSEO).get("mbti"));
+        assertNull(service.detail(service.create(MINSEO, form(List.of(), "ISFP", 4, 1), null), MINSEO).get("mbti"));
+        assertEquals(400, fail(() -> service.create(MINSEO, form(List.of("MBTI"), null, 4, 1), null)).getStatus());
     }
 
     @Test void courseMustBeSelectable() {
-        assertEquals(400, fail(() -> service.create(MINSEO, form("ANYONE", null, 4, 9999), null)).getStatus());
+        assertEquals(400, fail(() -> service.create(MINSEO, form(List.of(), null, 4, 9999), null)).getStatus());
         jdbc.update("UPDATE courses SET is_hidden = TRUE WHERE course_id = 1");
         assertEquals(400, fail(() -> service.create(MINSEO, form(), null)).getStatus());
         jdbc.update("UPDATE courses SET is_hidden = FALSE, is_deleted = TRUE WHERE course_id = 1");
@@ -115,7 +115,7 @@ class MatchRulesTest {
     }
 
     private void assertRow(String status, boolean join, boolean leave, boolean edit, boolean close, boolean kick) {
-        MatchRequest same = new MatchRequest("제목", 3L, LocalDateTime.now().plusDays(3), 6, "정문", "ANYONE", null,
+        MatchRequest same = new MatchRequest("제목", 3L, LocalDateTime.now().plusDays(3), 6, "정문", List.of(), null,
                 null, null, List.of("KO"), null, null);
         // 각 동작을 저장점 없이 시험하면 서로 영향을 주므로, 상태를 바꾸는 동작은 원래대로 돌려 놓음
         set2To(status);
@@ -173,12 +173,14 @@ class MatchRulesTest {
     // ----- 수정 -----
 
     @Test void updateReplacesFieldsAndTags() {
-        var r = new MatchRequest("새 제목", 2L, LocalDateTime.now().plusDays(5).withNano(0), 5, "새 장소", "MBTI", "enfp",
+        var r = new MatchRequest("새 제목", 2L, LocalDateTime.now().plusDays(5).withNano(0), 5, "새 장소",
+                List.of("SAME_LANGUAGE", "MBTI", "MBTI"), "enfp",
                 List.of("30s"), List.of(), List.of("EN", "VI"), "소개", null);
         service.update(1, MINSEO, r, null);
         Map<String, Object> d = service.detail(1, MINSEO);
         assertEquals("새 제목", d.get("title"));
         assertEquals("ENFP", d.get("mbti"));
+        assertEquals(List.of("MBTI", "SAME_LANGUAGE"), d.get("targets"));   // 중복은 한 번만, 코드 순
         assertEquals(List.of("30s"), d.get("ageGroups"));
         assertEquals(List.of(), d.get("styles"));
         assertEquals(List.of("EN", "VI"), d.get("languages"));
@@ -189,8 +191,8 @@ class MatchRulesTest {
     }
 
     @Test void capacityCannotGoBelowCurrent() {
-        assertFails(409, "CAPACITY_TOO_SMALL", () -> service.update(3, DONGEON, form("ANYONE", null, 2, 4), null));
-        service.update(1, MINSEO, form("ANYONE", null, 2, 1), null);   // 지금 2명 → 정원 2 는 가능, 정원 참이 됨
+        assertFails(409, "CAPACITY_TOO_SMALL", () -> service.update(3, DONGEON, form(List.of(), null, 2, 4), null));
+        service.update(1, MINSEO, form(List.of(), null, 2, 1), null);   // 지금 2명 → 정원 2 는 가능, 정원 참이 됨
         assertEquals("FULL", statusOf(1));
     }
 
@@ -218,6 +220,18 @@ class MatchRulesTest {
         assertFails(403, "MBTI_MISMATCH", () -> service.join(4, DONGEON));      // INTJ
         assertFails(403, "MBTI_MISMATCH", () -> service.join(4, MINSEO));       // MBTI 없음
         jdbc.update("UPDATE users SET mbti = 'ISFP' WHERE user_id = ?", DONGEON);
+        service.join(4, DONGEON);
+    }
+
+    @Test void severalTargetsMustAllMatch() {
+        // 4번을 MBTI 맞춤 + 같은 언어끼리(VI)로 → MBTI 는 맞아도 언어가 안 맞으면 못 들어감
+        jdbc.update("UPDATE matches SET status = 'OPEN' WHERE match_id = 4");
+        jdbc.update("INSERT INTO match_tags (match_id, tag_type, tag_value) VALUES (4, 'TARGET', 'SAME_LANGUAGE')");
+        jdbc.update("DELETE FROM match_tags WHERE match_id = 4 AND tag_type = 'LANGUAGE'");
+        jdbc.update("INSERT INTO match_tags (match_id, tag_type, tag_value) VALUES (4, 'LANGUAGE', 'VI')");
+        jdbc.update("UPDATE users SET mbti = 'ISFP' WHERE user_id = ?", DONGEON);
+        assertFails(403, "LANGUAGE_MISMATCH", () -> service.join(4, DONGEON));   // KO 만
+        jdbc.update("INSERT INTO user_tags (user_id, tag_type, tag_value) VALUES (?, 'LANGUAGE', 'VI')", DONGEON);
         service.join(4, DONGEON);
     }
 

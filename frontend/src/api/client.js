@@ -61,6 +61,10 @@ export async function request(path, { method = 'GET', params, body } = {}) {
   } catch {
     // 서버가 꺼져 있으면 Vite가 JSON이 아닌 오류를 돌려줌
   }
+  // 백엔드가 꺼져 있으면 Vite 프록시가 JSON 없이 500 대 오류를 돌려줌 → 알아보기 쉬운 문구로
+  if (!json && res.status >= 500) {
+    throw new ApiError(0, 'SERVER_DOWN', '서버에 연결할 수 없어요. 백엔드(bootRun)가 켜져 있는지 확인해 주세요.')
+  }
   if (!res.ok || !json || !json.success) {
     throw new ApiError(
       res.status,

@@ -38,6 +38,14 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 - 가짜 데이터에서 로그인한 사람은 **민서**예요. 동행 1번은 민서가 모집자라 W4(모집자 화면), 2번은 참여하기(W2-1), 3번은 이미 참여 중(W5 참여 취소), 4번은 마감 상태로 보여요. 가짜로 등록 · 참여한 내용은 새로고침하면 처음으로 돌아가요.
 - 가짜 데이터에서 **로그인 전 화면(M0)** 보기: 브라우저 콘솔에서 `localStorage.setItem('mockGuest', '1')` 후 새로고침 (되돌리기: `localStorage.removeItem('mockGuest')`)
 
+### 실제 API로 확인하기
+
+1. 백엔드를 켭니다 (`backend` 에서 `./gradlew bootRun`, MySQL 실행 · `db/schema.sql` · `seed.sql` 적용).
+2. `frontend` 에서 `npm run dev` 를 켭니다. (화면 구석에 MOCK 배지가 없으면 실제 API)
+3. `/login` 에서 seed 계정(`minseo` · `donghun` … / 비밀번호 `test1234!`)으로 로그인합니다.
+4. 서버가 꺼져 있으면 화면에 "서버에 연결할 수 없어요. 백엔드(bootRun)가 켜져 있는지 확인해 주세요." 가 보입니다.
+5. 실제 API 모드에서는 로그인이 풀린 채로 참여 · 등록 · 글쓰기를 하면 로그인 필요 모달(G1)이 뜹니다.
+
 ## 폴더
 
 | 폴더 | 내용 |

@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import Button from '../../components/Button.jsx'
 import Chip from '../../components/Chip.jsx'
 import { changeMatchHidden, getAdminMatches } from '../../api/adminApi.js'
-import { MATCH_STATUS_LABELS, TARGET_LABELS } from '../../constants/labels.js'
+import { MATCH_STATUS_LABELS, targetLabels } from '../../constants/labels.js'
 import { formatMeetAt } from '../../utils/format.js'
 import { showToast } from '../../utils/toast.js'
 import { useAsync } from '../../utils/useAsync.js'
@@ -101,7 +101,7 @@ export default function AD3Matches() {
                   </td>
                   <td className="nowrap">{m.host.nickname}</td>
                   <td className="nowrap">{formatMeetAt(m.meetAt)}</td>
-                  <td className="nowrap">{TARGET_LABELS[m.target]}</td>
+                  <td className="nowrap">{targetLabels(m.targets).join(' · ')}</td>
                   <td className="num">
                     {m.current}/{m.capacity}
                   </td>

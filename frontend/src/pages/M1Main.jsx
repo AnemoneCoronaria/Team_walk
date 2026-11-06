@@ -112,6 +112,7 @@ export default function M1Main() {
             {matches.data?.items.map((m) => (
               <MatchCard key={m.matchId} match={m} />
             ))}
+            {matches.error && <p className="t-b14 c-muted">모집 글을 불러오지 못했어요. ({matches.error.message})</p>}
             {matches.data?.items.length === 0 && (
               <p className="t-b14 c-muted">조건에 맞는 모집 글이 아직 없어요.</p>
             )}
@@ -132,6 +133,7 @@ export default function M1Main() {
             {courses.data?.items.map((c) => (
               <CourseCard key={c.courseId} course={c} />
             ))}
+            {courses.error && <p className="t-b14 c-muted">코스를 불러오지 못했어요. ({courses.error.message})</p>}
           </div>
         </div>
       </section>

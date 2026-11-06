@@ -29,6 +29,8 @@ function filterMock(params) {
   const status = params.status || 'OPEN'
   const styles = splitParam(params.style)
   const langs = splitParam(params.lang)
+  const targets = splitParam(target)
+  const ages = splitParam(age)
 
   let list = MATCHES.filter((m) => {
     const day = m.meetAt.slice(0, 10)
@@ -38,8 +40,10 @@ function filterMock(params) {
     if (timeSlot && timeSlotOf(m.meetAt) !== timeSlot) return false
     if (styles.length && !styles.some((s) => m.styles.includes(s))) return false
     if (langs.length && !langs.some((l) => m.languages.includes(l))) return false
-    if (target && m.target !== target) return false
-    if (age && m.ageGroups.length && !m.ageGroups.includes(age)) return false
+    // 모집 대상: 글의 대상이 모두 고른 것 안에 있어야 함 (누구나 글은 항상 보임) — 서버와 같은 규칙
+    if (targets.length && !m.targets.every((t) => targets.includes(t))) return false
+    // 연령대: 글에 연령 제한이 없으면(무관) 항상 보이고, 있으면 고른 연령대 중 하나라도 맞아야
+    if (ages.length && m.ageGroups.length && !ages.some((a) => m.ageGroups.includes(a))) return false
     if (area && m.area !== area) return false
     if (courseId && m.course.courseId !== Number(courseId)) return false
     return true
@@ -59,6 +63,11 @@ function filterMock(params) {
 /**
  * 동행 목록 — GET /api/matches
  * params: from, to, timeSlot, style, lang, target, age, area, status, sort, page, size
+ *   target · age 는 여러 개를 쉼표로 (target=EXCHANGE,MBTI · age=20s,30s)
+ *   target = "내가 맞출 수 있는 조건": 글의 모집 대상이 모두 이 안에 있으면 보임 (누구나 글은 항상 보임)
+ *     예) target=SAME_LANGUAGE → "같은 언어끼리 + MBTI 맞춤" 글은 빠짐, target=SAME_LANGUAGE,MBTI 면 보임
+ *   age: 하나라도 맞으면 (연령 제한이 없는 글은 항상 보임)
+ * 응답의 targets: 모집 대상 목록, [] 이면 누구나
  * 화면: W1, E1, M0(size=2), M1(size=4), C2(이 코스에서 모집 중인 동행)
  *
  * courseId: C2 "이 코스에서 모집 중인 동행" (민서가 백엔드에 추가함)
@@ -128,8 +137,9 @@ export function kickParticipant(matchId, userId) {
 
 /**
  * 모집 글 쓰기 — POST /api/matches (multipart) → 201 { matchId }
- * form: { title, courseId, meetAt("2026-11-02T19:00:00"), capacity, meetPlace, target, mbti,
+ * form: { title, courseId, meetAt("2026-11-02T19:00:00"), capacity, meetPlace, targets[], mbti,
  *         ageGroups[], styles[], languages[], description, gpx(File, 선택) }
+ * targets: 모집 대상 여러 개 (EXCHANGE · SAME_LANGUAGE · MBTI), 비우면 누구나. mbti 는 MBTI 가 있을 때만
  * 여러 개 고르는 값은 같은 이름으로 여러 번 보냄 (styles=SLOW, styles=CHAT) — 민서 MatchRequest 규칙
  */
 export function createMatch(form) {
@@ -201,8 +211,9 @@ function blockReason(m, userId) {
   const me = USER_PROFILE[userId] ?? { languages: [], ageGroup: null, mbti: null }
   if (m.ageGroups.length && !m.ageGroups.includes(me.ageGroup)) return 'AGE_MISMATCH'
   const extra = MATCH_EXTRA[m.matchId] ?? {}
-  if (m.target === 'MBTI' && extra.mbti !== me.mbti) return 'MBTI_MISMATCH'
-  if (m.target === 'SAME_LANGUAGE' && !m.languages.some((l) => me.languages.includes(l))) return 'LANGUAGE_MISMATCH'
+  // 모집 대상은 고른 조건을 모두 만족해야 참여 (서버 MatchService 와 같은 순서)
+  if (m.targets.includes('MBTI') && extra.mbti !== me.mbti) return 'MBTI_MISMATCH'
+  if (m.targets.includes('SAME_LANGUAGE') && !m.languages.some((l) => me.languages.includes(l))) return 'LANGUAGE_MISMATCH'
   return null
 }
 
@@ -315,7 +326,7 @@ async function mockCreate(form) {
     title: form.title,
     meetAt: form.meetAt,
     course,
-    target: form.target,
+    targets: form.targets,
     styles: form.styles,
     languages: form.languages,
     current: 1,
@@ -330,7 +341,7 @@ async function mockCreate(form) {
   MATCH_EXTRA[matchId] = {
     meetPlace: form.meetPlace,
     description: form.description || null,
-    mbti: form.target === 'MBTI' ? form.mbti : null,
+    mbti: form.targets.includes('MBTI') ? form.mbti : null,
     hasGpx: Boolean(path),
     path: path ?? undefined,
   }
@@ -348,7 +359,7 @@ async function mockUpdate(matchId, form) {
     title: form.title,
     meetAt: form.meetAt,
     course: courseBrief(form.courseId),
-    target: form.target,
+    targets: form.targets,
     styles: form.styles,
     languages: form.languages,
     capacity: Number(form.capacity),
@@ -360,7 +371,7 @@ async function mockUpdate(matchId, form) {
   Object.assign(extra, {
     meetPlace: form.meetPlace,
     description: form.description || null,
-    mbti: form.target === 'MBTI' ? form.mbti : null,
+    mbti: form.targets.includes('MBTI') ? form.mbti : null,
   })
   if (path) Object.assign(extra, { hasGpx: true, path })
   if (form.removeGpx) Object.assign(extra, { hasGpx: false, path: undefined })

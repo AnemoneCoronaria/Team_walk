@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link, NavLink, useNavigate } from 'react-router-dom'
+import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/authContext.js'
 import { avatarSrc } from '../constants/labels.js'
 import './Header.css'
@@ -9,6 +9,9 @@ import './Header.css'
 export default function Header() {
   const { user, loading } = useAuth()
   const navigate = useNavigate()
+  const { pathname } = useLocation()
+  // '코스 찾기'는 /courses 아래 전부지만, 코스 등록(/courses/new)은 '경로 업로드'만 켜지게
+  const uploading = pathname === '/courses/new'
   const [q, setQ] = useState('')
 
   // 검색: 지금은 코스 이름 검색(C1)으로 보냄 (동행 글 검색 API는 명세에 없음)
@@ -26,7 +29,9 @@ export default function Header() {
             산책시루
           </Link>
           <nav className="header-nav">
-            <NavLink to="/courses">코스 찾기</NavLink>
+            <NavLink to="/courses" className={({ isActive }) => (isActive && !uploading ? 'active' : '')}>
+              코스 찾기
+            </NavLink>
             <NavLink to="/matches">동행 찾기</NavLink>
             <NavLink to="/courses/new">경로 업로드</NavLink>
           </nav>

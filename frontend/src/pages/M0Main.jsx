@@ -13,7 +13,7 @@ const STEPS = [
 
 // M0 메인 (로그인 전) — API: GET /api/matches?size=2
 export default function M0Main() {
-  const { data } = useAsync(() => getMatches({ size: 2 }), 'm0')
+  const { data, error } = useAsync(() => getMatches({ size: 2 }), 'm0')
 
   return (
     <main>
@@ -62,6 +62,7 @@ export default function M0Main() {
             {data?.items.map((m) => (
               <MatchCard key={m.matchId} match={m} />
             ))}
+            {error && <p className="t-b14 c-muted">모집 글을 불러오지 못했어요. ({error.message})</p>}
           </div>
         </div>
       </section>

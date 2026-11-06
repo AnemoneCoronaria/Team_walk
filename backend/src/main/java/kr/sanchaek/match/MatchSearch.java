@@ -14,8 +14,8 @@ public record MatchSearch(
         String timeSlot,        // MORNING · AFTERNOON · EVENING · NIGHT
         List<String> styles,    // 하나라도 겹치면 통과
         List<String> languages,
-        String target,
-        String age,
+        List<String> targets,   // 모집 대상 = "내가 맞출 수 있는 조건": 글의 대상이 모두 이 안에 있으면 통과 (누구나 글은 항상 통과)
+        List<String> ages,      // 연령대: 하나라도 겹치면 통과 (연령 제한이 없는 글은 항상 통과)
         String area,
         Long courseId,
         String sort,            // deadline(기본) · recent

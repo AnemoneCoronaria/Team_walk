@@ -12,8 +12,8 @@ public class LandmarkRepository {
     public record Row(long landmarkId, String name, String area, double lat, double lng, int radiusM,
             LocalDateTime stampedAt) {}
     public record Stamp(long landmarkId, String name, LocalDateTime stampedAt) {}
-    /** 끝난(DONE) 동행에 끝까지 참여한 기록 */
-    public record DoneMatch(LocalDateTime meetAt, String target) {}
+    /** 끝난(DONE) 동행에 끝까지 참여한 기록. exchange: 모집 대상에 내 · 외국인 교류(EXCHANGE)가 있던 동행 */
+    public record DoneMatch(LocalDateTime meetAt, boolean exchange) {}
 
     private final NamedParameterJdbcTemplate jdbc;
 
@@ -73,13 +73,15 @@ public class LandmarkRepository {
     /** 만난 순서대로 */
     public List<DoneMatch> doneMatches(long userId) {
         return jdbc.query("""
-                SELECT m.meet_at, m.target
+                SELECT m.meet_at,
+                       EXISTS (SELECT 1 FROM match_tags t WHERE t.match_id = m.match_id
+                               AND t.tag_type = 'TARGET' AND t.tag_value = 'EXCHANGE') AS exchange
                 FROM match_participants p
                 JOIN matches m        ON m.match_id = p.match_id
                 JOIN v_match_status s ON s.match_id = p.match_id
                 WHERE p.user_id = :userId AND p.status = 'JOINED' AND s.status = 'DONE'
                 ORDER BY m.meet_at, m.match_id
                 """, new MapSqlParameterSource("userId", userId),
-                (rs, n) -> new DoneMatch(rs.getObject("meet_at", LocalDateTime.class), rs.getString("target")));
+                (rs, n) -> new DoneMatch(rs.getObject("meet_at", LocalDateTime.class), rs.getBoolean("exchange")));
     }
 }

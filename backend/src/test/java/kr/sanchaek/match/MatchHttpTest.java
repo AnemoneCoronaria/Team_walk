@@ -74,7 +74,6 @@ class MatchHttpTest {
         f.put("meetAt", new String[] {FUTURE});
         f.put("capacity", new String[] {"3"});
         f.put("meetPlace", new String[] {"정문"});
-        f.put("target", new String[] {"ANYONE"});
         f.put("languages", new String[] {"KO"});
         for (String o : overrides) {
             String[] kv = o.split("=", 2);
@@ -172,10 +171,11 @@ class MatchHttpTest {
         bad("capacity=abc");
         bad("meetPlace=");
         bad("meetPlace=" + "가".repeat(101));
-        bad("target=");
-        bad("target=FRIENDS");
-        bad("target=MBTI");                // MBTI 맞춤인데 MBTI 없음
-        bad("target=MBTI", "mbti=ABCD");
+        bad("targets=FRIENDS");
+        bad("targets=ANYONE");             // 누구나는 값 없이 (아무것도 안 보냄)
+        bad("targets=MBTI");               // MBTI 맞춤인데 MBTI 없음
+        bad("targets=EXCHANGE,MBTI");
+        bad("targets=MBTI", "mbti=ABCD");
         bad("languages=");
         bad("languages=JP");
         bad("styles=WALK");

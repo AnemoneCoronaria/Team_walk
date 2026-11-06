@@ -56,7 +56,7 @@ class MatchJoinConcurrencyTest {
 
     @Test void onlyRemainingSeatsAreTaken() throws Exception {
         for (int capacity : new int[] {2, 3, 4}) {
-            MatchRequest form = new MatchRequest("동시 참여 시험", 1L, LocalDateTime.now().plusDays(3), capacity, "정문", "ANYONE", null,
+            MatchRequest form = new MatchRequest("동시 참여 시험", 1L, LocalDateTime.now().plusDays(3), capacity, "정문", java.util.List.of(), null,
                     null, null, List.of("KO"), null, null);
             long id = service.create(1, form, null);    // 모집자는 관리자, 남은 자리 = capacity - 1
             try {
