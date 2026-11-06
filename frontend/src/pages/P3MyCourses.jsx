@@ -164,7 +164,7 @@ function CourseEditForm({ course, detail, onClose, onSaved }) {
     try {
       await updateMyCourse(course.courseId, {
         name: name.trim(),
-        description: description.trim() || null,
+        description: description.trim(), // 비우면 ''로 보내야 지워짐 (null 은 "그대로 둠")
         level,
         facilities,
         visibility,

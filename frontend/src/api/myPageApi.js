@@ -48,10 +48,15 @@ export function getMyCourses() {
   return request('/api/users/me/courses', { params: { size: 50 } })
 }
 
-/** 코스 정보 수정 (P3) — body: { name, description, level, facilities[], visibility } */
+/**
+ * 코스 정보 수정 (P3) — body: { name, description, level, facilities[], visibility }
+ * 부분 수정: null 인 칸은 그대로 둠. 소개를 지우려면 description: ''
+ */
 export function updateMyCourse(courseId, body) {
   if (USE_MOCK) {
-    Object.assign(COURSES.find((c) => c.courseId === Number(courseId)) ?? {}, body)
+    const next = { ...body }
+    if (next.description === '') next.description = null // 서버처럼 ''는 소개 지우기
+    Object.assign(COURSES.find((c) => c.courseId === Number(courseId)) ?? {}, next)
     return mockResponse(null)
   }
   return request(`/api/courses/${courseId}`, { method: 'PUT', body })
