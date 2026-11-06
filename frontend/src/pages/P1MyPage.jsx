@@ -4,6 +4,7 @@ import Chip from '../components/Chip.jsx'
 import { getMyStamps } from '../api/userApi.js'
 import { getMyMatches } from '../api/myPageApi.js'
 import { useAuth } from '../auth/authContext.js'
+import { MATCH_STATUS_LABELS } from '../constants/labels.js'
 import { formatKm, formatMeetAt } from '../utils/format.js'
 import { useAsync } from '../utils/useAsync.js'
 import './MyPage.css'
@@ -69,9 +70,16 @@ function Stat({ value, label }) {
 }
 
 // 동행 한 줄 — 모집자면 "글 수정", 참여자면 "참여 취소", 지난 동행이면 "후기 쓰기"(R1)
+// "내가 모집한 글" 탭에는 마감 · 끝난 글도 옴 → 글 수정은 W2 처럼 모집 중 · 정원 참일 때만 (그 밖은 서버가 409)
 function MyMatchRow({ match: m, past }) {
   const isHost = m.role === 'HOST'
-  const state = past ? '끝난 동행' : isHost ? `모집자 · ${m.current}/${m.capacity}명` : '참여 확정'
+  const editable = m.status === 'OPEN' || m.status === 'FULL'
+  const state =
+    past || m.status === 'DONE'
+      ? '끝난 동행'
+      : isHost
+        ? `모집자 · ${MATCH_STATUS_LABELS[m.status]} ${m.current}/${m.capacity}명`
+        : '참여 확정'
 
   return (
     <div className="panel mypage-row col g8 fill">
@@ -96,9 +104,15 @@ function MyMatchRow({ match: m, past }) {
               </Button>
             )
           ) : isHost ? (
-            <Button variant="ghost" to={`/matches/${m.matchId}/edit`}>
-              글 수정
-            </Button>
+            editable ? (
+              <Button variant="ghost" to={`/matches/${m.matchId}/edit`}>
+                글 수정
+              </Button>
+            ) : (
+              <Button variant="ghost" disabled title="마감했거나 끝난 동행은 고칠 수 없어요">
+                글 수정
+              </Button>
+            )
           ) : (
             <Button variant="ghost" to={`/matches/${m.matchId}`}>
               참여 취소
