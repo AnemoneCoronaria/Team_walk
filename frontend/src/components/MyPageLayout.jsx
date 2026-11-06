@@ -8,12 +8,12 @@ import { AGE_LABELS, LANGUAGE_LABELS, STYLE_LABELS } from '../constants/labels.j
 import { showToast } from '../utils/toast.js'
 import './MyPageLayout.css'
 
-// 메뉴 (to 가 없는 것은 아직 없는 화면: 저장한 코스 P6 은 2순위, 후기 · 스탬프 P4 는 3주차)
+// 메뉴 (to 가 없는 것은 아직 없는 화면: 저장한 코스 P6 은 2순위)
 const MENU = [
   { to: '/mypage', label: '내 동행', end: true },
   { to: '/mypage/courses', label: '내가 올린 코스' },
   { label: '저장한 코스' },
-  { label: '후기 · 스탬프' },
+  { to: '/mypage/reviews', label: '후기 · 스탬프' },
   { to: '/mypage/settings', label: '계정 설정' },
 ]
 

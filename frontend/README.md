@@ -62,6 +62,7 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 | `/signup` | A3 계정 정보 → A4 프로필 · 태그 → A5 완료 (한 주소에서 단계만 바뀜) | 승민 |
 | `/mypage` | P1 마이페이지 · 내 동행 (참여 예정 · 내가 모집한 글 · 지난 동행). 왼쪽 프로필 · 메뉴 · 로그아웃은 `MyPageLayout` | 승민 |
 | `/mypage/courses` | P3 내가 올린 코스 (정보 수정 · GPX · 삭제) | 승민 |
+| `/mypage/reviews` | P4 내 후기 (삭제) · 스탬프 · 배지는 R2 로 | 승민 |
 | `/mypage/settings` | P5 계정 설정 (비밀번호 변경 창, P5-1 회원 탈퇴 창) | 승민 |
 | `/mypage/profile` | P2 프로필 · 태그 수정 (로그인 필요, 저장하면 P1 으로) | 승민 |
 | `/courses/:id/review` | R1 후기 쓰기 (동행 후기면 `?matchId=`) + 랜드마크 GPX 인증 (R1-1 동의 · R2-1 성공 · R1-2 실패 창) | 승민 |

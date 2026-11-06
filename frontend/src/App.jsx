@@ -21,6 +21,7 @@ import P3MyCourses from './pages/P3MyCourses.jsx'
 import P5AccountSettings from './pages/P5AccountSettings.jsx'
 import R1ReviewWrite from './pages/R1ReviewWrite.jsx'
 import C4CourseReviews from './pages/C4CourseReviews.jsx'
+import P4MyReviews from './pages/P4MyReviews.jsx'
 import R2StampTour from './pages/R2StampTour.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="/mypage" element={<MyPageLayout />}>
           <Route index element={<P1MyPage />} />
           <Route path="courses" element={<P3MyCourses />} />
+          <Route path="reviews" element={<P4MyReviews />} />
           <Route path="settings" element={<P5AccountSettings />} />
         </Route>
         <Route path="/mypage/profile" element={<P2ProfileEdit />} />
