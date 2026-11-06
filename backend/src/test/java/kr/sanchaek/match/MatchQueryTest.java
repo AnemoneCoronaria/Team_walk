@@ -37,12 +37,12 @@ class MatchQueryTest {
     }
 
     private record S(String status, LocalDate from, LocalDate to, String timeSlot, List<String> styles, List<String> languages,
-            String target, String age, String area, Long courseId, String sort, int page, int size) {
+            List<String> targets, List<String> ages, String area, Long courseId, String sort, int page, int size) {
         static S open() {
             return new S("OPEN", null, null, null, null, null, null, null, null, null, "deadline", 1, 50);
         }
         MatchSearch q() {
-            return new MatchSearch(status, from, to, timeSlot, styles, languages, target, age, area, courseId, sort, page, size);
+            return new MatchSearch(status, from, to, timeSlot, styles, languages, targets, ages, area, courseId, sort, page, size);
         }
     }
 
@@ -109,16 +109,30 @@ class MatchQueryTest {
 
     @Test void ageFilterPassesNoAgeTag() {
         for (var e : Map.of("20s", List.of(1L, 2L), "30s", List.of(1L, 2L), "40s", List.of(2L), "50s+", List.of(2L)).entrySet()) {
-            var s = new S("OPEN", null, null, null, null, null, null, e.getKey(), null, null, "deadline", 1, 50);
+            var s = new S("OPEN", null, null, null, null, null, null, List.of(e.getKey()), null, null, "deadline", 1, 50);
             assertEquals(e.getValue(), ids(s.q()), e.getKey());
         }
+        // 여러 개는 하나라도 맞으면 (age=40s,20s → 1번은 20s, 2번은 연령 제한 없음)
+        var many = new S("OPEN", null, null, null, null, null, null, List.of("40s", "20s"), null, null, "deadline", 1, 50);
+        assertEquals(List.of(1L, 2L), ids(many.q()));
     }
 
     @Test void targetAreaCourseFilters() {
-        assertEquals(List.of(1L), ids(new S("OPEN", null, null, null, null, null, "EXCHANGE", null, null, null, "deadline", 1, 50).q()));
+        // 모집 대상: 글의 대상이 모두 고른 것 안에 있으면 보임. 누구나(대상 없음)인 2번은 항상 보임
+        assertEquals(List.of(1L, 2L), ids(new S("OPEN", null, null, null, null, null, List.of("EXCHANGE"), null, null, null, "deadline", 1, 50).q()));
+        assertEquals(List.of(2L), ids(new S("OPEN", null, null, null, null, null, List.of("SAME_LANGUAGE"), null, null, null, "deadline", 1, 50).q()));
         assertEquals(List.of(2L), ids(new S("OPEN", null, null, null, null, null, null, null, "BAEGOT", null, "deadline", 1, 50).q()));
         assertEquals(List.of(1L), ids(new S("OPEN", null, null, null, null, null, null, null, null, 1L, "deadline", 1, 50).q()));
-        assertEquals(List.of(), ids(new S("OPEN", null, null, null, null, null, "없는값", null, null, null, "deadline", 1, 50).q()));
+        assertEquals(List.of(2L), ids(new S("OPEN", null, null, null, null, null, List.of("없는값"), null, null, null, "deadline", 1, 50).q()));
+    }
+
+    @Test void severalTargetsShowOnlyWhenAllPicked() {
+        // 1번을 "교류 + MBTI 맞춤"으로 → 교류만 고르면 빠지고, 둘 다 고르면 보임
+        jdbc.update("INSERT INTO match_tags (match_id, tag_type, tag_value) VALUES (1, 'TARGET', 'MBTI')");
+        assertEquals(List.of(2L), ids(new S("OPEN", null, null, null, null, null, List.of("EXCHANGE"), null, null, null, "deadline", 1, 50).q()));
+        assertEquals(List.of(2L), ids(new S("OPEN", null, null, null, null, null, List.of("MBTI"), null, null, null, "deadline", 1, 50).q()));
+        assertEquals(List.of(1L, 2L), ids(new S("OPEN", null, null, null, null, null, List.of("MBTI", "EXCHANGE"), null, null, null, "deadline", 1, 50).q()));
+        assertEquals(List.of(1L, 2L), ids(new S("OPEN", null, null, null, null, null, List.of("MBTI", "EXCHANGE", "SAME_LANGUAGE"), null, null, null, "deadline", 1, 50).q()));
     }
 
     @Test void sortAndPaging() {
@@ -139,9 +153,10 @@ class MatchQueryTest {
 
     @Test void listItemShape() {
         Map<String, Object> m = repo.findMatches(S.open().q()).items().get(0);
-        assertEquals(List.of("matchId", "title", "meetAt", "course", "target", "styles", "languages", "current", "capacity", "status", "host"),
+        assertEquals(List.of("matchId", "title", "meetAt", "course", "targets", "styles", "languages", "current", "capacity", "status", "host"),
                 List.copyOf(m.keySet()));
         assertEquals(List.of("KO", "ZH"), m.get("languages"));
+        assertEquals(List.of("EXCHANGE"), m.get("targets"));
         assertEquals(2, m.get("current"));
         assertEquals("민서", ((Map<?, ?>) m.get("host")).get("nickname"));
     }

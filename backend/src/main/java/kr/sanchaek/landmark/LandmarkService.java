@@ -119,7 +119,7 @@ public class LandmarkService {
         List<LocalDateTime> stampTimes = stamps.stream().map(LandmarkRepository.Stamp::stampedAt).toList();
         List<LocalDateTime> matches = done.stream().map(LandmarkRepository.DoneMatch::meetAt).toList();
         List<LocalDateTime> exchanges = done.stream()
-                .filter(m -> "EXCHANGE".equals(m.target())).map(LandmarkRepository.DoneMatch::meetAt).toList();
+                .filter(LandmarkRepository.DoneMatch::exchange).map(LandmarkRepository.DoneMatch::meetAt).toList();
 
         List<Badge> badges = new ArrayList<>();
         for (StampBadge b : stampBadges(totalLandmarks)) {

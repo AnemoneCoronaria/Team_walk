@@ -29,7 +29,7 @@ import {
   LEVEL_LABELS,
   MATCH_STATUS_LABELS,
   STYLE_LABELS,
-  TARGET_LABELS,
+  targetLabels,
 } from '../constants/labels.js'
 import { daysLeftLabel, formatKm, formatMeetAtLong, formatMeetAtShort, formatMonthDay } from '../utils/format.js'
 import './W2MatchDetail.css'
@@ -58,7 +58,7 @@ const LEAVE_REASONS = ['일정이 생겼어요', '몸이 안 좋아요', '날씨
 export default function W2MatchDetail() {
   const { matchId } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const { user } = useAuth()
+  const { user, refresh: refreshAuth } = useAuth()
   const [version, setVersion] = useState(0) // 참여 · 마감 뒤 다시 불러오기
   const { data: m, error } = useAsync(() => getMatch(matchId), `${matchId}-${version}-${user?.userId}`)
   const reload = () => setVersion((v) => v + 1)
@@ -97,6 +97,12 @@ export default function W2MatchDetail() {
       if (wantsJoin) setSearchParams({}, { replace: true })
       reload()
     } catch (err) {
+      if (err.status === 401) {
+        // 로그인이 풀렸으면(세션 만료 · 다른 탭에서 로그아웃) 헤더를 바꾸고 G1 로그인 필요 모달
+        refreshAuth()
+        setModal('login')
+        return
+      }
       showToast(err.message, 'error')
       setModal(null)
       reload()
@@ -153,7 +159,11 @@ export default function W2MatchDetail() {
           <div className="col g10">
             <p className="t-h20 c-strong">이런 분과 걷고 싶어요</p>
             <div className="row fwrap g8">
-              <Chip tone="neutral">{TARGET_LABELS[m.target]}</Chip>
+              {targetLabels(m.targets).map((label) => (
+                <Chip key={label} tone="neutral">
+                  {label}
+                </Chip>
+              ))}
               {m.mbti && <Chip tone="neutral">MBTI {m.mbti}</Chip>}
               {m.ageGroups.map((a) => (
                 <Chip key={a} tone="neutral">

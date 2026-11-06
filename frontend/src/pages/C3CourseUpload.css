@@ -25,6 +25,7 @@
   border-radius: 16px;
   background: var(--bg-page);
 }
+.c3-drop-icon { font-size: 32px; line-height: 1.35; color: var(--text-muted); }
 .c3-drop.is-over { border-color: var(--brand-green); background: var(--brand-green-soft); }
 .c3-drop.is-error { border-color: var(--status-danger); background: var(--status-danger-soft); }
 

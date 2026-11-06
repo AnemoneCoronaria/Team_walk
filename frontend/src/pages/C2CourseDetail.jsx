@@ -9,7 +9,7 @@ import { getMatches } from '../api/matchApi.js'
 import { useAuth } from '../auth/authContext.js'
 import { showToast } from '../utils/toast.js'
 import { useAsync } from '../utils/useAsync.js'
-import { FACILITY_LABELS, LEVEL_LABELS, TARGET_LABELS, avatarSrc } from '../constants/labels.js'
+import { FACILITY_LABELS, LEVEL_LABELS, avatarSrc, targetLabels } from '../constants/labels.js'
 import { formatDate, formatDuration, formatKm, formatMeetAt, formatMonthDay, formatStars } from '../utils/format.js'
 import './C2CourseDetail.css'
 
@@ -79,9 +79,12 @@ export default function C2CourseDetail() {
         <div className="c2-main">
           <div className="c2-toprow t-b14m c-muted">
             <Link to="/courses">← 코스 찾기</Link>
-            <button type="button" className="c2-link" onClick={() => setModal(user ? 'report' : 'login')}>
-              🚩 코스 신고
-            </button>
+            {/* 내가 올린 코스는 신고 대신 아무것도 안 보임 (서버 isMine) */}
+            {!c.isMine && (
+              <button type="button" className="c2-link" onClick={() => setModal(user ? 'report' : 'login')}>
+                🚩 코스 신고
+              </button>
+            )}
           </div>
           <div className="row g8">
             <span className="chip chip-green">{LEVEL_LABELS[c.level]}</span>
@@ -196,7 +199,7 @@ export default function C2CourseDetail() {
                 <span className="chip chip-green">
                   모집 중 {m.current}/{m.capacity}
                 </span>
-                <span className="chip chip-neutral">{TARGET_LABELS[m.target]}</span>
+                <span className="chip chip-neutral">{targetLabels(m.targets).join(' · ')}</span>
               </div>
             </Link>
           ))}

@@ -82,10 +82,10 @@ export const ADMIN_COURSES = [
 
 // AD3 모집 글 (GET /api/admin/matches 의 items). courseName 은 가짜 데이터의 검색 흉내용 (응답에는 없음)
 export const ADMIN_MATCHES = [
-  { matchId: 6, title: '지난 주말 배곧 산책 모임', host: { userId: 2, nickname: '민서', avatar: 'seagull' }, courseName: '배곧생명공원 산책 코스', meetAt: '2026-11-02T10:00:00', target: 'ANYONE', current: 3, capacity: 4, status: 'DONE', hidden: false },
-  { matchId: 5, title: '옥구산 정상까지 빠르게 걸어요', host: { userId: 5, nickname: '동훈', avatar: 'dog' }, courseName: '옥구공원 순환 코스', meetAt: '2026-11-18T07:00:00', target: 'ANYONE', current: 2, capacity: 5, status: 'CANCELED', hidden: false },
-  { matchId: 4, title: '정왕역 저녁 산책 (ISFP 모여라)', host: { userId: 6, nickname: '승민', avatar: 'cat' }, courseName: '정왕역 동네 한 바퀴', meetAt: '2026-11-12T20:00:00', target: 'MBTI', current: 2, capacity: 4, status: 'CLOSED', hidden: false },
-  { matchId: 3, title: '오이도 노을 보러 같이 가요', host: { userId: 4, nickname: '동언', avatar: 'lighthouse' }, courseName: '오이도 빨강등대 코스', meetAt: '2026-11-15T16:30:00', target: 'SAME_LANGUAGE', current: 3, capacity: 3, status: 'FULL', hidden: false },
-  { matchId: 2, title: '주말 아침 배곧생명공원 산책해요', host: { userId: 3, nickname: '정란', avatar: 'lotus' }, courseName: '배곧생명공원 산책 코스', meetAt: '2026-11-14T08:00:00', target: 'ANYONE', current: 1, capacity: 6, status: 'OPEN', hidden: false },
-  { matchId: 1, title: '퇴근 후 옥구공원 한 바퀴 같이 걸어요', host: { userId: 2, nickname: '민서', avatar: 'seagull' }, courseName: '옥구공원 순환 코스', meetAt: '2026-11-11T19:00:00', target: 'EXCHANGE', current: 2, capacity: 4, status: 'OPEN', hidden: false },
+  { matchId: 6, title: '지난 주말 배곧 산책 모임', host: { userId: 2, nickname: '민서', avatar: 'seagull' }, courseName: '배곧생명공원 산책 코스', meetAt: '2026-11-02T10:00:00', targets: [], current: 3, capacity: 4, status: 'DONE', hidden: false },
+  { matchId: 5, title: '옥구산 정상까지 빠르게 걸어요', host: { userId: 5, nickname: '동훈', avatar: 'dog' }, courseName: '옥구공원 순환 코스', meetAt: '2026-11-18T07:00:00', targets: [], current: 2, capacity: 5, status: 'CANCELED', hidden: false },
+  { matchId: 4, title: '정왕역 저녁 산책 (ISFP 모여라)', host: { userId: 6, nickname: '승민', avatar: 'cat' }, courseName: '정왕역 동네 한 바퀴', meetAt: '2026-11-12T20:00:00', targets: ['MBTI'], current: 2, capacity: 4, status: 'CLOSED', hidden: false },
+  { matchId: 3, title: '오이도 노을 보러 같이 가요', host: { userId: 4, nickname: '동언', avatar: 'lighthouse' }, courseName: '오이도 빨강등대 코스', meetAt: '2026-11-15T16:30:00', targets: ['SAME_LANGUAGE'], current: 3, capacity: 3, status: 'FULL', hidden: false },
+  { matchId: 2, title: '주말 아침 배곧생명공원 산책해요', host: { userId: 3, nickname: '정란', avatar: 'lotus' }, courseName: '배곧생명공원 산책 코스', meetAt: '2026-11-14T08:00:00', targets: [], current: 1, capacity: 6, status: 'OPEN', hidden: false },
+  { matchId: 1, title: '퇴근 후 옥구공원 한 바퀴 같이 걸어요', host: { userId: 2, nickname: '민서', avatar: 'seagull' }, courseName: '옥구공원 순환 코스', meetAt: '2026-11-11T19:00:00', targets: ['EXCHANGE'], current: 2, capacity: 4, status: 'OPEN', hidden: false },
 ]

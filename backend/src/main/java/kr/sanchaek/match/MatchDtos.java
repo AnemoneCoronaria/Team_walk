@@ -37,7 +37,7 @@ public final class MatchDtos {
     // ----- AD3 모집 글 관리 -----
 
     /** 표 한 줄. hidden 이면 화면 상태는 "숨김", 아니면 status (OPEN · FULL · CLOSED · CANCELED · DONE) */
-    public record AdminMatchItem(long matchId, String title, Author host, LocalDateTime meetAt, String target,
+    public record AdminMatchItem(long matchId, String title, Author host, LocalDateTime meetAt, List<String> targets,
             int current, int capacity, String status, boolean hidden) {
     }
 

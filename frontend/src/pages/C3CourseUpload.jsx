@@ -46,6 +46,10 @@ export default function C3CourseUpload() {
       setError(null)
       setStep(2)
     } catch (err) {
+      if (err.status === 401) {
+        setAskLogin(true) // 로그인이 풀렸으면 G1
+        return
+      }
       setError({ fileName: f.name, message: errorText(err) })
       showToast(errorText(err), 'error')
     } finally {
@@ -68,6 +72,7 @@ export default function C3CourseUpload() {
       {step === 3 && (
         <StepInfo
           onBack={() => setStep(2)}
+          onLoginRequired={() => setAskLogin(true)}
           onSubmit={async (info) => {
             const { courseId } = await createCourse({ file, ...info })
             showToast('코스가 등록됐어요')
@@ -128,7 +133,7 @@ function StepFile({ error, parsing, onFile }) {
           onFile(e.dataTransfer.files[0])
         }}
       >
-        <p className="t-display48 c-muted">⤒</p>
+        <p className="c3-drop-icon">⤒</p>
         <p className={`t-b16m nowrap ${error ? 'c-danger' : 'c-strong'}`}>
           {parsing
             ? 'GPX 파일을 읽는 중…'
@@ -203,7 +208,7 @@ function StepCheck({ file, parsed, onBack, onNext }) {
 }
 
 // C3-3 코스 정보 입력
-function StepInfo({ onBack, onSubmit }) {
+function StepInfo({ onBack, onSubmit, onLoginRequired }) {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [level, setLevel] = useState('')
@@ -227,8 +232,12 @@ function StepInfo({ onBack, onSubmit }) {
     try {
       await onSubmit({ name: name.trim(), description: description.trim(), level, facilities, visibility })
     } catch (err) {
-      showToast(err.message, 'error')
       setSaving(false)
+      if (err.status === 401) {
+        onLoginRequired() // 입력한 값은 그대로 두고 로그인 모달만
+        return
+      }
+      showToast(err.message, 'error')
     }
   }
 

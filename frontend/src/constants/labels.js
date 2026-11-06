@@ -12,6 +12,20 @@ export const STYLE_LABELS = {
   DOG: '🐶 반려견과',
 }
 
+// 서로 반대인 산책 스타일 — 둘 중 하나만 고를 수 있음 (천천히 ↔ 빠르게, 조용히 ↔ 수다)
+export const STYLE_OPPOSITE = {
+  SLOW: 'FAST',
+  FAST: 'SLOW',
+  QUIET: 'CHAT',
+  CHAT: 'QUIET',
+}
+
+// 스타일 칩 누르기: 이미 골랐으면 빼고, 아니면 넣으면서 반대 스타일은 뺌
+export function toggleStyle(list, code) {
+  if (list.includes(code)) return list.filter((s) => s !== code)
+  return [...list.filter((s) => s !== STYLE_OPPOSITE[code]), code]
+}
+
 export const LANGUAGE_LABELS = {
   KO: '한국어',
   ZH: '中文',
@@ -54,11 +68,17 @@ export const VISIBILITY_LABELS = {
   PRIVATE: '나만 보기',
 }
 
+// 모집 대상 — 여러 개 고를 수 있고, 하나도 없으면 "누구나" (API 의 targets: [] )
 export const TARGET_LABELS = {
-  ANYONE: '누구나',
   EXCHANGE: '내 · 외국인 교류',
   SAME_LANGUAGE: '같은 언어끼리',
   MBTI: 'MBTI 맞춤',
+}
+
+// 모집 대상 목록 → 화면 글자 하나씩 (비어 있으면 ['누구나']). 순서는 TARGET_LABELS 순
+export function targetLabels(targets = []) {
+  const list = Object.keys(TARGET_LABELS).filter((code) => targets.includes(code))
+  return list.length ? list.map((code) => TARGET_LABELS[code]) : ['누구나']
 }
 
 export const TIME_SLOT_LABELS = {
