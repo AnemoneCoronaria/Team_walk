@@ -3,6 +3,7 @@ package kr.sanchaek.user;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -82,6 +83,75 @@ public class UserRepository {
     public void releaseSuspension(long userId) {
         jdbc.update("UPDATE users SET status = 'ACTIVE', suspended_until = NULL "
                   + "WHERE user_id = ? AND status = 'SUSPENDED'", userId);
+    }
+
+    /** 비밀번호 확인용 해시. 없거나 탈퇴한 회원이면 null */
+    public String findPasswordHash(long userId) {
+        List<String> rows = jdbc.queryForList(
+                "SELECT password_hash FROM users WHERE user_id = ? AND status <> 'WITHDRAWN'", String.class, userId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    /**
+     * 프로필 · 태그 수정. null 인 값은 그대로 둠.
+     * mbti 는 "" 이면 NULL(선택 안 함)로. styles · languages 는 보낸 목록으로 통째로 바꿈.
+     */
+    @Transactional
+    public void updateProfile(long userId, String nickname, String avatar, String ageGroup, String mbti,
+            List<String> styles, List<String> languages) {
+        List<String> sets = new ArrayList<>();
+        List<Object> args = new ArrayList<>();
+        if (nickname != null) { sets.add("nickname = ?");  args.add(nickname); }
+        if (avatar != null)   { sets.add("avatar = ?");    args.add(avatar); }
+        if (ageGroup != null) { sets.add("age_group = ?"); args.add(ageGroup); }
+        if (mbti != null)     { sets.add("mbti = ?");      args.add(mbti.isEmpty() ? null : mbti); }
+        if (!sets.isEmpty()) {
+            args.add(userId);
+            jdbc.update("UPDATE users SET " + String.join(", ", sets) + " WHERE user_id = ?", args.toArray());
+        }
+        if (styles != null) {
+            replaceTags(userId, "STYLE", styles);
+        }
+        if (languages != null) {
+            replaceTags(userId, "LANGUAGE", languages);
+        }
+    }
+
+    private void replaceTags(long userId, String tagType, List<String> values) {
+        jdbc.update("DELETE FROM user_tags WHERE user_id = ? AND tag_type = ?", userId, tagType);
+        for (String value : values) {
+            jdbc.update("INSERT INTO user_tags (user_id, tag_type, tag_value) VALUES (?, ?, ?)", userId, tagType, value);
+        }
+    }
+
+    public void updatePassword(long userId, String passwordHash) {
+        jdbc.update("UPDATE users SET password_hash = ? WHERE user_id = ?", passwordHash, userId);
+    }
+
+    /** 위치 정보 동의. 동의하면 동의 시각을 지금으로, 철회하면 NULL 로 */
+    public void updateLocationConsent(long userId, boolean agree) {
+        jdbc.update("UPDATE users SET agree_location = ?, agree_location_at = IF(?, NOW(), NULL) WHERE user_id = ?",
+                agree, agree, userId);
+    }
+
+    /** 내가 모집 중인(OPEN · FULL) 동행이 있는지 → 있으면 탈퇴 불가 */
+    public boolean hasOpenMatch(long userId) {
+        Integer count = jdbc.queryForObject(
+                "SELECT COUNT(*) FROM matches m JOIN v_match_status s ON s.match_id = m.match_id "
+              + "WHERE m.host_id = ? AND s.status IN ('OPEN', 'FULL')", Integer.class, userId);
+        return count != null && count > 0;
+    }
+
+    /**
+     * 회원 탈퇴. 행은 지우지 않고 status = 'WITHDRAWN' (글 · 후기는 "탈퇴한 회원"으로 남음).
+     * 아직 열리지 않은 동행의 참여는 취소(LEFT)해서 자리를 비워 줌.
+     */
+    @Transactional
+    public void withdraw(long userId) {
+        jdbc.update("UPDATE users SET status = 'WITHDRAWN', suspended_until = NULL WHERE user_id = ?", userId);
+        jdbc.update("UPDATE match_participants p JOIN matches m ON m.match_id = p.match_id "
+                  + "SET p.status = 'LEFT', p.leave_reason = '회원 탈퇴' "
+                  + "WHERE p.user_id = ? AND p.status = 'JOINED' AND m.meet_at > NOW()", userId);
     }
 
     /** 내 정보. 없거나 탈퇴한 회원이면 null */
