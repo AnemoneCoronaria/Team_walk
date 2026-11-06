@@ -57,6 +57,29 @@ public class CourseController {
         return ApiResponse.ok();
     }
 
+    // 코스 저장 (C2 ♡). 이미 저장했으면 그대로
+    @PostMapping("/api/courses/{id}/save")
+    public ApiResponse<Void> save(@PathVariable("id") long id, @LoginUser Long userId) {
+        courses.save(id, userId);
+        return ApiResponse.ok();
+    }
+
+    // 저장 해제 (C2 · P6 ♥)
+    @DeleteMapping("/api/courses/{id}/save")
+    public ApiResponse<Void> unsave(@PathVariable("id") long id, @LoginUser Long userId) {
+        courses.unsave(id, userId);
+        return ApiResponse.ok();
+    }
+
+    // 저장한 코스 (P6). sort: recent 최근 저장순(기본) · distance 거리 · rating 별점
+    @GetMapping("/api/users/me/saved-courses")
+    public ApiResponse<PageResult<CourseRepository.SavedCourse>> saved(@LoginUser Long userId,
+            @RequestParam(name = "sort", defaultValue = "recent") String sort,
+            @RequestParam(name = "page", defaultValue = "1") int page,
+            @RequestParam(name = "size", defaultValue = "20") int size) {
+        return ApiResponse.ok(courses.saved(userId, sort, page, size));
+    }
+
     @GetMapping("/api/users/me/courses")
     public ApiResponse<PageResult<CourseRepository.MyCourse>> mine(@LoginUser Long userId,
             @RequestParam(name = "page", defaultValue = "1") int page,

@@ -152,7 +152,7 @@ public record Match(long matchId, String title, LocalDateTime meetAt, String sta
 
 자세한 내용은 **[db/README.md](../db/README.md)** 에 있습니다. 여기서는 핵심만 적습니다.
 
-- 1주차 테이블 7개(회원 · 코스 · 동행), 2주차 테이블 6개(후기 · 신고 · 랜드마크 · 스탬프 · 댓글), 계산용 뷰 2개(동행 상태, 코스 별점)가 있습니다. DB는 각자 PC의 MySQL입니다.
+- 1주차 테이블 7개(회원 · 코스 · 동행), 2주차 테이블 6개(후기 · 신고 · 랜드마크 · 스탬프 · 댓글), 저장한 코스 1개, 계산용 뷰 2개(동행 상태, 코스 별점)가 있습니다. DB는 각자 PC의 MySQL입니다.
 - **세팅:** MySQL 8.4 설치 → DB `sanchaek`, 계정 `sanchaek` 만들기 (비밀번호는 각자 정함) → `schema.sql` → `seed.sql` 실행 → `check.sql`로 확인 (7줄 모두 OK).<br>
   후기 사진 · GPX를 다룰 때는 `C:\dev\jspTeam\uploads` 폴더도 만듭니다.
 - **테스트 계정:** `admin`, `minseo`, `jeongran`, `dongeon`, `donghun`, `seungmin`, 정지 테스트용 `banned` (비밀번호 전부 `test1234!`)

@@ -192,6 +192,11 @@ INSERT INTO landmarks (landmark_id, name, area, lat, lng, radius_m, description,
     (7, '거북섬',              'SIHWA',  37.321469, 126.679738, 300, '시화호 해양레저 단지', 7),
     (8, '시흥 해양생태과학관',   'SIHWA',  37.329401, 126.677035, 300, '시화호 갯벌과 바다 생태 전시', 8);
 
+-- 저장한 코스: 민서가 코스 3 · 4 저장 (P6)
+INSERT INTO saved_courses (user_id, course_id, created_at) VALUES
+    (2, 3, NOW() - INTERVAL 2 DAY),
+    (2, 4, NOW() - INTERVAL 1 DAY);
+
 -- 스탬프: 민서 3곳 → 배지 첫 산책 · 랜드마크 3곳 / 동언 1곳 → 첫 산책
 --   (지난 동행 6번에 참여한 민서 · 정란 · 승민은 '첫 동행' 배지도 받음)
 INSERT INTO user_stamps (user_id, landmark_id, stamped_at) VALUES

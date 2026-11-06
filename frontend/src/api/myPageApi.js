@@ -1,12 +1,13 @@
 // 마이페이지 API — P1 내 동행 (백엔드: 민서), P3 내가 올린 코스 (백엔드: 동언)
 //   GET    /api/users/me/matches?tab=  (민서) — tab: upcoming 참여 예정 · hosting 내가 모집한 글 · past 지난 동행
 //   GET    /api/users/me/courses       (동언, PR #20)
+//   GET    /api/users/me/saved-courses (민서) — P6 저장한 코스
 //   PUT    /api/courses/{id}           (동언, PR #20) — 코스 정보 수정 (GPX 경로는 그대로)
 //   DELETE /api/courses/{id}           (동언, PR #20)
 import { USE_MOCK, request, mockResponse, paginate } from './client.js'
 import { ME } from '../mocks/users.js'
 import { MATCHES } from '../mocks/matches.js'
-import { COURSES, REVIEWS, toCourseSummary } from '../mocks/courses.js'
+import { COURSES, REVIEWS, SAVED_COURSE_IDS, toCourseSummary } from '../mocks/courses.js'
 
 /**
  * 내 동행 (P1 탭) — { items, page, size, total }
@@ -36,6 +37,25 @@ function mockMyMatches(tab) {
       delete copy.participants
       return copy
     })
+}
+
+/**
+ * 저장한 코스 (P6) — GET /api/users/me/saved-courses?sort=recent|distance|rating → { items, page, size, total }
+ * items 한 줄 = 코스 목록 칸 + openMatches(모집 중인 동행 수), savedAt
+ */
+export function getSavedCourses(sort = 'recent') {
+  if (USE_MOCK) {
+    const courses = SAVED_COURSE_IDS.map((id) => COURSES.find((c) => c.courseId === id)).filter(Boolean)
+    const sorted = sort === 'distance' ? [...courses].sort((a, b) => a.distanceKm - b.distanceKm)
+      : sort === 'rating' ? [...courses].sort((a, b) => b.rating - a.rating)
+      : courses
+    const items = sorted.map((c) => ({
+      ...toCourseSummary(c),
+      openMatches: MATCHES.filter((m) => m.course.courseId === c.courseId && m.status === 'OPEN').length,
+    }))
+    return mockResponse(paginate(items, 1, 50))
+  }
+  return request('/api/users/me/saved-courses', { params: { sort, size: 50 } })
 }
 
 /** 내가 올린 코스 (P3) — { items, page, size, total }, items 한 줄 = 코스 목록 칸 + visibility */

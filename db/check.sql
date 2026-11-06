@@ -7,9 +7,9 @@
 SET NAMES utf8mb4;
 USE sanchaek;
 
-SELECT 'tables 13 + views 2' AS check_item,
+SELECT 'tables 14 + views 2' AS check_item,
        IF((SELECT COUNT(*) FROM information_schema.tables
-            WHERE table_schema = 'sanchaek' AND table_type = 'BASE TABLE') = 13
+            WHERE table_schema = 'sanchaek' AND table_type = 'BASE TABLE') = 14
           AND (SELECT COUNT(*) FROM information_schema.views WHERE table_schema = 'sanchaek') = 2,
           'OK', 'FAIL') AS result
 UNION ALL

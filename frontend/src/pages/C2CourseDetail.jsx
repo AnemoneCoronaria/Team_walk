@@ -4,9 +4,10 @@ import KakaoMap from '../components/KakaoMap.jsx'
 import LoginRequiredModal from '../components/LoginRequiredModal.jsx'
 import ReportModal from '../components/ReportModal.jsx'
 import X1NotFound from './X1NotFound.jsx'
-import { courseGpxUrl, getCourse, getCourseReviews } from '../api/courseApi.js'
+import { courseGpxUrl, getCourse, getCourseReviews, saveCourse, unsaveCourse } from '../api/courseApi.js'
 import { getMatches } from '../api/matchApi.js'
 import { useAuth } from '../auth/authContext.js'
+import { showToast } from '../utils/toast.js'
 import { useAsync } from '../utils/useAsync.js'
 import { FACILITY_LABELS, LEVEL_LABELS, TARGET_LABELS, avatarSrc } from '../constants/labels.js'
 import { formatDate, formatDuration, formatKm, formatMeetAt, formatMonthDay, formatStars } from '../utils/format.js'
@@ -28,12 +29,32 @@ export default function C2CourseDetail() {
   const { courseId } = useParams()
   const { user } = useAuth()
   const [modal, setModal] = useState(null) // 'report' | 'login'
+  const [savedNow, setSavedNow] = useState({}) // 이 화면에서 ♡ 를 누른 결과 (코스 번호별)
+  const [saving, setSaving] = useState(false)
   const course = useAsync(() => getCourse(courseId), `course-${courseId}`)
   const reviews = useAsync(() => getCourseReviews(courseId, { size: 3 }), `reviews-${courseId}`)
   const matches = useAsync(() => getMatches({ courseId, size: 3 }), `matches-${courseId}`)
 
   const c = course.data
   const ends = useMemo(() => c?.path ?? null, [c])
+  const isSaved = savedNow[courseId] ?? c?.saved ?? false
+
+  async function toggleSave() {
+    if (!user) {
+      setModal('login')
+      return
+    }
+    setSaving(true)
+    try {
+      await (isSaved ? unsaveCourse(courseId) : saveCourse(courseId))
+      setSavedNow((now) => ({ ...now, [courseId]: !isSaved }))
+      showToast(isSaved ? '저장을 해제했어요' : '코스를 저장했어요. 마이페이지에서 볼 수 있어요')
+    } catch (err) {
+      showToast(err.message, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   if (course.error?.status === 404) {
     return <X1NotFound />
@@ -144,7 +165,9 @@ export default function C2CourseDetail() {
             <a className="btn btn-secondary btn-block" href={courseGpxUrl(c.courseId)} download>
               ⤓ GPX 다운로드
             </a>
-            {/* 코스 저장(하트)은 2순위라 숨김 */}
+            <button type="button" className="btn btn-secondary btn-block" disabled={saving} onClick={toggleSave}>
+              {isSaved ? '♥ 저장됨' : '♡ 코스 저장'}
+            </button>
             <a className="btn btn-secondary btn-block" href={kakaoRouteUrl} target="_blank" rel="noreferrer">
               🧭 카카오맵 길 찾기
             </a>
