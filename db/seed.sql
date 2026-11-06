@@ -112,30 +112,31 @@ INSERT INTO course_facilities (course_id, facility) VALUES
 --   ※ FULL · DONE 은 저장하지 않습니다. v_match_status 뷰가 계산합니다.
 -- ---------------------------------------------------------------------
 INSERT INTO matches (match_id, host_id, course_id, title, content, meet_at, meet_place,
-                     capacity, target, mbti, path_json, gpx_path, status, created_at) VALUES
+                     capacity, mbti, path_json, gpx_path, status, created_at) VALUES
     (1, 2, 1, '퇴근 후 옥구공원 한 바퀴 같이 걸어요', '퇴근하고 가볍게 걸을 분 구해요! 천천히 이야기하면서 걸어요. 欢迎说中文的朋友！',
      TIMESTAMP(@today + INTERVAL 5 DAY, '19:00:00'), '옥구공원 정문 주차장 앞',
-     4, 'EXCHANGE', NULL,
+     4, NULL,
      '[[37.35272,126.709915],[37.352712,126.710646],[37.353007,126.711231],[37.35317,126.711948],[37.3536,126.712311],[37.354075,126.712404],[37.354517,126.712709],[37.355019,126.712745],[37.355397,126.712217],[37.355711,126.711718],[37.356088,126.711285],[37.356339,126.710653],[37.356295,126.709915]]',
      'gpx/match-1.gpx', 'OPEN', NOW() - INTERVAL 1 DAY),
     (2, 3, 3, '주말 아침 배곧생명공원 산책해요', '토요일 아침에 상쾌하게 걸어요. 누구나 환영해요.',
      TIMESTAMP(@today + INTERVAL 8 DAY, '08:00:00'), '배곧생명공원 주차장 입구',
-     6, 'ANYONE', NULL, NULL, NULL, 'OPEN', NOW() - INTERVAL 1 DAY),
+     6, NULL, NULL, NULL, 'OPEN', NOW() - INTERVAL 1 DAY),
     (3, 4, 4, '오이도 노을 보러 같이 가요', '해 질 무렵 빨강등대 앞에서 만나요. 사진도 같이 찍어요.',
      TIMESTAMP(@today + INTERVAL 9 DAY, '16:30:00'), '오이도 빨강등대 앞',
-     3, 'SAME_LANGUAGE', NULL, NULL, NULL, 'OPEN', NOW() - INTERVAL 1 DAY),
+     3, NULL, NULL, NULL, 'OPEN', NOW() - INTERVAL 1 DAY),
     (4, 6, 2, '정왕역 저녁 산책 (ISFP 모여라)', '조용히 걷는 걸 좋아하는 분이면 좋겠어요.',
      TIMESTAMP(@today + INTERVAL 6 DAY, '20:00:00'), '정왕역 앞',
-     4, 'MBTI', 'ISFP', NULL, NULL, 'CLOSED', NOW() - INTERVAL 2 HOUR),
+     4, 'ISFP', NULL, NULL, 'CLOSED', NOW() - INTERVAL 2 HOUR),
     (5, 5, 1, '옥구산 정상까지 빠르게 걸어요', '운동 삼아 빠르게 걸을 분! 아침 7시에 만나요.',
      TIMESTAMP(@today + INTERVAL 12 DAY, '07:00:00'), '옥구공원 정문',
-     5, 'ANYONE', NULL, NULL, NULL, 'CANCELED', NOW() - INTERVAL 1 HOUR),
+     5, NULL, NULL, NULL, 'CANCELED', NOW() - INTERVAL 1 HOUR),
     (6, 2, 3, '지난 주말 배곧 산책 모임', '다녀왔어요! 다음에도 같이 걸어요.',
      TIMESTAMP(@today - INTERVAL 4 DAY, '10:00:00'), '배곧생명공원 주차장 입구',
-     4, 'ANYONE', NULL, NULL, NULL, 'OPEN', NOW() - INTERVAL 7 DAY);
+     4, NULL, NULL, NULL, 'OPEN', NOW() - INTERVAL 7 DAY);
 
--- 동행 태그 (원하는 스타일 · 언어 · 연령대, 영어 코드)
+-- 동행 태그 (원하는 스타일 · 언어 · 연령대 · 모집 대상, 영어 코드). 모집 대상(TARGET)이 없는 글은 "누구나" (2 · 5 · 6)
 INSERT INTO match_tags (match_id, tag_type, tag_value) VALUES
+    (1, 'TARGET', 'EXCHANGE'),
     (1, 'STYLE', 'SLOW'),
     (1, 'LANGUAGE', 'KO'),
     (1, 'LANGUAGE', 'ZH'),
@@ -143,9 +144,11 @@ INSERT INTO match_tags (match_id, tag_type, tag_value) VALUES
     (1, 'AGE_GROUP', '30s'),
     (2, 'STYLE', 'CHAT'),
     (2, 'LANGUAGE', 'KO'),
+    (3, 'TARGET', 'SAME_LANGUAGE'),
     (3, 'STYLE', 'SLOW'),
     (3, 'LANGUAGE', 'KO'),
     (3, 'AGE_GROUP', '20s'),
+    (4, 'TARGET', 'MBTI'),
     (4, 'LANGUAGE', 'KO'),
     (5, 'STYLE', 'FAST'),
     (5, 'LANGUAGE', 'KO'),

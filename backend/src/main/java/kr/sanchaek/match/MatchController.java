@@ -74,7 +74,7 @@ public class MatchController {
         PageResult.validate(page, size);
 
         MatchSearch q = new MatchSearch(status, from, to, timeSlot, split(style), split(lang),
-                target, age, area, courseId, sort, page, size);
+                split(target), split(age), area, courseId, sort, page, size);
         return ApiResponse.ok(repo.findMatches(q));
     }
 

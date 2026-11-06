@@ -11,7 +11,7 @@ record MatchState(
         long hostId,
         long courseId,
         int capacity,
-        String target,
+        List<String> targets,   // 모집 대상 (EXCHANGE · SAME_LANGUAGE · MBTI), 비어 있으면 누구나
         String mbti,
         String gpxPath,
         int current,

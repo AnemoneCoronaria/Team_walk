@@ -265,10 +265,10 @@ public class MatchService {
         if (!state.ageGroups().isEmpty() && !state.ageGroups().contains(me.ageGroup())) {
             return "AGE_MISMATCH";
         }
-        if ("MBTI".equals(state.target()) && !state.mbti().equals(me.mbti())) {
+        if (state.targets().contains("MBTI") && (state.mbti() == null || !state.mbti().equals(me.mbti()))) {
             return "MBTI_MISMATCH";
         }
-        if ("SAME_LANGUAGE".equals(state.target()) && Collections.disjoint(state.languages(), me.languages())) {
+        if (state.targets().contains("SAME_LANGUAGE") && Collections.disjoint(state.languages(), me.languages())) {
             return "LANGUAGE_MISMATCH";
         }
         return null;
@@ -308,7 +308,7 @@ public class MatchService {
 
     /** 칸끼리 맞춰 봐야 하는 규칙 (record 의 @Valid 로는 칸 하나씩만 검사됨) */
     private static void checkRequest(MatchRequest r) {
-        if ("MBTI".equals(r.target()) && r.mbti() == null) {
+        if (r.targets().contains("MBTI") && r.mbti() == null) {
             throw ApiException.badRequest("MBTI 맞춤 모집은 원하는 MBTI 를 골라 주세요.");
         }
     }

@@ -10,12 +10,12 @@ import { createMatch, getMatch, updateMatch } from '../api/matchApi.js'
 import { useAuth } from '../auth/authContext.js'
 import { useAsync } from '../utils/useAsync.js'
 import { showToast } from '../utils/toast.js'
-import { AGE_LABELS, LANGUAGE_LABELS, LEVEL_LABELS, STYLE_LABELS, TARGET_LABELS } from '../constants/labels.js'
+import { AGE_LABELS, LANGUAGE_LABELS, LEVEL_LABELS, STYLE_LABELS, TARGET_LABELS, toggleStyle } from '../constants/labels.js'
 import { formatKm, toDateParam } from '../utils/format.js'
 import './W3MatchWrite.css'
 
-// W3 의 산책 스타일 칩 6개 (Figma 순서. '반려견과'는 W3 디자인에 없음)
-const STYLE_CHIPS = ['SLOW', 'FAST', 'QUIET', 'CHAT', 'PHOTO', 'SUNRISE_SUNSET']
+// W3 의 산책 스타일 칩 (Figma 순서 + '반려견과'. 프로필 · W1 필터와 같은 7개)
+const STYLE_CHIPS = ['SLOW', 'FAST', 'QUIET', 'CHAT', 'PHOTO', 'SUNRISE_SUNSET', 'DOG'] // 프로필과 같은 7개
 const MBTI_PAIRS = [
   ['E', 'I'],
   ['N', 'S'],
@@ -42,6 +42,16 @@ export default function W3MatchWrite() {
   if (editing && existing.data && !existing.data.isHost) {
     return <Notice text="모집자만 글을 고칠 수 있어요." />
   }
+  // 취소 · 끝난 글은 서버가 수정을 막음(409) → 들어올 때 미리 안내
+  if (editing && ['CANCELED', 'DONE'].includes(existing.data?.status)) {
+    return (
+      <Notice
+        text={existing.data.status === 'DONE' ? '이미 끝난 동행은 고칠 수 없어요.' : '모집을 취소한 글은 고칠 수 없어요.'}
+        to={`/matches/${matchId}`}
+        label="동행 상세로"
+      />
+    )
+  }
   // key: 수정할 글이 바뀌면 입력칸을 새로 채움
   return <WriteForm key={matchId ?? 'new'} user={user} existing={existing.data} />
 }
@@ -59,13 +69,13 @@ function LoginFirst() {
   )
 }
 
-function Notice({ text }) {
+function Notice({ text, to = '/matches', label = '동행 목록으로' }) {
   return (
     <main className="w3">
       <div className="panel w3-card ai-c">
         <p className="t-b16m c-strong">{text}</p>
-        <Button variant="secondary" to="/matches">
-          동행 목록으로
+        <Button variant="secondary" to={to}>
+          {label}
         </Button>
       </div>
     </main>
@@ -82,7 +92,7 @@ function initialValues(existing, user, presetCourseId) {
       time: '',
       capacity: '4',
       meetPlace: '',
-      target: '',
+      targets: [], // 비우면 누구나
       ageGroups: [],
       mbti: ['', '', '', ''],
       styles: [],
@@ -97,7 +107,7 @@ function initialValues(existing, user, presetCourseId) {
     time: existing.meetAt.slice(11, 16),
     capacity: String(existing.capacity),
     meetPlace: existing.meetPlace ?? '',
-    target: existing.target,
+    targets: existing.targets ?? [],
     ageGroups: existing.ageGroups ?? [],
     mbti: existing.mbti ? existing.mbti.split('') : ['', '', '', ''],
     styles: existing.styles,
@@ -126,6 +136,7 @@ function WriteForm({ user, existing }) {
   const [checkingGpx, setCheckingGpx] = useState(false)
 
   const [tried, setTried] = useState(false)
+  const [askLogin, setAskLogin] = useState(false) // 쓰는 도중 로그인이 풀렸을 때
   const [saving, setSaving] = useState(false)
 
   // 코스 고르기: 전체 공개 코스 + 내가 올린 코스. 나만 보기(PRIVATE) 코스는 참여자가 볼 수 없어 뺌 (서버도 400)
@@ -181,8 +192,8 @@ function WriteForm({ user, existing }) {
       meetAt: `${v.date}T${v.time}:00`,
       capacity: Number(v.capacity),
       meetPlace: meetPlace.trim(),
-      target: v.target,
-      mbti: v.target === 'MBTI' ? v.mbti.join('') : null,
+      targets: v.targets,
+      mbti: v.targets.includes('MBTI') ? v.mbti.join('') : null,
       ageGroups: v.ageGroups,
       styles: v.styles,
       languages: v.languages,
@@ -202,8 +213,12 @@ function WriteForm({ user, existing }) {
         navigate(`/matches/${matchId}`)
       }
     } catch (err) {
-      showToast(err.message, 'error')
       setSaving(false)
+      if (err.status === 401) {
+        setAskLogin(true)
+        return
+      }
+      showToast(err.message, 'error')
     }
   }
 
@@ -303,9 +318,9 @@ function WriteForm({ user, existing }) {
           error={show('meetPlace')}
         />
 
-        <Group title="모집 대상" hint="하나만 선택" error={show('target')}>
+        <Group title="모집 대상" hint="여러 개 선택 가능 · 안 고르면 누구나">
           {Object.entries(TARGET_LABELS).map(([code, label]) => (
-            <Chip key={code} tone="neutral" selected={v.target === code} onClick={() => set('target', code)}>
+            <Chip key={code} tone="neutral" selected={v.targets.includes(code)} onClick={() => toggle('targets', code)}>
               {label}
             </Chip>
           ))}
@@ -323,10 +338,10 @@ function WriteForm({ user, existing }) {
         </Group>
 
         {/* MBTI 맞춤일 때만 고를 수 있음 (아니면 흐리게) */}
-        <div className={`col g8 fill ${v.target === 'MBTI' ? '' : 'w3-dim'}`}>
+        <div className={`col g8 fill ${v.targets.includes('MBTI') ? '' : 'w3-dim'}`}>
           <div className="row ai-c g8">
             <p className="t-b14m c-strong">원하는 MBTI (MBTI 맞춤일 때)</p>
-            <p className="t-c12 c-muted">{v.target === 'MBTI' ? `${v.mbti.map((x) => x || '_').join('')} · 글자마다 하나씩` : '선택'}</p>
+            <p className="t-c12 c-muted">{v.targets.includes('MBTI') ? `${v.mbti.map((x) => x || '_').join('')} · 글자마다 하나씩` : '선택'}</p>
           </div>
           <div className="row fwrap g6">
             {MBTI_PAIRS.map((pair, i) =>
@@ -335,7 +350,7 @@ function WriteForm({ user, existing }) {
                   key={letter}
                   tone="neutral"
                   selected={v.mbti[i] === letter}
-                  onClick={() => v.target === 'MBTI' && set('mbti', v.mbti.map((x, j) => (j === i ? letter : x)))}
+                  onClick={() => v.targets.includes('MBTI') && set('mbti', v.mbti.map((x, j) => (j === i ? letter : x)))}
                 >
                   {letter}
                 </Chip>
@@ -344,13 +359,13 @@ function WriteForm({ user, existing }) {
           </div>
           {show('mbti') && <p className="t-c12 c-danger">{show('mbti')}</p>}
         </div>
-        {v.target === 'EXCHANGE' && (
+        {v.targets.includes('EXCHANGE') && (
           <div className="w3-note">‘내 · 외국인 교류’를 고르면 서로 다른 언어 태그를 가진 사람이 함께 참여하도록 안내돼요</div>
         )}
 
         <Group title="원하는 산책 스타일">
           {STYLE_CHIPS.map((code) => (
-            <Chip key={code} tone="green" selected={v.styles.includes(code)} onClick={() => toggle('styles', code)}>
+            <Chip key={code} tone="green" selected={v.styles.includes(code)} onClick={() => set('styles', toggleStyle(v.styles, code))}>
               {STYLE_LABELS[code]}
             </Chip>
           ))}
@@ -387,6 +402,7 @@ function WriteForm({ user, existing }) {
           </Button>
         </div>
       </div>
+      <LoginRequiredModal open={askLogin} onClose={() => setAskLogin(false)} />
     </main>
   )
 }
@@ -400,8 +416,7 @@ function validate(v) {
     date: v.date ? '' : '날짜를 골라 주세요.',
     time: !v.time ? '시간을 골라 주세요.' : meet && meet <= new Date() ? '지금 이후로 정해 주세요.' : '',
     meetPlace: v.meetPlace.trim() ? '' : '만나는 곳을 입력해 주세요.',
-    target: v.target ? '' : '모집 대상을 골라 주세요.',
-    mbti: v.target === 'MBTI' && v.mbti.some((x) => !x) ? 'MBTI 네 글자를 모두 골라 주세요.' : '',
+    mbti: v.targets.includes('MBTI') && v.mbti.some((x) => !x) ? 'MBTI 네 글자를 모두 골라 주세요.' : '',
     languages: v.languages.length ? '' : '언어를 1개 이상 골라 주세요.',
   }
 }

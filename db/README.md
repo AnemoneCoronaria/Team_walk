@@ -65,7 +65,7 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 | `courses` | 동언 | 코스 1개 | 경로는 `path_json` 한 칸에, GPX 파일은 업로드 폴더에 (`gpx_path`) |
 | `course_facilities` | 동언 | 코스의 편의시설 1개 | 있음/없음만 (개수 없음) |
 | `matches` | 민서 | 동행 모집 글 1개 | `status`에는 OPEN · CLOSED · CANCELED만 저장 |
-| `match_tags` | 민서 | 동행이 원하는 스타일 · 언어 · 연령대 1개 | |
+| `match_tags` | 민서 | 동행이 원하는 스타일 · 언어 · 연령대 · 모집 대상 1개 | |
 | `match_participants` | 민서 | 동행 참여자 1명 | 모집자도 한 줄 들어감 |
 
 **2주차**
@@ -106,7 +106,7 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 | 산책 스타일 `STYLE` (최대 3개) | `SLOW` 🐢 천천히, `FAST` 🏃 빠르게, `QUIET` 🤫 조용히, `CHAT` 💬 수다, `PHOTO` 📸 사진 찍으며, `SUNRISE_SUNSET` 🌅 일출 · 일몰, `DOG` 🐶 반려견과 |
 | 언어 `LANGUAGE` | `KO` 한국어, `ZH` 中文, `EN` English, `VI` Tiếng Việt, `RU` Русский |
 | MBTI `mbti` | `ENFP` 같은 4글자, 선택 안 함이면 `NULL` |
-| 동행 모집 대상 `target` (하나만) | `ANYONE` 누구나, `EXCHANGE` 내 · 외국인 교류, `SAME_LANGUAGE` 같은 언어끼리, `MBTI` MBTI 맞춤 |
+| 동행 모집 대상 `TARGET` (여러 개, `match_tags`) | `EXCHANGE` 내 · 외국인 교류, `SAME_LANGUAGE` 같은 언어끼리, `MBTI` MBTI 맞춤. **하나도 없으면 "누구나"**, 참여할 때는 고른 조건을 모두 만족해야 함 |
 | 동행 연령대 `AGE_GROUP` (여러 개) | 위 연령대 코드. **"무관"이면 아무것도 저장하지 않음** |
 | 코스 공개 범위 `visibility` (C3-3) | `PUBLIC` 전체 공개, `MATCH_ONLY` 동행 참여자에게만, `PRIVATE` 나만 보기 → 누가 볼 수 있는지는 [쿼리 예시](#쿼리-예시) |
 | 코스 편의시설 `facility` (C3-3) | `TOILET` 화장실, `BENCH` 벤치, `PARKING` 주차, `SEA_VIEW` 바다 뷰 (있음/없음만) |
@@ -263,7 +263,7 @@ static double meters(double lat1, double lng1, double lat2, double lng2) {
 | 랜드마크 3곳 | `LANDMARK_3` | 스탬프 3곳 | 세 번째 스탬프 시각 |
 | 시흥 산책 마스터 | `SIHEUNG_MASTER` | 스탬프 8곳 전부 | 여덟 번째 스탬프 시각 |
 | 첫 동행 | `FIRST_MATCH` | 끝난(DONE) 동행에 1번 참여 | 그 동행의 `meet_at` |
-| 내 · 외국인 교류 3회 | `EXCHANGE_3` | 모집 대상이 `EXCHANGE`인 끝난 동행에 3번 참여 | 세 번째 동행의 `meet_at` |
+| 내 · 외국인 교류 3회 | `EXCHANGE_3` | 모집 대상에 `EXCHANGE`가 있는 끝난 동행에 3번 참여 | 세 번째 동행의 `meet_at` |
 
 - `newBadges`(랜드마크 인증 응답)는 저장 전후의 배지를 비교해서 새로 생긴 것만 보냅니다.
 
@@ -603,7 +603,9 @@ SELECT stamped_at FROM user_stamps WHERE user_id = ?
 ORDER BY stamped_at, landmark_id LIMIT 1 OFFSET ?;                      -- ? = N - 1 → earnedAt
 
 -- 동행 배지 (첫 동행 1번 · 내·외국인 교류 3번): 끝난(DONE) 동행에 JOINED 로 남은 것만
-SELECT COUNT(*) AS match_count, IFNULL(SUM(m.target = 'EXCHANGE'), 0) AS exchange_count
+SELECT COUNT(*) AS match_count,
+       IFNULL(SUM(EXISTS (SELECT 1 FROM match_tags t WHERE t.match_id = m.match_id
+                          AND t.tag_type = 'TARGET' AND t.tag_value = 'EXCHANGE')), 0) AS exchange_count
 FROM match_participants p
 JOIN matches m        ON m.match_id = p.match_id
 JOIN v_match_status s ON s.match_id = p.match_id

@@ -45,11 +45,10 @@ public record MatchRequest(
         @Size(max = 100, message = "만나는 곳은 100자까지예요.")
         String meetPlace,
 
-        @NotNull(message = "모집 대상을 골라 주세요.")
-        @Pattern(regexp = "^(ANYONE|EXCHANGE|SAME_LANGUAGE|MBTI)$", message = "모집 대상 값이 올바르지 않아요.")
-        String target,
+        // 모집 대상 (여러 개). 비우면 "누구나". 참여할 때는 고른 조건을 모두 만족해야 함
+        List<@Pattern(regexp = "^(EXCHANGE|SAME_LANGUAGE|MBTI)$", message = "모집 대상 값이 올바르지 않아요.") String> targets,
 
-        // target 이 MBTI 일 때만 씀 (그 외에는 보내도 저장하지 않음)
+        // 모집 대상에 MBTI 가 있을 때만 씀 (그 외에는 보내도 저장하지 않음)
         @Pattern(regexp = "^[EIei][NSns][TFtf][JPjp]$", message = "MBTI 는 ENFP 같은 4글자예요.")
         String mbti,
 
@@ -71,8 +70,9 @@ public record MatchRequest(
     /** 앞뒤 공백 정리, 빈 값은 null, 중복 태그 제거, MBTI 는 대문자 (MBTI 대상이 아니면 null) */
     MatchRequest cleaned() {
         String text = description == null || description.isBlank() ? null : description.trim();
-        String upperMbti = "MBTI".equals(target) && mbti != null ? mbti.toUpperCase(Locale.ROOT) : null;
-        return new MatchRequest(title.trim(), courseId, meetAt.withNano(0), capacity, meetPlace.trim(), target,
+        List<String> cleanTargets = distinct(targets);
+        String upperMbti = cleanTargets.contains("MBTI") && mbti != null ? mbti.toUpperCase(Locale.ROOT) : null;
+        return new MatchRequest(title.trim(), courseId, meetAt.withNano(0), capacity, meetPlace.trim(), cleanTargets,
                 upperMbti, distinct(ageGroups), distinct(styles), distinct(languages), text, removeGpx);
     }
 

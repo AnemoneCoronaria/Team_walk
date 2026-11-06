@@ -29,7 +29,10 @@ import kr.sanchaek.match.MatchDtos.LeftParticipant;
 @Repository         // 여기는 DB 건드는 곳...
 public class MatchRepository {
     // 목록 한 줄을 만드는 칸 (toSummary 가 읽음)
-    private static final String SUMMARY_COLUMNS = "m.match_id, m.title, m.meet_at, m.target, m.capacity,"
+    // 모집 대상(TARGET 태그)을 "EXCHANGE,MBTI" 한 칸으로 읽음 → splitTargets 로 목록. 없으면 NULL (누구나)
+    private static final String TARGETS_COLUMN = "(SELECT GROUP_CONCAT(tt.tag_value ORDER BY tt.tag_value) FROM match_tags tt"
+            + " WHERE tt.match_id = m.match_id AND tt.tag_type = 'TARGET') AS targets";
+    private static final String SUMMARY_COLUMNS = "m.match_id, m.title, m.meet_at, " + TARGETS_COLUMN + ", m.capacity,"
             + " s.current_count, s.status,"
             + " c.course_id, c.name AS course_name, c.distance_km, c.level,"
             + " u.user_id, u.nickname, u.avatar, u.status AS user_status";
@@ -84,15 +87,22 @@ public class MatchRepository {
         }
         addTagFilter(where, args, "STYLE", q.styles());
         addTagFilter(where, args, "LANGUAGE", q.languages());
-        if (q.target() != null) {
-            where.append(" AND m.target = ?");
-            args.add(q.target());
+        if (q.targets() != null && !q.targets().isEmpty()) {
+            // 모집 대상: 글이 요구하는 대상이 모두 고른 것 안에 있어야 함 (= 고른 것 밖의 대상이 하나도 없음)
+            // 예) target=SAME_LANGUAGE → "같은 언어끼리" 글과 누구나 글만. "같은 언어끼리 + MBTI 맞춤" 글은 빠짐
+            where.append(" AND NOT EXISTS (SELECT 1 FROM match_tags t WHERE t.match_id = m.match_id AND t.tag_type = 'TARGET'"
+                    + " AND t.tag_value NOT IN (")
+                    .append(String.join(",", q.targets().stream().map(v -> "?").toList()))
+                    .append("))");
+            args.addAll(q.targets());
         }
-        if (q.age() != null) {
-            // 연령대 태그가 없는 글은 "누구나"라서 통과
+        if (q.ages() != null && !q.ages().isEmpty()) {
+            // 연령대 태그가 없는 글은 "무관"이라서 통과
             where.append(" AND (NOT EXISTS (SELECT 1 FROM match_tags t WHERE t.match_id = m.match_id AND t.tag_type = 'AGE_GROUP')"
-                    + " OR EXISTS (SELECT 1 FROM match_tags t WHERE t.match_id = m.match_id AND t.tag_type = 'AGE_GROUP' AND t.tag_value = ?))");
-            args.add(q.age());
+                    + " OR EXISTS (SELECT 1 FROM match_tags t WHERE t.match_id = m.match_id AND t.tag_type = 'AGE_GROUP' AND t.tag_value IN (")
+                    .append(String.join(",", q.ages().stream().map(v -> "?").toList()))
+                    .append(")))");
+            args.addAll(q.ages());
         }
         if (q.area() != null) {
             where.append(" AND c.area = ?");
@@ -168,7 +178,7 @@ public class MatchRepository {
         course.put("level", rs.getString("level"));
         m.put("course", course);
 
-        m.put("target", rs.getString("target"));
+        m.put("targets", splitTargets(rs.getString("targets")));
         m.put("styles", new ArrayList<String>());       // 아래에서 태그를 읽어 채움
         m.put("languages", new ArrayList<String>());
         m.put("current", rs.getInt("current_count"));
@@ -181,6 +191,11 @@ public class MatchRepository {
         host.put("avatar", rs.getString("avatar"));
         m.put("host", host);
         return m;
+    }
+
+    /** TARGETS_COLUMN 값 "EXCHANGE,MBTI" → [EXCHANGE, MBTI]. NULL(누구나)이면 빈 목록 */
+    private static List<String> splitTargets(String csv) {
+        return csv == null || csv.isEmpty() ? new ArrayList<>() : new ArrayList<>(List.of(csv.split(",")));
     }
 
     /** 탈퇴한 회원은 이름 대신 "탈퇴한 회원" (db/README "지우지 않습니다"). 쿼리에 nickname, user_status 칸이 있어야 함 */
@@ -234,7 +249,9 @@ public class MatchRepository {
     public Map<String, Object> findMatchById(Long matchId, Long viewerId) {
         long viewer = viewerId == null ? 0 : viewerId;
         String sql = """
-            SELECT m.match_id, m.title, m.content, m.meet_at, m.meet_place, m.capacity, m.target, m.mbti,
+            SELECT m.match_id, m.title, m.content, m.meet_at, m.meet_place, m.capacity, m.mbti,
+                   (SELECT GROUP_CONCAT(tt.tag_value ORDER BY tt.tag_value) FROM match_tags tt
+                     WHERE tt.match_id = m.match_id AND tt.tag_type = 'TARGET') AS targets,
                    m.path_json AS match_path, m.gpx_path,
                    s.current_count, s.status,
                    c.course_id, c.name AS course_name, c.distance_km, c.level, c.duration_min,
@@ -288,7 +305,7 @@ public class MatchRepository {
             course.put("durationMin", rs.getInt("duration_min"));
             m.put("course", course);
 
-            m.put("target", rs.getString("target"));
+            m.put("targets", splitTargets(rs.getString("targets")));
             m.put("mbti", rs.getString("mbti"));
             m.put("styles", new ArrayList<String>());
             m.put("languages", new ArrayList<String>());
@@ -332,10 +349,11 @@ public class MatchRepository {
         return rows.get(0);
     }
 
-    /** 원하는 스타일 · 언어 · 연령대 태그 */
+    /** 원하는 스타일 · 언어 · 연령대 태그 (모집 대상 TARGET 은 상세 쿼리에서 targets 로 읽음) */
     @SuppressWarnings("unchecked")
     private void attachDetailTags(Long matchId, Map<String, Object> match) {
-        jdbc.query("SELECT tag_type, tag_value FROM match_tags WHERE match_id = ? ORDER BY tag_type, tag_value", rs -> {
+        jdbc.query("SELECT tag_type, tag_value FROM match_tags WHERE match_id = ?"
+                + " AND tag_type IN ('STYLE', 'LANGUAGE', 'AGE_GROUP') ORDER BY tag_type, tag_value", rs -> {
             String key = switch (rs.getString("tag_type")) {
                 case "STYLE" -> "styles";
                 case "LANGUAGE" -> "languages";
@@ -410,8 +428,8 @@ public class MatchRepository {
      * (db/README "참여하기는 트랜잭션으로". @Transactional 안에서만 의미가 있음)
      */
     public MatchState findState(long matchId, boolean lock) {
-        String sql = "SELECT match_id, host_id, course_id, capacity, target, mbti, gpx_path FROM matches"
-                + " WHERE match_id = ? AND is_hidden = FALSE" + (lock ? " FOR UPDATE" : "");
+        String sql = "SELECT m.match_id, m.host_id, m.course_id, m.capacity, m.mbti, m.gpx_path, " + TARGETS_COLUMN
+                + " FROM matches m WHERE m.match_id = ? AND m.is_hidden = FALSE" + (lock ? " FOR UPDATE" : "");
         List<Map<String, Object>> rows = jdbc.queryForList(sql, matchId);
         if (rows.isEmpty()) {
             throw ApiException.notFound("동행 찾을 수 없음");
@@ -428,7 +446,7 @@ public class MatchRepository {
                 }, matchId);
         return new MatchState(matchId, ((Number) m.get("host_id")).longValue(), ((Number) m.get("course_id")).longValue(),
                 ((Number) m.get("capacity")).intValue(),
-                (String) m.get("target"), (String) m.get("mbti"), (String) m.get("gpx_path"),
+                splitTargets((String) m.get("targets")), (String) m.get("mbti"), (String) m.get("gpx_path"),
                 ((Number) s.get("current_count")).intValue(), (String) s.get("status"), ageGroups, languages);
     }
 
@@ -465,8 +483,8 @@ public class MatchRepository {
 
     /** 모집 글 저장 → 새 match_id. 상태는 OPEN 으로 시작 (GPX 는 번호가 정해진 뒤 updateGpx 로) */
     public long insertMatch(long hostId, MatchRequest r) {
-        String sql = "INSERT INTO matches (host_id, course_id, title, content, meet_at, meet_place, capacity, target, mbti)"
-                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO matches (host_id, course_id, title, content, meet_at, meet_place, capacity, mbti)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
         KeyHolder keyHolder = new GeneratedKeyHolder();
         jdbc.update(con -> {
             PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
@@ -477,8 +495,7 @@ public class MatchRepository {
             ps.setObject(5, r.meetAt());
             ps.setString(6, r.meetPlace());
             ps.setInt(7, r.capacity());
-            ps.setString(8, r.target());
-            ps.setString(9, r.mbti());
+            ps.setString(8, r.mbti());
             return ps;
         }, keyHolder);
         return keyHolder.getKey().longValue();
@@ -488,10 +505,10 @@ public class MatchRepository {
     public void updateMatch(long matchId, MatchRequest r) {
         jdbc.update("""
             UPDATE matches SET course_id = ?, title = ?, content = ?, meet_at = ?, meet_place = ?,
-                               capacity = ?, target = ?, mbti = ?
+                               capacity = ?, mbti = ?
             WHERE match_id = ?
             """, r.courseId(), r.title(), r.description(), r.meetAt(), r.meetPlace(),
-                r.capacity(), r.target(), r.mbti(), matchId);
+                r.capacity(), r.mbti(), matchId);
     }
 
     /** 태그는 전부 지우고 다시 넣기 (db/README "여러 개 고르는 값은 태그 테이블") */
@@ -501,6 +518,7 @@ public class MatchRepository {
         r.styles().forEach(v -> jdbc.update(sql, matchId, "STYLE", v));
         r.languages().forEach(v -> jdbc.update(sql, matchId, "LANGUAGE", v));
         r.ageGroups().forEach(v -> jdbc.update(sql, matchId, "AGE_GROUP", v));
+        r.targets().forEach(v -> jdbc.update(sql, matchId, "TARGET", v));
     }
 
     /** 첨부 GPX 파일 경로 · 경로 좌표 (둘 다 null 이면 첨부 떼기) */
@@ -610,7 +628,7 @@ public class MatchRepository {
                 rs.getString("title"),
                 toAuthor(rs),
                 rs.getObject("meet_at", LocalDateTime.class),
-                rs.getString("target"),
+                splitTargets(rs.getString("targets")),
                 rs.getInt("current_count"),
                 rs.getInt("capacity"),
                 rs.getString("status"),

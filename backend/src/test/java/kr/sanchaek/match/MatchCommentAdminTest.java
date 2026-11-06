@@ -130,7 +130,7 @@ class MatchCommentAdminTest {
     }
 
     private static MatchRequest request(long courseId) {
-        return new MatchRequest("제목만 고침", courseId, java.time.LocalDateTime.now().plusDays(7), 4, "정문", "ANYONE", null,
+        return new MatchRequest("제목만 고침", courseId, java.time.LocalDateTime.now().plusDays(7), 4, "정문", java.util.List.of(), null,
                 null, null, java.util.List.of("KO"), null, null);
     }
 
