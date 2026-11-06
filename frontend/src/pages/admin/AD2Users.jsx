@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Button from '../../components/Button.jsx'
 import Chip from '../../components/Chip.jsx'
 import Modal from '../../components/Modal.jsx'
-import { changeUserStatus, getAdminUsers } from '../../api/adminApi.js'
+import { changeUserStatus, getAdminUsers, issueTempPassword } from '../../api/adminApi.js'
 import { AGE_LABELS, LANGUAGE_LABELS } from '../../constants/labels.js'
 import { formatDate, formatMonthDay } from '../../utils/format.js'
 import { showToast } from '../../utils/toast.js'
@@ -27,6 +27,7 @@ function StatusChip({ user }) {
 
 // AD2 회원 관리 (/admin/users)
 // API: GET /api/admin/users?q=&status= · PUT /api/admin/users/{id}/status { status: SUSPENDED | ACTIVE }
+//      POST /api/admin/users/{id}/temp-password (회원이 비밀번호를 잊었을 때, A1 안내 참고)
 // 경고는 AD1 신고 처리에서만 줌. 탈퇴 회원 · 관리자 계정은 바꿀 수 없음
 export default function AD2Users() {
   const [status, setStatus] = useState('')
@@ -35,7 +36,31 @@ export default function AD2Users() {
   const [version, setVersion] = useState(0)
   const { data, error, loading } = useAsync(() => getAdminUsers({ q, status, page }), `ad2-${status}-${q}-${page}-${version}`)
   const [suspending, setSuspending] = useState(null) // 정지 확인 창을 연 회원
+  const [resetting, setResetting] = useState(null) // 임시 비밀번호 확인 창을 연 회원
+  const [issued, setIssued] = useState(null) // 발급 결과 { nickname, loginId, temporaryPassword }
   const [busy, setBusy] = useState(false)
+
+  async function onIssue() {
+    setBusy(true)
+    try {
+      const { temporaryPassword } = await issueTempPassword(resetting.userId)
+      setIssued({ nickname: resetting.nickname, loginId: resetting.loginId, temporaryPassword })
+      setResetting(null)
+    } catch (err) {
+      showToast(err.message, 'error')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  async function onCopy() {
+    try {
+      await navigator.clipboard.writeText(issued.temporaryPassword)
+      showToast('복사했어요')
+    } catch {
+      showToast('복사하지 못했어요. 직접 적어 주세요', 'error')
+    }
+  }
 
   async function onChange(user, next) {
     setBusy(true)
@@ -119,14 +144,21 @@ export default function AD2Users() {
                   <td className="actions">
                     {u.role === 'ADMIN' || u.status === 'WITHDRAWN' ? (
                       <span className="t-c12 c-muted">-</span>
-                    ) : u.status === 'SUSPENDED' ? (
-                      <Button variant="secondary" disabled={busy} onClick={() => onChange(u, 'ACTIVE')}>
-                        정지 풀기
-                      </Button>
                     ) : (
-                      <Button variant="danger" disabled={busy} onClick={() => setSuspending(u)}>
-                        7일 정지
-                      </Button>
+                      <div className="row g8 admin-row-actions">
+                        <Button variant="ghost" disabled={busy} onClick={() => setResetting(u)}>
+                          임시 비밀번호
+                        </Button>
+                        {u.status === 'SUSPENDED' ? (
+                          <Button variant="secondary" disabled={busy} onClick={() => onChange(u, 'ACTIVE')}>
+                            정지 풀기
+                          </Button>
+                        ) : (
+                          <Button variant="danger" disabled={busy} onClick={() => setSuspending(u)}>
+                            7일 정지
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -148,6 +180,44 @@ export default function AD2Users() {
               </Button>
               <Button variant="danger" className="grow" disabled={busy} onClick={() => onChange(suspending, 'SUSPENDED')}>
                 7일 정지
+              </Button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      <Modal open={Boolean(resetting)} onClose={busy ? undefined : () => setResetting(null)}>
+        {resetting && (
+          <>
+            <h2 className="t-h20 c-strong">{resetting.nickname}님의 임시 비밀번호를 발급할까요?</h2>
+            <p className="t-b14 c-body">지금 쓰는 비밀번호는 바로 쓸 수 없게 돼요. 본인이 요청한 것이 맞는지 먼저 확인해 주세요.</p>
+            <div className="row g12 fill">
+              <Button variant="secondary" className="grow" disabled={busy} onClick={() => setResetting(null)}>
+                취소
+              </Button>
+              <Button className="grow" disabled={busy} onClick={onIssue}>
+                발급하기
+              </Button>
+            </div>
+          </>
+        )}
+      </Modal>
+
+      <Modal open={Boolean(issued)} onClose={() => setIssued(null)}>
+        {issued && (
+          <>
+            <h2 className="t-h20 c-strong">임시 비밀번호를 발급했어요</h2>
+            <p className="t-b14 c-body">
+              {issued.nickname}({issued.loginId})님에게 전달해 주세요. <b>이 창을 닫으면 다시 볼 수 없어요.</b>
+            </p>
+            <code className="admin-temp-password">{issued.temporaryPassword}</code>
+            <p className="t-c12 c-muted">로그인한 뒤 계정 설정에서 비밀번호를 바꾸도록 안내해 주세요.</p>
+            <div className="row g12 fill">
+              <Button variant="secondary" className="grow" onClick={onCopy}>
+                복사
+              </Button>
+              <Button className="grow" onClick={() => setIssued(null)}>
+                닫기
               </Button>
             </div>
           </>

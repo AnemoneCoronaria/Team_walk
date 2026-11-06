@@ -183,6 +183,10 @@ public class AdminRepository {
         return rows.isEmpty() ? null : rows.get(0);
     }
 
+    public void updatePassword(long userId, String passwordHash) {
+        jdbc.update("UPDATE users SET password_hash = ? WHERE user_id = ?", passwordHash, userId);
+    }
+
     public boolean isAdmin(long userId) {
         String[] roleAndStatus = findRoleAndStatus(userId);
         return roleAndStatus != null && "ADMIN".equals(roleAndStatus[0]);

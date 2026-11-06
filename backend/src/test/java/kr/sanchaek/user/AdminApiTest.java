@@ -155,6 +155,71 @@ class AdminApiTest {
         assertEquals("ACTIVE", jdbc.queryForObject("SELECT status FROM users WHERE user_id = 3", String.class));
     }
 
+    // ----- AD2 임시 비밀번호 -----
+
+    private String issue(long userId) throws Exception {
+        String body = mvc.perform(post("/api/admin/users/" + userId + "/temp-password").session(admin()))
+                .andExpect(status().isOk()).andExpect(jsonPath("$.data.userId").value(userId))
+                .andReturn().getResponse().getContentAsString();
+        return com.jayway.jsonpath.JsonPath.read(body, "$.data.temporaryPassword");
+    }
+
+    private ResultActions login(String id, String pw) throws Exception {
+        return mvc.perform(post("/api/auth/login").contentType("application/json")
+                .content("{\"loginId\":\"" + id + "\",\"password\":\"" + pw + "\"}"));
+    }
+
+    @Test void tempPasswordReplacesOldAndCanBeChanged() throws Exception {
+        String temp = issue(5);
+        login("donghun", "test1234!").andExpect(status().isUnauthorized());
+        login("donghun", temp).andExpect(status().isOk());
+
+        // 원문이 아니라 해시로 저장
+        String hash = jdbc.queryForObject("SELECT password_hash FROM users WHERE user_id = 5", String.class);
+        assertTrue(hash.startsWith("$2"));
+        assertFalse(hash.contains(temp));
+
+        // 임시 비밀번호로 계정 설정의 비밀번호 변경 가능
+        MockHttpSession donghun = new MockHttpSession();
+        donghun.setAttribute(SessionUtil.USER_ID, 5L);
+        donghun.setAttribute(SessionUtil.ROLE, "USER");
+        mvc.perform(put("/api/users/me/password").session(donghun).contentType("application/json")
+                .content("{\"currentPassword\":\"" + temp + "\",\"newPassword\":\"newpass12!\"}")).andExpect(status().isOk());
+        login("donghun", temp).andExpect(status().isUnauthorized());
+        login("donghun", "newpass12!").andExpect(status().isOk());
+    }
+
+    @Test void tempPasswordFollowsPasswordRuleAndIsRandom() throws Exception {
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        for (int i = 0; i < 30; i++) {
+            String temp = issue(5);
+            assertTrue(temp.matches("^(?=.*[A-Za-z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$"), temp);   // 회원가입 규칙
+            assertEquals(12, temp.length());
+            assertFalse(temp.matches(".*[0O1lI].*"), temp);   // 헷갈리는 글자 없음
+            seen.add(temp);
+        }
+        assertEquals(30, seen.size());
+    }
+
+    @Test void tempPasswordLimits() throws Exception {
+        String url = "/api/admin/users/%d/temp-password";
+        mvc.perform(post(url.formatted(5))).andExpect(status().isUnauthorized());
+        mvc.perform(post(url.formatted(5)).session(user())).andExpect(status().isForbidden());
+        mvc.perform(post(url.formatted(99999)).session(admin())).andExpect(status().isNotFound());
+        mvc.perform(post(url.formatted(1)).session(admin())).andExpect(status().isBadRequest());   // 관리자 자신
+        jdbc.update("UPDATE users SET role = 'ADMIN' WHERE user_id = 3");
+        mvc.perform(post(url.formatted(3)).session(admin())).andExpect(status().isBadRequest());   // 다른 관리자
+        jdbc.update("UPDATE users SET status = 'WITHDRAWN' WHERE user_id = 5");
+        String before = jdbc.queryForObject("SELECT password_hash FROM users WHERE user_id = 5", String.class);
+        mvc.perform(post(url.formatted(5)).session(admin())).andExpect(status().isBadRequest());   // 탈퇴 회원
+        assertEquals(before, jdbc.queryForObject("SELECT password_hash FROM users WHERE user_id = 5", String.class));
+    }
+
+    @Test void suspendedUserCanGetTempPasswordButStillCannotLogin() throws Exception {
+        String temp = issue(7);   // banned: 정지 중
+        login("banned", temp).andExpect(status().isForbidden()).andExpect(jsonPath("$.error.code").value("SUSPENDED"));
+    }
+
     // ----- AD4 코스 관리 -----
 
     @Test void courseListAndHide() throws Exception {

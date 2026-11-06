@@ -2,9 +2,9 @@ import { useState } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
+import Modal from '../components/Modal.jsx'
 import { login } from '../api/userApi.js'
 import { useAuth } from '../auth/authContext.js'
-import { showToast } from '../utils/toast.js'
 import './Account.css'
 
 // A1 로그인 — 실패하면 같은 화면이 A2(오류 배너 + 비밀번호 칸 빨강)로 바뀜
@@ -20,6 +20,7 @@ export default function A1Login() {
   const [keepLogin, setKeepLogin] = useState(false)
   const [error, setError] = useState('') // A2 오류 배너 문구 (서버 메시지 그대로)
   const [submitting, setSubmitting] = useState(false)
+  const [forgot, setForgot] = useState(false) // 비밀번호 찾기 안내 창
 
   async function onSubmit(e) {
     e.preventDefault()
@@ -74,8 +75,7 @@ export default function A1Login() {
             <input type="checkbox" checked={keepLogin} onChange={(e) => setKeepLogin(e.target.checked)} />
             로그인 상태 유지
           </label>
-          {/* A6 비밀번호 찾기는 2순위 */}
-          <button className="account-link c-green" type="button" onClick={() => showToast('비밀번호 찾기는 준비 중이에요', 'info')}>
+          <button className="account-link c-green" type="button" onClick={() => setForgot(true)}>
             비밀번호 찾기
           </button>
         </div>
@@ -91,6 +91,17 @@ export default function A1Login() {
           </Link>
         </p>
       </form>
+
+      {/* 메일 발송이 없어서 관리자가 AD2 에서 임시 비밀번호를 발급함 */}
+      <Modal open={forgot} onClose={() => setForgot(false)}>
+        <h2 className="t-h20 c-strong">비밀번호를 잊으셨나요?</h2>
+        <p className="t-b14 c-body">
+          관리자에게 아이디를 알려 주시면 임시 비밀번호를 발급해 드려요. 로그인한 뒤 마이페이지 계정 설정에서 새 비밀번호로 바꿔 주세요.
+        </p>
+        <Button block onClick={() => setForgot(false)}>
+          확인
+        </Button>
+      </Modal>
     </main>
   )
 }

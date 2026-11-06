@@ -1,7 +1,9 @@
 package kr.sanchaek.user;
 
+import java.security.SecureRandom;
 import java.util.Locale;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -12,6 +14,7 @@ import kr.sanchaek.user.AdminDtos.CourseVisibilityResult;
 import kr.sanchaek.user.AdminDtos.ReportItem;
 import kr.sanchaek.user.AdminDtos.ReportProcessRequest;
 import kr.sanchaek.user.AdminDtos.ReportProcessResult;
+import kr.sanchaek.user.AdminDtos.TempPasswordResult;
 import kr.sanchaek.user.AdminDtos.UserItem;
 import kr.sanchaek.user.AdminDtos.UserStatusResult;
 import kr.sanchaek.user.AdminRepository.PendingReport;
@@ -23,7 +26,13 @@ import kr.sanchaek.user.AdminRepository.PendingReport;
 @Service
 public class AdminService {
 
+    private static final String TEMP_LETTERS = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ";
+    private static final String TEMP_DIGITS = "23456789";
+    private static final String TEMP_CHARS = TEMP_LETTERS + TEMP_DIGITS;
+
     private final AdminRepository repo;
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+    private final SecureRandom random = new SecureRandom();
 
     public AdminService(AdminRepository repo) {
         this.repo = repo;
@@ -125,6 +134,37 @@ public class AdminService {
             repo.activateUser(userId);
         }
         return new UserStatusResult(userId, status, repo.findSuspendedUntil(userId));
+    }
+
+    /**
+     * 임시 비밀번호 발급 (A1 "비밀번호 찾기"는 관리자 문의 안내 → 관리자가 여기서 발급).
+     * 해시만 저장하고 원문은 응답으로 한 번만 돌려줌. 탈퇴 회원 · 관리자 계정은 400, 정지 회원은 발급 가능 (정지가 풀려야 로그인됨)
+     */
+    public TempPasswordResult issueTempPassword(long userId) {
+        String[] roleAndStatus = repo.findRoleAndStatus(userId);
+        if (roleAndStatus == null) {
+            throw ApiException.notFound("회원을 찾을 수 없어요.");
+        }
+        if ("ADMIN".equals(roleAndStatus[0])) {
+            throw ApiException.badRequest("관리자 계정은 임시 비밀번호를 발급할 수 없어요. 계정 설정에서 바꿔 주세요.");
+        }
+        if ("WITHDRAWN".equals(roleAndStatus[1])) {
+            throw ApiException.badRequest("탈퇴한 회원에게는 발급할 수 없어요.");
+        }
+        String temporary = newTempPassword();
+        repo.updatePassword(userId, passwordEncoder.encode(temporary));
+        return new TempPasswordResult(userId, temporary);
+    }
+
+    /** 영문 · 숫자 · 특수문자가 모두 들어간 12자 (회원가입 비밀번호 규칙과 같음). 헷갈리는 글자 0 O 1 l I 는 뺌 */
+    private String newTempPassword() {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < 9; i++) {
+            sb.append(TEMP_CHARS.charAt(random.nextInt(TEMP_CHARS.length())));
+        }
+        sb.append(TEMP_LETTERS.charAt(random.nextInt(TEMP_LETTERS.length())));
+        sb.append(TEMP_DIGITS.charAt(random.nextInt(TEMP_DIGITS.length())));
+        return sb.append('!').toString();
     }
 
     // ===================== AD4 코스 관리 =====================
