@@ -1,6 +1,6 @@
 // 코스 API (백엔드 담당: 동언) — 노션 API 명세 "코스·GPX", "후기"
 import { USE_MOCK, request, mockResponse, mockError, paginate } from './client.js'
-import { COURSES, REVIEWS, toCourseSummary } from '../mocks/courses.js'
+import { COURSES, REVIEWS, SAVED_COURSE_IDS, toCourseSummary } from '../mocks/courses.js'
 import { ME } from '../mocks/users.js'
 import { parseGpxInBrowser } from '../mocks/gpx.js'
 
@@ -46,9 +46,30 @@ export function getCourses(params = {}) {
 export function getCourse(courseId) {
   if (USE_MOCK) {
     const course = COURSES.find((c) => c.courseId === Number(courseId))
-    return course ? mockResponse(course) : mockError(404, 'NOT_FOUND', '코스를 찾을 수 없습니다.')
+    if (!course) return mockError(404, 'NOT_FOUND', '코스를 찾을 수 없습니다.')
+    return mockResponse({ ...course, saved: SAVED_COURSE_IDS.includes(course.courseId) })
   }
   return request(`/api/courses/${courseId}`)
+}
+
+/** 코스 저장 (C2 ♡) — POST /api/courses/{id}/save (로그인 필요). 이미 저장했으면 그대로 */
+export function saveCourse(courseId) {
+  if (USE_MOCK) {
+    const id = Number(courseId)
+    if (!SAVED_COURSE_IDS.includes(id)) SAVED_COURSE_IDS.unshift(id)
+    return mockResponse(null)
+  }
+  return request(`/api/courses/${courseId}/save`, { method: 'POST' })
+}
+
+/** 저장 해제 (C2 · P6 ♥) — DELETE /api/courses/{id}/save */
+export function unsaveCourse(courseId) {
+  if (USE_MOCK) {
+    const at = SAVED_COURSE_IDS.indexOf(Number(courseId))
+    if (at >= 0) SAVED_COURSE_IDS.splice(at, 1)
+    return mockResponse(null)
+  }
+  return request(`/api/courses/${courseId}/save`, { method: 'DELETE' })
 }
 
 /**

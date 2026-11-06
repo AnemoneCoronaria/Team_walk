@@ -26,6 +26,7 @@ DROP TABLE IF EXISTS landmarks;
 DROP TABLE IF EXISTS match_participants;
 DROP TABLE IF EXISTS match_tags;
 DROP TABLE IF EXISTS matches;
+DROP TABLE IF EXISTS saved_courses;
 DROP TABLE IF EXISTS course_facilities;
 DROP TABLE IF EXISTS courses;
 DROP TABLE IF EXISTS user_tags;
@@ -143,6 +144,23 @@ CREATE TABLE course_facilities (
     CONSTRAINT chk_course_facilities_facility CHECK (facility IN ('TOILET','BENCH','PARKING','SEA_VIEW'))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
   COMMENT='코스 편의시설 (담당: 동언)';
+
+
+-- ---------------------------------------------------------------------
+-- 저장한 코스 (Figma C2 ♡ · P6, 담당: 민서)
+-- 회원이 코스를 저장한 기록. 저장 해제는 행을 지웁니다.
+-- 코스가 비공개 · 숨김 · 삭제되면 행은 남기고 목록에서만 빠집니다 (다시 공개되면 돌아옴).
+-- ---------------------------------------------------------------------
+CREATE TABLE saved_courses (
+    user_id     BIGINT    NOT NULL,
+    course_id   BIGINT    NOT NULL,
+    created_at  DATETIME  NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '저장한 시각 (최근 저장순)',
+    PRIMARY KEY (user_id, course_id),
+    KEY idx_saved_courses_course (course_id),
+    CONSTRAINT fk_saved_courses_user   FOREIGN KEY (user_id)   REFERENCES users (user_id),
+    CONSTRAINT fk_saved_courses_course FOREIGN KEY (course_id) REFERENCES courses (course_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci
+  COMMENT='저장한 코스 (담당: 민서)';
 
 
 -- ---------------------------------------------------------------------

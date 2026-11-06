@@ -28,7 +28,7 @@ public class CourseRepository {
     public record Landmark(long landmarkId, String name) {}
     public record Detail(long courseId, String name, String description, String area, double distanceKm,
             int durationMin, String level, List<String> facilities, List<List<Double>> path, Author author,
-            double rating, long reviewCount, List<Landmark> landmarks, boolean isMine, LocalDateTime createdAt) {}
+            double rating, long reviewCount, List<Landmark> landmarks, boolean isMine, boolean saved, LocalDateTime createdAt) {}
 
     private final NamedParameterJdbcTemplate jdbc;
     private static final String BASE = " FROM courses c JOIN v_course_rating r ON r.course_id = c.course_id ";
@@ -245,6 +245,56 @@ public class CourseRepository {
         return new PageResult<>(items, page, size, total);
     }
 
+    /** P6 저장한 코스: 코스 목록과 같은 모양 + 지금 모집 중인 동행 수, 저장한 시각 */
+    public record SavedCourse(long courseId, String name, String area, double distanceKm, int durationMin,
+            String level, List<String> facilities, List<Double> start, double rating, long reviewCount,
+            long openMatches, LocalDateTime savedAt) {}
+
+    /** 저장 (C2 ♡). 볼 수 없는 코스는 404, 이미 저장했으면 그대로 */
+    @Transactional
+    public void save(long id, long userId) {
+        checkVisible(id, userId);
+        jdbc.update("""
+                INSERT INTO saved_courses (user_id, course_id) VALUES (:userId, :id)
+                ON DUPLICATE KEY UPDATE course_id = course_id
+                """, accessParameters(id, userId));
+    }
+
+    /** 저장 해제. 저장한 적이 없거나 코스가 사라졌어도 성공 (사라진 코스도 지울 수 있게 볼 수 있는지 묻지 않음) */
+    public void unsave(long id, long userId) {
+        jdbc.update("DELETE FROM saved_courses WHERE user_id = :userId AND course_id = :id", accessParameters(id, userId));
+    }
+
+    /** 지금 볼 수 있는 코스만 (상세와 같은 기준). 비공개 · 숨김 · 삭제되면 빠지고 다시 공개되면 돌아옴 */
+    @Transactional(readOnly = true)
+    public PageResult<SavedCourse> saved(long userId, String sort, int page, int size) {
+        PageResult.validate(page, size);
+        String order = switch (sort) {
+            case "recent" -> "sc.created_at DESC, c.course_id DESC";
+            case "distance" -> "c.distance_km ASC, c.course_id";
+            case "rating" -> "r.avg_rating DESC, c.course_id";
+            default -> throw ApiException.badRequest("정렬 값을 확인해 주세요.");
+        };
+        String from = BASE + " JOIN saved_courses sc ON sc.course_id = c.course_id AND sc.user_id = :userId WHERE " + VISIBLE;
+        MapSqlParameterSource params = new MapSqlParameterSource("userId", userId);
+        long total = jdbc.queryForObject("SELECT COUNT(*)" + from, params, Long.class);
+        params.addValue("size", size).addValue("offset", PageResult.offset(page, size));
+        String openMatches = "(SELECT COUNT(*) FROM matches om JOIN v_match_status os ON os.match_id = om.match_id "
+                + "WHERE om.course_id = c.course_id AND om.is_hidden = FALSE AND os.status = 'OPEN')";
+        List<SavedCourse> rows = jdbc.query("SELECT " + COLUMNS + ", sc.created_at AS saved_at, " + openMatches + " AS open_matches"
+                + from + " ORDER BY " + order + " LIMIT :size OFFSET :offset", params, (rs, n) -> {
+                    Summary s = summary(rs, List.of());
+                    return new SavedCourse(s.courseId(), s.name(), s.area(), s.distanceKm(), s.durationMin(),
+                            s.level(), s.facilities(), s.start(), s.rating(), s.reviewCount(),
+                            rs.getLong("open_matches"), rs.getObject("saved_at", LocalDateTime.class));
+                });
+        Map<Long, List<String>> facilities = facilitiesOf(rows.stream().map(SavedCourse::courseId).toList());
+        List<SavedCourse> items = rows.stream().map(c -> new SavedCourse(c.courseId(), c.name(), c.area(),
+                c.distanceKm(), c.durationMin(), c.level(), facilities.getOrDefault(c.courseId(), List.of()),
+                c.start(), c.rating(), c.reviewCount(), c.openMatches(), c.savedAt())).toList();
+        return new PageResult<>(items, page, size, total);
+    }
+
     /** 수정 · 삭제 전 확인: 없거나 지웠거나 숨긴 코스면 404, 작성자가 아니면 403. 행을 잠근다 */
     public void checkAuthor(long id, long userId) {
         List<Long> authors = jdbc.queryForList("SELECT author_id FROM courses "
@@ -282,7 +332,9 @@ public class CourseRepository {
     public Detail detail(long id, Long userId) {
         String sql = "SELECT " + COLUMNS
                 + ", c.description, c.path_json, c.author_id, c.created_at, u.nickname, u.avatar, "
-                + "u.status AS author_status" + BASE
+                + "u.status AS author_status, "
+                + "EXISTS (SELECT 1 FROM saved_courses sc WHERE sc.course_id = c.course_id AND sc.user_id = :userId) AS saved"
+                + BASE
                 + " JOIN users u ON u.user_id=c.author_id WHERE c.course_id=:id AND " + VISIBLE;
         List<Detail> results = jdbc.query(sql, accessParameters(id, userId),
                 (rs, n) -> mapDetail(rs, id, userId));
@@ -301,7 +353,7 @@ public class CourseRepository {
         return new Detail(id, rs.getString("name"), rs.getString("description"), rs.getString("area"),
                 rs.getDouble("distance_km"), rs.getInt("duration_min"), rs.getString("level"),
                 facilities(id), path, author, rs.getDouble("avg_rating"), rs.getLong("review_count"),
-                landmarksAlong(path), userId != null && userId == authorId,
+                landmarksAlong(path), userId != null && userId == authorId, rs.getBoolean("saved"),
                 rs.getTimestamp("created_at").toLocalDateTime());
     }
 
