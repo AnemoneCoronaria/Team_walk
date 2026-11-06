@@ -21,6 +21,7 @@ import P3MyCourses from './pages/P3MyCourses.jsx'
 import P5AccountSettings from './pages/P5AccountSettings.jsx'
 import R1ReviewWrite from './pages/R1ReviewWrite.jsx'
 import C4CourseReviews from './pages/C4CourseReviews.jsx'
+import R2StampTour from './pages/R2StampTour.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/:id/edit, /matches/new
@@ -58,6 +59,8 @@ export default function App() {
 
         {/* 후기 쓰기 (승민) — C4 · P1 지난 동행에서 들어옴 */}
         <Route path="/courses/:courseId/review" element={<R1ReviewWrite />} />
+        {/* 랜드마크 스탬프 투어 (승민) — M1 배너 · P4 · 인증 성공 창에서 들어옴 */}
+        <Route path="/stamps" element={<R2StampTour />} />
 
         {/* 오류 화면 (승민): X2 500 은 확인 · 시연용 주소, 없는 주소 → X1 404 */}
         <Route path="/500" element={<X2ServerError />} />

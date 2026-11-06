@@ -1,0 +1,21 @@
+/* R2 랜드마크 스탬프 투어 */
+
+.stamp-page { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; padding: 40px 0 64px; }
+
+.stamp-hero { display: flex; align-items: flex-end; gap: 32px; align-self: stretch; padding: 32px; }
+.stamp-progress { width: 480px; height: 10px; border-radius: 5px; background: var(--bg-subtle); overflow: hidden; }
+.stamp-progress span { display: block; height: 100%; border-radius: 5px; background: var(--brand-green); }
+
+.stamp-body { display: flex; gap: 24px; align-self: stretch; }
+.stamp-map { width: 560px; height: 420px; flex-shrink: 0; border-radius: 16px; overflow: hidden; }
+.stamp-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; flex: 1 0 0; min-width: 1px; align-content: start; }
+
+.stamp-card { display: flex; align-items: center; gap: 12px; padding: 14px 16px; font: inherit; text-align: left; cursor: pointer; }
+.stamp-card.is-stamped { border-color: var(--brand-green); background: var(--brand-green-soft); }
+.stamp-card.is-selected { box-shadow: 0 0 0 2px var(--brand-green); }
+.stamp-card-icon { display: flex; align-items: center; justify-content: center; flex-shrink: 0; width: 40px; height: 40px; border-radius: 20px; background: var(--bg-surface); font-size: 22px; }
+
+.stamp-badges { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; align-self: stretch; }
+.stamp-badge-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 12px; text-align: center; }
+.stamp-badge-card.is-locked { opacity: 0.45; }
+.stamp-badge-icon { font-size: 32px; line-height: 1.2; }
