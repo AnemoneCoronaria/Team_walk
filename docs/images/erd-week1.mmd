@@ -63,8 +63,7 @@ erDiagram
         datetime meet_at "만나는 일시"
         varchar meet_place "만남 장소 설명"
         tinyint capacity "2~6, 모집자 포함"
-        varchar target "ANYONE, EXCHANGE, SAME_LANGUAGE, MBTI"
-        char mbti "target이 MBTI일 때만"
+        char mbti "모집 대상에 MBTI가 있을 때만"
         json path_json "첨부 GPX 경로 좌표, 없으면 NULL"
         varchar gpx_path "첨부 GPX 파일 경로"
         varchar status "OPEN, CLOSED, CANCELED"
@@ -73,8 +72,8 @@ erDiagram
     }
     match_tags {
         bigint match_id PK, FK
-        varchar tag_type PK "STYLE, LANGUAGE, AGE_GROUP"
-        varchar tag_value PK "SLOW, ZH, 20s 같은 코드"
+        varchar tag_type PK "STYLE, LANGUAGE, AGE_GROUP, TARGET"
+        varchar tag_value PK "SLOW, ZH, 20s, MBTI 같은 코드"
     }
     match_participants {
         bigint match_id PK, FK

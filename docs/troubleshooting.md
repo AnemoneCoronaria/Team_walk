@@ -38,6 +38,8 @@
 | 인터넷 예제의 **`com.fasterxml.jackson.databind … cannot be resolved`** (`ObjectMapper` 등) | 스프링부트 4는 Jackson 3을 써서 패키지 이름이 바뀜 | `tools.jackson.databind.…` 로 바꾸기 (어노테이션 `com.fasterxml.jackson.annotation`은 그대로) |
 | `build.gradle`에 **`spring-boot-starter-web`** 을 넣었더니 경고 | 스프링부트 4에서 이름이 바뀜 | `spring-boot-starter-webmvc` 로 (Initializr로 만들면 알아서 들어감) |
 | 일부 API만 **500**, 로그에 **`Name for argument of type [...] not specified`** (실제로 겪음) | `@RequestParam` · `@PathVariable`에 이름을 안 적음. VS Code가 컴파일한 클래스에는 변수 이름 정보가 없음 (`bootRun`으로 켰어도 VS Code가 다시 컴파일하면 발생) | 이름 적기: `@PathVariable("id") long id`, `@RequestParam(name = "q", required = false) String q`. 급하면 `./gradlew clean bootRun` |
+| 동행 글쓰기만 **500**, 로그에 **`Field 'target' doesn't have a default value`** · 모든 글이 "누구나"로 보임 (실제로 겪을 수 있음) | PR #33 이후 코드를 받았는데 DB는 옛 구조 | 내 데이터를 지키려면 `db/migrate-week3-targets.sql` 한 번 실행, 시험 데이터뿐이면 `schema.sql` → `seed.sql`. 그다음 백엔드 재시작 ([DB 안내 3)](../db/README.md#3-테이블과-테스트-데이터-넣기-테이블이-바뀔-때마다-다시)) |
+| 동행 목록 · 상세가 **500**, 로그에 **`Unknown column 'm.target'`** | DB는 새 구조인데 서버가 옛 코드로 켜져 있음 | `git pull` 후 백엔드 재시작 |
 | **모든 API가 404**, `/api/hello`도 404 (실제로 겪음) | 8080에 **다른 스프링 프로젝트**가 켜져 있음. VS Code에서 다른 프로젝트를 실행해 둔 경우 | 그 프로젝트를 끄고 `bootRun`. `/api/hello`에 `"landmarks":8`이 나오면 산책시루 서버 |
 | 고친 코드가 반영이 안 됨 | 서버가 예전 코드로 계속 돌고 있음 | Ctrl+C로 끄고 다시 `bootRun` |
 | `bootRun`이 **`80% EXECUTING`** 에서 멈춤 | 멈춘 게 아니라 서버가 켜져 있는 상태 (실제로 겪음) | 로그에 `Started SanchaekApplication`이 있으면 정상. 그대로 두고 브라우저에서 확인, 끌 때 Ctrl+C |
