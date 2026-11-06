@@ -62,6 +62,7 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 | `/mypage/courses` | P3 내가 올린 코스 (정보 수정 · GPX · 삭제) | 승민 |
 | `/mypage/settings` | P5 계정 설정 (비밀번호 변경 창, P5-1 회원 탈퇴 창) | 승민 |
 | `/mypage/profile` | P2 프로필 · 태그 수정 (로그인 필요, 저장하면 P1 으로) | 승민 |
+| `/courses/:id/review` | R1 후기 쓰기 (동행 후기면 `?matchId=`). 랜드마크 인증은 3주차 | 승민 |
 | `/500` | X2 서버 오류 (확인 · 시연용. 화면에서 API 5xx 일 때 `<X2ServerError />` 를 보여 주면 됨) | 승민 |
 | 그 밖의 주소 | X1 404 (상세 화면에서 API 404 일 때도 `<X1NotFound />`) | 승민 |
 | `/health` | 환경 확인 | - |

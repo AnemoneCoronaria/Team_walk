@@ -1,0 +1,40 @@
+/* R1 후기 쓰기 · C4 후기 전체 보기 */
+
+/* ---------- R1 ---------- */
+.review-page { display: flex; justify-content: center; padding: 40px 0 64px; }
+.review-card { padding: 40px; border-radius: 20px; }
+
+.review-stars { display: flex; gap: 4px; }
+.review-star { padding: 0; border: 0; background: none; color: var(--brand-green); font-size: 32px; line-height: 1; cursor: pointer; }
+
+.review-textarea { height: 120px; padding: 12px 16px; resize: vertical; }
+
+.review-photo { position: relative; flex-shrink: 0; width: 96px; height: 96px; border-radius: 12px; overflow: hidden; background: var(--bg-subtle); }
+.review-photo img { width: 100%; height: 100%; object-fit: cover; }
+.review-photo-add { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-size: 28px; cursor: pointer; }
+.review-photo-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 11px;
+  background: rgba(28, 43, 38, 0.6);
+  color: var(--text-inverse);
+  font-size: 14px;
+  line-height: 22px;
+  cursor: pointer;
+}
+
+.review-actions { display: flex; gap: 12px; align-self: flex-end; }
+
+/* ---------- C4 ---------- */
+.review-list-page { padding: 40px 0 64px; }
+.review-list { display: flex; flex-direction: column; align-self: stretch; }
+.review-item { display: flex; gap: 12px; padding: 20px 24px; border-bottom: 1px solid var(--border-default); }
+.review-item:last-child { border-bottom: 0; }
+.review-thumb { width: 88px; height: 88px; border-radius: 10px; object-fit: cover; }
+.review-report { padding: 0; border: 0; background: none; cursor: pointer; }
+.review-pager { display: flex; align-items: center; gap: 12px; align-self: center; }

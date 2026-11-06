@@ -17,6 +17,7 @@ import MyPageLayout from './components/MyPageLayout.jsx'
 import P1MyPage from './pages/P1MyPage.jsx'
 import P3MyCourses from './pages/P3MyCourses.jsx'
 import P5AccountSettings from './pages/P5AccountSettings.jsx'
+import R1ReviewWrite from './pages/R1ReviewWrite.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/new
@@ -50,6 +51,9 @@ export default function App() {
           <Route path="settings" element={<P5AccountSettings />} />
         </Route>
         <Route path="/mypage/profile" element={<P2ProfileEdit />} />
+
+        {/* 후기 쓰기 (승민) — C4 · P1 지난 동행에서 들어옴 */}
+        <Route path="/courses/:courseId/review" element={<R1ReviewWrite />} />
 
         {/* 오류 화면 (승민): X2 500 은 확인 · 시연용 주소, 없는 주소 → X1 404 */}
         <Route path="/500" element={<X2ServerError />} />
