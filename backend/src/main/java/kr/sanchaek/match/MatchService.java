@@ -58,7 +58,7 @@ public class MatchService {
      */
     @Transactional(readOnly = true)
     public Map<String, Object> detail(long matchId, Long userId) {
-        Map<String, Object> match = repo.findMatchById(matchId);
+        Map<String, Object> match = repo.findMatchById(matchId, userId);
         MatchState state = repo.findState(matchId, false);
         String myStatus = userId == null ? null : repo.findParticipantStatus(matchId, userId);
         String reason = joinBlockReason(state, userId, myStatus);
@@ -100,7 +100,10 @@ public class MatchService {
             throw ApiException.conflict("CAPACITY_TOO_SMALL",
                     "지금 참여 인원(" + state.current() + "명)보다 적게 줄일 수 없어요.");
         }
-        checkCourse(r.courseId(), userId);
+        // 코스를 바꿀 때만 검사. 코스가 나중에 비공개 · 삭제돼도 제목 같은 다른 칸은 고칠 수 있어야 함
+        if (r.courseId() != state.courseId()) {
+            checkCourse(r.courseId(), userId);
+        }
         GpxService.Result route = parseGpx(gpx);
 
         repo.updateMatch(matchId, r);

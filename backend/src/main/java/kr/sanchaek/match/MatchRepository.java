@@ -222,15 +222,24 @@ public class MatchRepository {
      * 없거나 숨겨진 글이면 404 (ApiException.notFound).
      * - 지도 경로(path): 모집자가 첨부한 경로(matches.path_json)가 있으면 그것, 없으면 코스 경로
      * - 만나는 좌표(meetPoint): 첨부 경로의 시작점, 없으면 코스 시작점 (저장하지 않고 계산)
+     * - 코스 경로 · 시작점은 보는 사람(viewerId, 비로그인은 null)이 그 코스를 볼 수 있을 때만 줌. 못 보면 path 는 [], meetPoint 는 null
+     *   (코스 상세의 공개 범위와 같은 규칙. 비공개 · 숨김 · 삭제된 코스의 좌표가 동행 상세로 새지 않게)
      * - 모집자 matchCount: 끝난(DONE) 동행 중 모집자가 JOINED 인 것의 수 (db/README "모임 횟수") / rating: 모집자가 연 동행들에 달린 후기 평균
      */
-    public Map<String, Object> findMatchById(Long matchId) {
+    public Map<String, Object> findMatchById(Long matchId, Long viewerId) {
+        long viewer = viewerId == null ? 0 : viewerId;
         String sql = """
             SELECT m.match_id, m.title, m.content, m.meet_at, m.meet_place, m.capacity, m.target, m.mbti,
                    m.path_json AS match_path, m.gpx_path,
                    s.current_count, s.status,
                    c.course_id, c.name AS course_name, c.distance_km, c.level, c.duration_min,
                    c.start_lat, c.start_lng, c.path_json AS course_path,
+                   (c.is_deleted = FALSE AND c.is_hidden = FALSE AND (
+                       c.visibility = 'PUBLIC' OR c.author_id = ? OR (
+                           c.visibility = 'MATCH_ONLY' AND EXISTS (
+                               SELECT 1 FROM matches m2
+                               JOIN match_participants p ON p.match_id = m2.match_id
+                               WHERE m2.course_id = c.course_id AND p.user_id = ? AND p.status = 'JOINED')))) AS can_see_course,
                    u.user_id, u.nickname, u.avatar, u.status AS user_status
             FROM matches m
             JOIN v_match_status s ON s.match_id = m.match_id
@@ -250,17 +259,19 @@ public class MatchRepository {
 
             // 경로와 만나는 좌표
             String matchPath = rs.getString("match_path");
-            List<?> path = jsonMapper.readValue(matchPath != null ? matchPath : rs.getString("course_path"), List.class);
+            boolean canSeeCourse = rs.getBoolean("can_see_course");
+            String visiblePath = matchPath != null ? matchPath : canSeeCourse ? rs.getString("course_path") : "[]";
+            List<?> path = jsonMapper.readValue(visiblePath, List.class);
             Map<String, Object> meetPoint = new LinkedHashMap<>();
             if (matchPath != null && !path.isEmpty()) {
                 List<?> first = (List<?>) path.get(0);
                 meetPoint.put("lat", first.get(0));
                 meetPoint.put("lng", first.get(1));
-            } else {
+            } else if (canSeeCourse) {
                 meetPoint.put("lat", rs.getBigDecimal("start_lat"));
                 meetPoint.put("lng", rs.getBigDecimal("start_lng"));
             }
-            m.put("meetPoint", meetPoint);
+            m.put("meetPoint", meetPoint.isEmpty() ? null : meetPoint);
             m.put("path", path);
             m.put("hasGpx", rs.getString("gpx_path") != null);
 
@@ -288,7 +299,7 @@ public class MatchRepository {
             host.put("avatar", rs.getString("avatar"));
             m.put("host", host);
             return m;
-        }, matchId);
+        }, viewer, viewer, matchId);
         if (rows.isEmpty()) {
             throw ApiException.notFound("동행 찾을 수 없음");
         }
@@ -394,7 +405,7 @@ public class MatchRepository {
      * (db/README "참여하기는 트랜잭션으로". @Transactional 안에서만 의미가 있음)
      */
     public MatchState findState(long matchId, boolean lock) {
-        String sql = "SELECT match_id, host_id, capacity, target, mbti, gpx_path FROM matches"
+        String sql = "SELECT match_id, host_id, course_id, capacity, target, mbti, gpx_path FROM matches"
                 + " WHERE match_id = ? AND is_hidden = FALSE" + (lock ? " FOR UPDATE" : "");
         List<Map<String, Object>> rows = jdbc.queryForList(sql, matchId);
         if (rows.isEmpty()) {
@@ -410,7 +421,8 @@ public class MatchRepository {
                 rs -> {
                     ("AGE_GROUP".equals(rs.getString("tag_type")) ? ageGroups : languages).add(rs.getString("tag_value"));
                 }, matchId);
-        return new MatchState(matchId, ((Number) m.get("host_id")).longValue(), ((Number) m.get("capacity")).intValue(),
+        return new MatchState(matchId, ((Number) m.get("host_id")).longValue(), ((Number) m.get("course_id")).longValue(),
+                ((Number) m.get("capacity")).intValue(),
                 (String) m.get("target"), (String) m.get("mbti"), (String) m.get("gpx_path"),
                 ((Number) s.get("current_count")).intValue(), (String) s.get("status"), ageGroups, languages);
     }

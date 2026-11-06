@@ -71,7 +71,7 @@ public class MatchController {
         if (!sort.equals("deadline") && !sort.equals("recent")) {
             throw ApiException.badRequest("sort 는 deadline · recent 중 하나예요.");
         }
-        checkPage(page, size);
+        PageResult.validate(page, size);
 
         MatchSearch q = new MatchSearch(status, from, to, timeSlot, split(style), split(lang),
                 target, age, area, courseId, sort, page, size);
@@ -80,12 +80,6 @@ public class MatchController {
 
     private static final Set<String> STATUSES = Set.of("OPEN", "FULL", "CLOSED", "CANCELED", "DONE");
     private static final Set<String> MY_TABS = Set.of("upcoming", "hosting", "past");
-
-    private static void checkPage(int page, int size) {
-        if (page < 1 || size < 1 || size > 100) {
-            throw ApiException.badRequest("page 는 1 이상, size 는 1~100 이어야 해요.");
-        }
-    }
 
     /** "SLOW,CHAT" → ["SLOW", "CHAT"]. 비어 있으면 null */
     private static List<String> split(String csv) {
@@ -105,7 +99,7 @@ public class MatchController {
         if (!MY_TABS.contains(tab)) {
             throw ApiException.badRequest("tab 은 upcoming · hosting · past 중 하나예요.");
         }
-        checkPage(page, size);
+        PageResult.validate(page, size);
         return ApiResponse.ok(repo.findMyMatches(userId, tab, page, size));
     }
 

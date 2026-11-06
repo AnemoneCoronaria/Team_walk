@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
@@ -15,6 +16,7 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
  * 공통 설정 세 가지 (팀원은 고칠 일 없음)
  * 1. @LoginUser 파라미터 → 세션의 userId
  * 2. /api/admin/** → 관리자 검사 (AdminInterceptor)
+ *    /api/** → 탈퇴 · 정지된 회원의 남은 세션 끝내기 (SessionCheckInterceptor, 관리자 검사보다 먼저)
  * 3. /files/** → 업로드 폴더의 파일 내려 주기 (예: /files/reviews/88-1.jpg).
  *    단 gpx/ 폴더는 비공개라 404 (비공개 코스 GPX 유출 방지). GPX 는 권한을 확인하는 /api/.../gpx 로만 받음
  */
@@ -22,8 +24,10 @@ import org.springframework.web.servlet.resource.PathResourceResolver;
 public class WebConfig implements WebMvcConfigurer {
 
     private final FileStore fileStore;
+    private final JdbcTemplate jdbc;
 
-    public WebConfig(FileStore fileStore) {
+    public WebConfig(FileStore fileStore, JdbcTemplate jdbc) {
+        this.jdbc = jdbc;
         this.fileStore = fileStore;
     }
 
@@ -34,6 +38,7 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new SessionCheckInterceptor(jdbc)).addPathPatterns("/api/**");
         registry.addInterceptor(new AdminInterceptor()).addPathPatterns("/api/admin/**");
     }
 

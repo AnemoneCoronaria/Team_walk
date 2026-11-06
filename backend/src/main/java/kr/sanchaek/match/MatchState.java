@@ -9,6 +9,7 @@ import java.util.List;
 record MatchState(
         long matchId,
         long hostId,
+        long courseId,
         int capacity,
         String target,
         String mbti,
