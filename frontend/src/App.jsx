@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Navigate, Route, Routes } from 'react-router-dom'
 import { useAuth } from './auth/authContext.js'
 import Layout from './components/Layout.jsx'
 import HealthCheck from './pages/HealthCheck.jsx'
@@ -21,10 +21,15 @@ import P3MyCourses from './pages/P3MyCourses.jsx'
 import P5AccountSettings from './pages/P5AccountSettings.jsx'
 import R1ReviewWrite from './pages/R1ReviewWrite.jsx'
 import C4CourseReviews from './pages/C4CourseReviews.jsx'
+import AdminLayout from './pages/admin/AdminLayout.jsx'
+import AD1Reports from './pages/admin/AD1Reports.jsx'
+import AD2Users from './pages/admin/AD2Users.jsx'
+import AD4Courses from './pages/admin/AD4Courses.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/:id/edit, /matches/new
 //   승민: /login, /signup, /mypage, /500, 없는 주소(*) … (/mypage 는 아직 자리만)
+//   정란: /admin/reports (AD1), /admin/users (AD2), /admin/courses (AD4) · 민서: AD3 은 /admin 아래에 추가
 export default function App() {
   return (
     <Routes>
@@ -58,6 +63,14 @@ export default function App() {
 
         {/* 후기 쓰기 (승민) — C4 · P1 지난 동행에서 들어옴 */}
         <Route path="/courses/:courseId/review" element={<R1ReviewWrite />} />
+
+        {/* 관리자 (정란 AD1 · AD2 · AD4) — 관리자 계정이 아니면 A1 로그인으로 */}
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="/admin/reports" replace />} />
+          <Route path="reports" element={<AD1Reports />} />
+          <Route path="users" element={<AD2Users />} />
+          <Route path="courses" element={<AD4Courses />} />
+        </Route>
 
         {/* 오류 화면 (승민): X2 500 은 확인 · 시연용 주소, 없는 주소 → X1 404 */}
         <Route path="/500" element={<X2ServerError />} />
