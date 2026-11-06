@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import KakaoMap from '../components/KakaoMap.jsx'
-import Placeholder from './Placeholder.jsx'
+import X1NotFound from './X1NotFound.jsx'
 import { courseGpxUrl, getCourse, getCourseReviews } from '../api/courseApi.js'
 import { getMatches } from '../api/matchApi.js'
 import { useAsync } from '../utils/useAsync.js'
@@ -18,7 +18,7 @@ const FACILITY_ROWS = [
 /**
  * C2 코스 상세
  * API: GET /api/courses/{id}, GET /api/courses/{id}/reviews?size=3,
- *      GET /api/matches?courseId={id} (← courseId 파라미터는 명세에 아직 없음, matchApi.js 참고)
+ *      GET /api/matches?courseId={id}
  * GPX 다운로드: <a href="/api/courses/{id}/gpx"> (파일이라 백엔드를 켜야 받아짐)
  */
 export default function C2CourseDetail() {
@@ -31,7 +31,7 @@ export default function C2CourseDetail() {
   const ends = useMemo(() => c?.path ?? null, [c])
 
   if (course.error?.status === 404) {
-    return <Placeholder id="X1" title="코스를 찾을 수 없어요" owner="승민 (404 화면)" />
+    return <X1NotFound />
   }
   if (course.error) {
     return (

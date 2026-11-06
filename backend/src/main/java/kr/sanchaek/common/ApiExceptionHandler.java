@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.HandlerMethodValidationException;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartException;
 import org.springframework.web.multipart.support.MissingServletRequestPartException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
@@ -26,7 +27,7 @@ import org.springframework.web.servlet.resource.NoResourceFoundException;
  *
  * | 상황                                         | 응답 |
  * | ApiException                                 | 던진 그대로 |
- * | @Valid 검사 실패, JSON 형식 오류, 파라미터 누락 · 타입 틀림 | 400 INVALID_INPUT |
+ * | @Valid 검사 실패, JSON 형식 오류, 파라미터 누락 · 타입 틀림, multipart 아님 | 400 INVALID_INPUT |
  * | 업로드 용량 초과 (application.properties 5MB / 30MB)       | 400 TOO_LARGE |
  * | 없는 주소                                    | 404 NOT_FOUND |
  * | GET 만 만든 곳에 POST 등                      | 405 METHOD_NOT_ALLOWED |
@@ -42,13 +43,21 @@ public class ApiExceptionHandler {
         return fail(e.getStatus(), e.getCode(), e.getMessage());
     }
 
-    /** @Valid 를 붙인 요청 본문(record)의 검사 실패 → 첫 번째 메시지를 보여 줌 */
+    /**
+     * @Valid 를 붙인 요청 본문(record)의 검사 실패 → 첫 번째 메시지를 보여 줌.
+     * multipart 칸(@ModelAttribute)에서 숫자 · 날짜 형식이 틀린 경우는 스프링의 영어 문장 대신 "형식" 안내로
+     */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleInvalidBody(MethodArgumentNotValidException e) {
         FieldError field = e.getBindingResult().getFieldError();
-        String message = field != null
-                ? field.getField() + ": " + field.getDefaultMessage()
-                : "요청 값을 확인해 주세요.";
+        String message;
+        if (field == null) {
+            message = "요청 값을 확인해 주세요.";
+        } else if (field.isBindingFailure()) {
+            message = field.getField() + ": 형식이 올바르지 않아요.";
+        } else {
+            message = field.getField() + ": " + field.getDefaultMessage();
+        }
         return fail(400, "INVALID_INPUT", message);
     }
 
@@ -58,6 +67,7 @@ public class ApiExceptionHandler {
             HttpMediaTypeNotSupportedException.class,   // JSON 이어야 하는데 다른 형식
             MissingServletRequestParameterException.class,
             MissingServletRequestPartException.class,   // multipart 파일 칸 누락
+            MultipartException.class,                   // 파일 칸이 필요한데 multipart 요청이 아님 (용량 초과는 아래 TOO_LARGE)
             MethodArgumentTypeMismatchException.class   // /api/matches/abc 처럼 숫자 자리에 글자
     })
     public ResponseEntity<ApiResponse<Void>> handleBadRequest(Exception e) {

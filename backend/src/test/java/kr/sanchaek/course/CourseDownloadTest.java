@@ -30,7 +30,7 @@ class CourseDownloadTest {
 
     private MockMvc mvc() {
         var downloads = new CourseDownloadService(courses, new FileStore(uploadDir.toString()));
-        return MockMvcBuilders.standaloneSetup(new CourseController(courses, downloads))
+        return MockMvcBuilders.standaloneSetup(new CourseController(courses, downloads, null))
                 .setCustomArgumentResolvers(new LoginUserArgumentResolver())
                 .setControllerAdvice(new ApiExceptionHandler()).build();
     }

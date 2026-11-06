@@ -1,5 +1,7 @@
 package kr.sanchaek.match;
 
+import java.sql.PreparedStatement;
+import java.sql.Statement;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -8,6 +10,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import tools.jackson.databind.json.JsonMapper;
@@ -169,7 +173,7 @@ public class MatchRepository {
      * 없거나 숨겨진 글이면 404 (ApiException.notFound).
      * - 지도 경로(path): 모집자가 첨부한 경로(matches.path_json)가 있으면 그것, 없으면 코스 경로
      * - 만나는 좌표(meetPoint): 첨부 경로의 시작점, 없으면 코스 시작점 (저장하지 않고 계산)
-     * - 모집자 matchCount: 모집자가 연 동행 중 끝난(DONE) 것의 수 / rating: 그 동행들에 달린 후기 평균
+     * - 모집자 matchCount: 끝난(DONE) 동행 중 모집자가 JOINED 인 것의 수 (db/README "모임 횟수") / rating: 모집자가 연 동행들에 달린 후기 평균
      */
     public Map<String, Object> findMatchById(Long matchId) {
         String sql = """
@@ -276,15 +280,15 @@ public class MatchRepository {
         }, matchId);
     }
 
-    /** 모집자의 진행한 동행 수 · 후기 평균 (후기가 없으면 rating 은 null) */
+    /** 모집자의 모임 횟수 · 후기 평균 (후기가 없으면 rating 은 null) */
     @SuppressWarnings("unchecked")
     private void attachHostStats(Map<String, Object> match) {
         Map<String, Object> host = (Map<String, Object>) match.get("host");
         Object hostId = host.get("userId");
         Integer count = jdbc.queryForObject("""
-            SELECT COUNT(*) FROM matches m
-            JOIN v_match_status s ON s.match_id = m.match_id
-            WHERE m.host_id = ? AND m.is_hidden = FALSE AND s.status = 'DONE'
+            SELECT COUNT(*) FROM match_participants p
+            JOIN v_match_status s ON s.match_id = p.match_id
+            WHERE p.user_id = ? AND p.status = 'JOINED' AND s.status = 'DONE'
             """, Integer.class, hostId);
         Double rating = jdbc.queryForObject("""
             SELECT ROUND(AVG(r.rating), 1) FROM reviews r
@@ -330,4 +334,127 @@ public class MatchRepository {
         return list;
     }
 
+
+    // ---------------------------------------------------------------------
+    // 2주차: 모집 글 쓰기 · 참여 (규칙 검사는 MatchService, 여기는 SQL 만)
+    // ---------------------------------------------------------------------
+
+    /**
+     * 규칙 검사용 글 정보. 없거나 숨긴 글이면 404.
+     * lock 이 true 면 matches 행을 FOR UPDATE 로 잠금 → 같은 글에 동시에 참여 · 수정하는 사람은 앞 사람이 끝날 때까지 기다림
+     * (db/README "참여하기는 트랜잭션으로". @Transactional 안에서만 의미가 있음)
+     */
+    public MatchState findState(long matchId, boolean lock) {
+        String sql = "SELECT match_id, host_id, capacity, target, mbti, gpx_path FROM matches"
+                + " WHERE match_id = ? AND is_hidden = FALSE" + (lock ? " FOR UPDATE" : "");
+        List<Map<String, Object>> rows = jdbc.queryForList(sql, matchId);
+        if (rows.isEmpty()) {
+            throw ApiException.notFound("동행 찾을 수 없음");
+        }
+        Map<String, Object> m = rows.get(0);
+        // 잠근 "뒤에" 세야 앞 사람이 넣은 참여자까지 보임
+        Map<String, Object> s = jdbc.queryForMap(
+                "SELECT current_count, status FROM v_match_status WHERE match_id = ?", matchId);
+        List<String> ageGroups = new ArrayList<>();
+        List<String> languages = new ArrayList<>();
+        jdbc.query("SELECT tag_type, tag_value FROM match_tags WHERE match_id = ? AND tag_type IN ('AGE_GROUP', 'LANGUAGE')",
+                rs -> {
+                    ("AGE_GROUP".equals(rs.getString("tag_type")) ? ageGroups : languages).add(rs.getString("tag_value"));
+                }, matchId);
+        return new MatchState(matchId, ((Number) m.get("host_id")).longValue(), ((Number) m.get("capacity")).intValue(),
+                (String) m.get("target"), (String) m.get("mbti"), (String) m.get("gpx_path"),
+                ((Number) s.get("current_count")).intValue(), (String) s.get("status"), ageGroups, languages);
+    }
+
+    /** 이 글에서 나의 참여 상태: JOINED · LEFT · KICKED, 한 번도 참여 안 했으면 null */
+    public String findParticipantStatus(long matchId, long userId) {
+        List<String> rows = jdbc.queryForList(
+                "SELECT status FROM match_participants WHERE match_id = ? AND user_id = ?", String.class, matchId, userId);
+        return rows.isEmpty() ? null : rows.get(0);
+    }
+
+    /** 참여 조건(연령대 · MBTI · 언어) 검사용 내 프로필 */
+    public Viewer findViewer(long userId) {
+        Map<String, Object> u = jdbc.queryForMap("SELECT age_group, mbti FROM users WHERE user_id = ?", userId);
+        List<String> languages = jdbc.queryForList(
+                "SELECT tag_value FROM user_tags WHERE user_id = ? AND tag_type = 'LANGUAGE'", String.class, userId);
+        return new Viewer((String) u.get("age_group"), (String) u.get("mbti"), languages);
+    }
+
+    record Viewer(String ageGroup, String mbti, List<String> languages) {
+    }
+
+    /** 모집 글에 고를 수 있는 코스: 삭제 · 숨김이 아니고, 전체 공개이거나 내가 올린 코스 (W3 "코스 검색 · 내가 올린 코스") */
+    public boolean isCourseSelectable(long courseId, long userId) {
+        Integer count = jdbc.queryForObject("""
+            SELECT COUNT(*) FROM courses
+            WHERE course_id = ? AND is_deleted = FALSE AND is_hidden = FALSE
+              AND (visibility = 'PUBLIC' OR author_id = ?)
+            """, Integer.class, courseId, userId);
+        return count != null && count > 0;
+    }
+
+    /** 모집 글 저장 → 새 match_id. 상태는 OPEN 으로 시작 (GPX 는 번호가 정해진 뒤 updateGpx 로) */
+    public long insertMatch(long hostId, MatchRequest r) {
+        String sql = "INSERT INTO matches (host_id, course_id, title, content, meet_at, meet_place, capacity, target, mbti)"
+                + " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbc.update(con -> {
+            PreparedStatement ps = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1, hostId);
+            ps.setLong(2, r.courseId());
+            ps.setString(3, r.title());
+            ps.setString(4, r.description());
+            ps.setObject(5, r.meetAt());
+            ps.setString(6, r.meetPlace());
+            ps.setInt(7, r.capacity());
+            ps.setString(8, r.target());
+            ps.setString(9, r.mbti());
+            return ps;
+        }, keyHolder);
+        return keyHolder.getKey().longValue();
+    }
+
+    /** 모집 글 수정 (상태 · 모집자 · GPX 는 그대로) */
+    public void updateMatch(long matchId, MatchRequest r) {
+        jdbc.update("""
+            UPDATE matches SET course_id = ?, title = ?, content = ?, meet_at = ?, meet_place = ?,
+                               capacity = ?, target = ?, mbti = ?
+            WHERE match_id = ?
+            """, r.courseId(), r.title(), r.description(), r.meetAt(), r.meetPlace(),
+                r.capacity(), r.target(), r.mbti(), matchId);
+    }
+
+    /** 태그는 전부 지우고 다시 넣기 (db/README "여러 개 고르는 값은 태그 테이블") */
+    public void replaceTags(long matchId, MatchRequest r) {
+        jdbc.update("DELETE FROM match_tags WHERE match_id = ?", matchId);
+        String sql = "INSERT INTO match_tags (match_id, tag_type, tag_value) VALUES (?, ?, ?)";
+        r.styles().forEach(v -> jdbc.update(sql, matchId, "STYLE", v));
+        r.languages().forEach(v -> jdbc.update(sql, matchId, "LANGUAGE", v));
+        r.ageGroups().forEach(v -> jdbc.update(sql, matchId, "AGE_GROUP", v));
+    }
+
+    /** 첨부 GPX 파일 경로 · 경로 좌표 (둘 다 null 이면 첨부 떼기) */
+    public void updateGpx(long matchId, String gpxPath, String pathJson) {
+        jdbc.update("UPDATE matches SET gpx_path = ?, path_json = ? WHERE match_id = ?", gpxPath, pathJson, matchId);
+    }
+
+    /** 모집자가 바꾸는 상태: CLOSED(마감) · CANCELED(모집 취소) */
+    public void updateStatus(long matchId, String status) {
+        jdbc.update("UPDATE matches SET status = ? WHERE match_id = ?", status, matchId);
+    }
+
+    /** 참여 (모집자 자신도 글을 쓸 때 이걸로 들어감). 취소했다가 다시 참여하면 같은 행을 JOINED 로 되돌림 */
+    public void upsertJoined(long matchId, long userId) {
+        jdbc.update("""
+            INSERT INTO match_participants (match_id, user_id) VALUES (?, ?)
+            ON DUPLICATE KEY UPDATE status = 'JOINED', leave_reason = NULL, joined_at = NOW()
+            """, matchId, userId);
+    }
+
+    /** 참여 취소(LEFT, 사유 저장) · 내보내기(KICKED) */
+    public void updateParticipantStatus(long matchId, long userId, String status, String leaveReason) {
+        jdbc.update("UPDATE match_participants SET status = ?, leave_reason = ? WHERE match_id = ? AND user_id = ?",
+                status, leaveReason, matchId, userId);
+    }
 }
