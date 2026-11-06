@@ -2,7 +2,7 @@
 
 [← README](../README.md) · [세팅 가이드](../docs/setup.md) · [개발 규칙](../docs/development.md) · [막혔을 때](../docs/troubleshooting.md)
 
-1주차(계정 · 코스 · 동행) **테이블 7개**, 2주차(후기 · 신고 · 랜드마크 · 스탬프 · 댓글) **테이블 6개**, 계산용 **뷰 2개**가 있습니다.
+1주차(계정 · 코스 · 동행) **테이블 7개**, 2주차(후기 · 신고 · 랜드마크 · 스탬프 · 댓글) **테이블 6개**, 저장한 코스 **테이블 1개**, 계산용 **뷰 2개**가 있습니다.
 DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연은 노트북 한 대에서).
 
 | 파일 | 내용 |
@@ -30,9 +30,11 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 
 깃허브에서 **그림을 누르면 크게** 볼 수 있습니다.
 
-### 전체 (테이블 13개)
+### 전체 (테이블 14개)
 
 ![전체 관계도: 1주차 7개 + 2주차 6개 테이블](../docs/images/erd-overview.png)
+
+> 그림에 없는 표: 나중에 추가한 `saved_courses` (회원 · 코스를 잇는 저장 기록)
 
 - **선 읽는 법:** `||` 쪽이 1, `o{` 쪽이 0개 이상(N). 예) 회원 1명이 코스를 0개 이상 올림 (1 : N)
 - `reports`(신고)는 동행 글 · 사용자 · 코스 · 후기를 모두 가리킬 수 있어서 선 대신 `target_type` + `target_id`로 연결합니다 → [설계 약속 10](#10-신고와-관리자-처리-2주차)
@@ -76,6 +78,7 @@ DB는 **각자 PC의 MySQL**을 씁니다. 배포는 하지 않습니다 (시연
 | `landmarks` | 동언 | 랜드마크 1곳 | 8곳을 `seed.sql`로 미리 넣음 (관리자 화면 없음) |
 | `user_stamps` | 동언 | 회원이 받은 스탬프 1개 | 랜드마크마다 1번만. 배지는 저장 안 하고 계산 |
 | `match_comments` | 민서 | 동행 댓글 1개 | 모집자 공지는 `is_notice = TRUE` |
+| `saved_courses` | 민서 | 저장한 코스 1개 | 저장 해제는 실제 삭제. 코스가 비공개 · 숨김 · 삭제되면 목록에서만 빠짐 |
 
 **뷰 (저장하지 않고 계산하는 표)**
 
@@ -331,7 +334,7 @@ Workbench에서 **File → Open SQL Script…** → `C:\dev\jspTeam\Team_walk\db
 +----------------------------------------------------+--------+
 | check_item                                         | result |
 +----------------------------------------------------+--------+
-| tables 13 + views 2                                | OK     |
+| tables 14 + views 2                                | OK     |
 | week1 rows (users 7, courses 4, matches 6)         | OK     |
 | week2 rows (landmarks 8, reviews 6, reports 4)     | OK     |
 | match status (OPEN,OPEN,FULL,CLOSED,CANCELED,DONE) | OK     |
@@ -343,7 +346,7 @@ Workbench에서 **File → Open SQL Script…** → `C:\dev\jspTeam\Team_walk\db
 
 > 💡 동행 날짜는 `seed.sql`을 **실행한 날** 기준입니다. 실행하고 5일쯤 지나면 1번 동행도 날짜가 지나 `match status`가 `FAIL`로 바뀝니다. 그때는 3)을 다시 실행하세요.
 
-왼쪽 **SCHEMAS**에서 🔄 새로고침 → `sanchaek` → Tables 13개, Views 2개가 보이면 됩니다. 직접 눈으로 보고 싶으면:
+왼쪽 **SCHEMAS**에서 🔄 새로고침 → `sanchaek` → Tables 14개, Views 2개가 보이면 됩니다. 직접 눈으로 보고 싶으면:
 
 ```sql
 SELECT m.match_id, m.title, s.current_count, m.capacity, s.status

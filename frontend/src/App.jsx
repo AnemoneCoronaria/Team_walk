@@ -27,6 +27,7 @@ import AD2Users from './pages/admin/AD2Users.jsx'
 import AD3Matches from './pages/admin/AD3Matches.jsx'
 import AD4Courses from './pages/admin/AD4Courses.jsx'
 import P4MyReviews from './pages/P4MyReviews.jsx'
+import P6SavedCourses from './pages/P6SavedCourses.jsx'
 import R2StampTour from './pages/R2StampTour.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
@@ -60,6 +61,7 @@ export default function App() {
         <Route path="/mypage" element={<MyPageLayout />}>
           <Route index element={<P1MyPage />} />
           <Route path="courses" element={<P3MyCourses />} />
+          <Route path="saved" element={<P6SavedCourses />} />
           <Route path="reviews" element={<P4MyReviews />} />
           <Route path="settings" element={<P5AccountSettings />} />
         </Route>

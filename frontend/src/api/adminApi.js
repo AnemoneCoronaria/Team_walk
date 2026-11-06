@@ -1,6 +1,7 @@
 // 관리자 API — AD1 신고 처리 · AD2 회원 관리 · AD4 코스 관리 (백엔드 · 화면: 정란), AD3 모집 글 관리 (민서)
 //   GET /api/admin/reports?status=          PUT /api/admin/reports/{id}            { action, memo }
 //   GET /api/admin/users?q=&status=         PUT /api/admin/users/{id}/status       { status }
+//                                           POST /api/admin/users/{id}/temp-password
 //   GET /api/admin/matches?q=&status=       PUT /api/admin/matches/{id}/visibility { hidden }
 //   GET /api/admin/courses?q=&tab=          PUT /api/admin/courses/{id}/visibility { hidden }
 // 관리자(role ADMIN)가 아니면 서버가 401 · 403 을 돌려줌
@@ -85,6 +86,15 @@ export function changeMatchHidden(matchId, hidden) {
     return mockResponse({ matchId, hidden })
   }
   return request(`/api/admin/matches/${matchId}/visibility`, { method: 'PUT', body: { hidden } })
+}
+
+/**
+ * AD2 임시 비밀번호 발급 → { userId, temporaryPassword } (응답에서 한 번만 볼 수 있음)
+ * 탈퇴 회원 · 관리자 계정은 400
+ */
+export function issueTempPassword(userId) {
+  if (USE_MOCK) return mockResponse({ userId, temporaryPassword: 'mockTemp2!' })
+  return request(`/api/admin/users/${userId}/temp-password`, { method: 'POST' })
 }
 
 /** AD4 코스 목록 — q: 코스 이름 · 등록자, tab: ALL(전체, 기본) · REVIEW(검토 필요) */

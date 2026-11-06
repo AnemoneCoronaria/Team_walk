@@ -79,6 +79,9 @@ export const COURSES = [
 ]
 
 // 코스 목록 한 줄 (GET /api/courses 의 items) — 경로 대신 시작점만
+// 저장한 코스 (seed 의 saved_courses: 민서가 코스 3 · 4). 새로고침하면 처음으로
+export const SAVED_COURSE_IDS = [4, 3]
+
 export function toCourseSummary(c) {
   return {
     courseId: c.courseId,
