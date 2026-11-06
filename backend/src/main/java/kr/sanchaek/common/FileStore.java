@@ -8,7 +8,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.Collection;
+import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -17,6 +21,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.web.multipart.MultipartFile;
 
 /**
@@ -37,10 +43,22 @@ import org.springframework.web.multipart.MultipartFile;
  *
  * // GPX 다운로드 (민서 · 동언)
  * return fileStore.download(course.gpxPath(), "옥구공원-둘레길.gpx");
+ *
+ * // &#64;Transactional 안에서: 롤백되면 파일도 지움 / 커밋된 뒤에만 지움
+ * fileStore.saveInTransaction(photo, path);
+ * fileStore.deleteAfterCommit(oldPaths);
  * </pre>
+ *
+ * gpx/ 폴더는 비공개입니다. /files/gpx/... 로는 내려 주지 않고(WebConfig), 권한을 확인하는
+ * /api/courses/{id}/gpx · /api/matches/{id}/gpx 에서 download(...) 로만 내려 줍니다.
  */
 @Component
 public class FileStore {
+
+    private static final Logger log = LoggerFactory.getLogger(FileStore.class);
+
+    /** /files/** 로 공개하지 않는 폴더 (업로드 폴더 기준) */
+    private static final String PRIVATE_DIR = "gpx";
 
     private final Path baseDir;
 
@@ -67,7 +85,57 @@ public class FileStore {
             Files.createDirectories(target.getParent());
             Files.copy(in, target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
+            deleteQuietly(relativePath);   // 쓰다 만 파일이 남지 않게
             throw new UncheckedIOException("파일 저장 실패: " + target, e);
+        }
+    }
+
+    /**
+     * 트랜잭션 안에서 저장. 커밋되지 않으면(롤백 · 저장 중 오류) 파일을 지운다.
+     * 정리 작업을 저장 <b>전에</b> 등록하므로 쓰다 실패한 파일도 남지 않는다. 트랜잭션 밖이면 save 와 같음
+     */
+    public void saveInTransaction(MultipartFile file, String relativePath) {
+        resolve(relativePath);   // 경로가 잘못됐으면 등록 전에 400
+        if (TransactionSynchronizationManager.isSynchronizationActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCompletion(int status) {
+                    if (status != STATUS_COMMITTED) {
+                        deleteQuietly(relativePath);
+                    }
+                }
+            });
+        }
+        save(file, relativePath);
+    }
+
+    /**
+     * 트랜잭션이 커밋된 뒤에 파일들을 지운다 (트랜잭션 밖이면 바로). 롤백되면 안 지움.
+     * 이미 커밋된 뒤라 실패해도 예외를 던지지 않고 로그만 남긴다
+     */
+    public void deleteAfterCommit(Collection<String> relativePaths) {
+        if (relativePaths == null || relativePaths.isEmpty()) {
+            return;
+        }
+        List<String> paths = List.copyOf(relativePaths);
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            paths.forEach(this::deleteQuietly);
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                paths.forEach(FileStore.this::deleteQuietly);
+            }
+        });
+    }
+
+    /** delete 와 같지만 실패해도 예외 없이 로그만 */
+    public void deleteQuietly(String relativePath) {
+        try {
+            delete(relativePath);
+        } catch (RuntimeException e) {
+            log.warn("파일 삭제 실패 (무시): {}", relativePath, e);
         }
     }
 
@@ -97,6 +165,23 @@ public class FileStore {
                 .header(HttpHeaders.CONTENT_DISPOSITION, ContentDisposition.attachment()
                         .filename(downloadName, StandardCharsets.UTF_8).build().toString())
                 .body(new FileSystemResource(file));
+    }
+
+    /** /files/** 로 내려 주면 안 되는 파일인지 (gpx/ 폴더 안). 대소문자 · 심볼릭 링크를 실제 경로로 비교 */
+    public boolean isPrivate(Path file) {
+        try {
+            Path privateDir = baseDir.resolve(PRIVATE_DIR);
+            if (!Files.exists(privateDir)) {
+                return false;
+            }
+            Path real = file.toAbsolutePath().normalize();
+            if (Files.exists(real)) {
+                real = real.toRealPath();
+            }
+            return real.startsWith(privateDir.toRealPath());
+        } catch (IOException e) {
+            return true;   // 판단할 수 없으면 공개하지 않음
+        }
     }
 
     /** DB 경로 → 브라우저 주소. null 이면 null */
