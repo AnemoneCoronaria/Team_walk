@@ -134,11 +134,11 @@ public class UserRepository {
                 agree, agree, userId);
     }
 
-    /** 내가 모집 중인(OPEN · FULL) 동행이 있는지 → 있으면 탈퇴 불가 */
+    /** 내가 연 동행 중 아직 진행 중인 것(OPEN · FULL · CLOSED)이 있는지 → 있으면 탈퇴 불가. CLOSED 는 시작 전일 때만 나옴 (끝나면 DONE) */
     public boolean hasOpenMatch(long userId) {
         Integer count = jdbc.queryForObject(
                 "SELECT COUNT(*) FROM matches m JOIN v_match_status s ON s.match_id = m.match_id "
-              + "WHERE m.host_id = ? AND s.status IN ('OPEN', 'FULL')", Integer.class, userId);
+              + "WHERE m.host_id = ? AND s.status IN ('OPEN', 'FULL', 'CLOSED')", Integer.class, userId);
         return count != null && count > 0;
     }
 

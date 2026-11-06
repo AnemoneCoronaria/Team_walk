@@ -101,11 +101,11 @@ public class UserService {
         repo.updatePassword(userId, passwordEncoder.encode(req.newPassword()));
     }
 
-    /** 회원 탈퇴. 비밀번호 확인 → 모집 중인 동행이 있으면 409 HAS_OPEN_MATCH */
+    /** 회원 탈퇴. 비밀번호 확인 → 내가 연 동행이 진행 중(모집 중 · 정원 참 · 마감)이면 409 HAS_OPEN_MATCH */
     public void withdraw(long userId, WithdrawRequest req) {
         checkPassword(userId, req.password());
         if (repo.hasOpenMatch(userId)) {
-            throw ApiException.conflict("HAS_OPEN_MATCH", "모집 중인 동행이 있어요. 먼저 모집을 취소해 주세요.");
+            throw ApiException.conflict("HAS_OPEN_MATCH", "진행 중인 동행이 있어요. 먼저 모집을 취소해 주세요.");
         }
         repo.withdraw(userId);
     }
