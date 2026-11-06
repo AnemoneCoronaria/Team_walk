@@ -103,6 +103,7 @@ VS Code에서는 **File → Open Folder…** 로 엽니다.<br>
 > [!NOTE]
 > - `80% EXECUTING`에서 멈춘 것처럼 보여도 **정상**입니다 (서버가 켜져 있는 상태). 끌 때는 Ctrl+C.
 > - VS Code의 ▶ Run 버튼은 `ClassNotFoundException`이 날 수 있습니다. 그럴 땐 위처럼 Gradle `bootRun`으로 실행하세요 → [backend/README.md](../backend/README.md#vs-code의--run-버튼)
+> - 다른 프로젝트를 VS Code에서 켜 두면 8080을 차지해서 **모든 API가 404**가 됩니다. `api/hello` 응답이 안 나오면 먼저 확인하세요.
 
 > [!TIP]
 > 인터넷 예제는 대부분 **스프링부트 3** 기준입니다. 거의 그대로 되지만 이것만 다릅니다.
@@ -121,13 +122,15 @@ npm run dev        # 개발 서버 시작 → http://localhost:5173
 ```
 
 - 끌 때는 터미널에서 **Ctrl+C**
-- 화면에 ✅ 연결 성공이 뜨려면 **백엔드(8080)가 켜져 있어야** 합니다.<br>
-  백엔드를 안 켰으면 ❌ 연결 실패가 나오는 게 정상입니다.
+- `http://localhost:5173/health` 에 ✅ 연결 성공이 뜨면 프론트와 백엔드가 연결된 것입니다.<br>
+  **`npm run dev`는 실제 API를 쓰므로 백엔드(8080)가 켜져 있어야** 합니다. 백엔드를 안 켰으면 ❌ 연결 실패가 나오는 게 정상입니다.
+- 백엔드 없이 화면만 보려면 `npm run dev:mock` (가짜 데이터, 오른쪽 아래에 `MOCK` 배지)
 
 | 명령 | 하는 일 |
 | --- | --- |
 | `npm install` | `package.json`에 적힌 라이브러리를 `node_modules/`에 설치 (깃허브엔 안 올라감) |
-| `npm run dev` | 개발 서버. 파일을 저장하면 화면이 바로 바뀜 |
+| `npm run dev` | 개발 서버 (실제 API). 파일을 저장하면 화면이 바로 바뀜 |
+| `npm run dev:mock` | 개발 서버 (가짜 데이터). 백엔드 없이 화면만 볼 때 |
 | `npm run lint` | 코드 검사 (ESLint). PR 올리기 전에 한 번 |
 | `npm run build` | 빌드가 되는지 확인 → `dist/` (배포는 하지 않음) |
 
@@ -153,9 +156,7 @@ npm run dev        # 개발 서버 시작 → http://localhost:5173
 | 파일 | 주소 | 확인하는 것 |
 | --- | --- | --- |
 | `backend/src/main/java/kr/sanchaek/common/HelloController.java` | `localhost:8080/api/hello` | 서버 실행, DB 접속(`landmarks: 8`), 공통 응답 형식 `{ success, data }` |
-| `frontend/src/App.jsx` | `localhost:5173/` | React 동작 + 프록시를 거쳐 백엔드 `/api/hello`에 연결되는지 |
-
-- 나중에 실제 메인 화면을 만들면서 `App.jsx`가 바뀌면, 이 테스트 화면은 `src/pages/HealthCheck.jsx` 같은 별도 화면으로 옮겨서 유지합니다.
+| `frontend/src/pages/HealthCheck.jsx` | `localhost:5173/health` | React 동작 + 프록시를 거쳐 백엔드 `/api/hello`에 연결되는지 |
 
 ---
 
