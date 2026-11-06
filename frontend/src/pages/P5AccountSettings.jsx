@@ -11,7 +11,9 @@ import './Account.css'
 import './MyPage.css'
 
 // P5 마이페이지 · 계정 설정 (/mypage/settings) + 비밀번호 변경 창 + P5-1 회원 탈퇴 확인 창
-// API: PUT /api/users/me/password · DELETE /api/users/me (정란 2주차 · 아직 없음 → 가짜 데이터)
+// API: PUT /api/users/me/password · DELETE /api/users/me (정란, develop)
+// 탈퇴는 지우지 않음 (db/README "지우지 않습니다"): 회원은 WITHDRAWN, 쓴 코스 · 글 · 후기는 "탈퇴한 회원"으로 남고
+// 참여 예정 동행만 자동 취소. 아이디는 다시 쓸 수 없음. 내가 연 동행이 진행 중이면 409 HAS_OPEN_MATCH
 // 이메일 · 알림 · 공개 범위 · 화면 언어 · 차단 목록은 2순위라 없음 (Figma 메모)
 export default function P5AccountSettings() {
   const { user } = useAuth()
@@ -42,7 +44,7 @@ export default function P5AccountSettings() {
       </div>
 
       <div className="mypage-danger fill">
-        <p className="t-b14 c-muted">회원 탈퇴 — 모집 글 · 후기 · 스탬프가 모두 삭제돼요</p>
+        <p className="t-b14 c-muted">회원 탈퇴 — 올린 코스 · 모집 글 · 후기는 ‘탈퇴한 회원’으로 남아요</p>
         <Button variant="danger" onClick={() => setWithdrawOpen(true)}>
           회원 탈퇴
         </Button>
@@ -164,8 +166,9 @@ function WithdrawModal({ onClose }) {
         <h2 className="t-h20 c-strong">정말 탈퇴하시겠어요?</h2>
         <ul className="mypage-notice">
           <li>참여 예정인 동행은 자동으로 취소돼요</li>
-          <li>올린 코스 {user.courseCount}개 · 후기 · 스탬프가 삭제돼요</li>
-          <li>같은 아이디로 30일간 다시 가입할 수 없어요</li>
+          <li>내가 모집 중이거나 마감한 동행이 있으면 먼저 모집을 취소해 주세요</li>
+          <li>올린 코스 {user.courseCount}개 · 모집 글 · 후기는 지워지지 않고 ‘탈퇴한 회원’으로 남아요</li>
+          <li>같은 아이디로 다시 가입할 수 없어요</li>
         </ul>
         <Input
           label="비밀번호 확인"

@@ -40,7 +40,8 @@ function ProfileEditForm({ user }) {
     if (!canSave) return
     setSubmitting(true)
     try {
-      await updateMe({ nickname: nickname.trim(), ageGroup, avatar, styles, languages, mbti: lettersToMbti(mbti) })
+      // MBTI "선택 안 함"은 ''로 보내야 지워짐 (null 은 서버가 "안 보낸 칸"으로 보고 그대로 둠)
+      await updateMe({ nickname: nickname.trim(), ageGroup, avatar, styles, languages, mbti: lettersToMbti(mbti) ?? '' })
       await refresh()
       showToast('프로필을 저장했어요')
       navigate('/mypage')

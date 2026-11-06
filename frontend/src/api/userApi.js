@@ -39,13 +39,15 @@ export function getMyStamps() {
 }
 
 /**
- * 내 프로필 · 태그 수정 (P2) — body: { nickname, ageGroup, avatar, styles[], languages[], mbti }
- * 정란 API가 아직 없어서 모양은 회원가입(POST /api/users)의 프로필 칸과 같게 맞춤 → API 명세가 나오면 확인
+ * 내 프로필 · 태그 수정 (P2) — PUT /api/users/me (정란), body: { nickname, ageGroup, avatar, styles[], languages[], mbti }
+ * 부분 수정: null 인 칸은 "안 보낸 칸"이라 그대로 둠. MBTI 를 지우려면(선택 안 함) mbti: ''
  * 응답 모양에 기대지 않고, 저장한 뒤 화면에서 refresh() 로 GET /api/users/me 를 다시 불러옴
  */
 export function updateMe(body) {
   if (USE_MOCK) {
-    Object.assign(ME, body) // 가짜 데이터: 새로고침하면 처음으로 돌아감
+    const next = { ...body }
+    if (next.mbti === '') next.mbti = null // 서버처럼 ''는 MBTI 지우기
+    Object.assign(ME, next) // 가짜 데이터: 새로고침하면 처음으로 돌아감
     return mockResponse(null)
   }
   return request('/api/users/me', { method: 'PUT', body })
