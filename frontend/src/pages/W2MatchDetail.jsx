@@ -79,7 +79,8 @@ export default function W2MatchDetail() {
 
   const open = m.status === 'OPEN'
   const joined = !m.isHost && m.myStatus === 'JOINED'
-  const editable = open || m.status === 'FULL' // 마감 · 취소 · 끝난 글은 수정 · 마감 불가
+  const closable = open || m.status === 'FULL' // 모집 마감은 모집 중 · 정원 참일 때만
+  const manageable = closable || m.status === 'CLOSED' // 글 수정 · 내보내기: 취소 · 끝난 글만 안 됨 (서버 규칙과 같음)
   const showComments = m.isHost || joined // 공지 · 댓글은 참여자와 모집자만
   const daysLeft = open || m.status === 'FULL' ? daysLeftLabel(m.meetAt) : null
   const emptySeats = Math.max(0, m.capacity - m.participants.length)
@@ -210,7 +211,7 @@ export default function W2MatchDetail() {
                     <p className="t-c12 c-muted nowrap">{p.languages.map((l) => LANGUAGE_LABELS[l]).join(' · ')}</p>
                   </div>
                 </div>
-                {m.isHost && !p.isHost && open && (
+                {m.isHost && !p.isHost && manageable && (
                   <button type="button" className="w2-text-btn t-c12b c-danger" onClick={() => setModal({ kick: p })}>
                     내보내기
                   </button>
@@ -228,7 +229,7 @@ export default function W2MatchDetail() {
           {/* 주요 버튼 */}
           {m.isHost ? (
             <div className="row g8 fill">
-              {editable ? (
+              {manageable ? (
                 <Button variant="secondary" className="grow" to={`/matches/${m.matchId}/edit`}>
                   글 수정
                 </Button>
@@ -237,7 +238,7 @@ export default function W2MatchDetail() {
                   글 수정
                 </Button>
               )}
-              <Button className="grow" disabled={!editable} onClick={() => setModal('close')}>
+              <Button className="grow" disabled={!closable} onClick={() => setModal('close')}>
                 {m.status === 'CLOSED' ? '마감했어요' : '모집 마감'}
               </Button>
             </div>
