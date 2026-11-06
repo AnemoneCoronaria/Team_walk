@@ -6,8 +6,7 @@ import {
   USER_PROFILE,
   PARTICIPANT_STATUS,
   MATCH_COMMENTS,
-  COURSE_BRIEF,
-} from '../mocks/matches.js'
+  COURSE_BRIEF, MATCH_LEFT } from '../mocks/matches.js'
 import { MATCH1_PATH } from '../mocks/paths.js'
 import { COURSES } from '../mocks/courses.js'
 import { ME } from '../mocks/users.js'
@@ -81,6 +80,7 @@ export function getMatches(params = {}) {
  * 목록 칸 + meetPlace, meetPoint {lat,lng}, path, hasGpx, course.durationMin, ageGroups, mbti, description,
  * host.matchCount · host.rating, participants[{ userId, nickname, avatar, languages, isHost }],
  * isHost(내가 모집자), myStatus(JOINED · LEFT · KICKED · null), joinable, reason(참여 못 하는 이유)
+ * leftParticipants[{ userId, nickname, avatar, reason, leftAt }] — 참여 취소한 사람과 사유. 모집자에게만 있는 칸
  * 숨김 · 없는 글은 404
  */
 export function getMatch(matchId) {
@@ -242,6 +242,7 @@ function mockDetail(m) {
       isHost: p.userId === m.host.userId,
     })),
     isHost: m.host.userId === ME.userId,
+    ...(m.host.userId === ME.userId ? { leftParticipants: MATCH_LEFT[m.matchId] ?? [] } : {}),
     myStatus: m.host.userId === ME.userId ? 'JOINED' : statusOf(m, ME.userId),
     joinable: reason === null,
     reason,

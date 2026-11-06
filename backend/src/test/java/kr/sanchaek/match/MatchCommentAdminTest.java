@@ -145,4 +145,40 @@ class MatchCommentAdminTest {
         jdbc.update("UPDATE courses SET visibility = 'PRIVATE' WHERE course_id = 4");
         assertEquals(400, statusOf(() -> service.update(1, MINSEO, request(4), null)));
     }
+
+    @Test void privateCourseCannotBeUsedForNewMatch() {
+        // 코스 3 의 작성자는 정란(3)
+        jdbc.update("UPDATE courses SET visibility = 'PRIVATE' WHERE course_id = 3");
+        assertEquals(400, statusOf(() -> service.create(JEONGRAN, request(3), null)));   // 내 코스여도 나만 보기는 안 됨
+
+        jdbc.update("UPDATE courses SET visibility = 'MATCH_ONLY' WHERE course_id = 3");
+        assertEquals(400, statusOf(() -> service.create(MINSEO, request(3), null)));     // 남의 동행 공개 코스
+        assertTrue(service.create(JEONGRAN, request(3), null) > 0);                      // 내 동행 공개 코스
+    }
+
+    @Test @SuppressWarnings("unchecked") void leaveReasonIsOnlyForHost() {
+        // 6번 글: 모집자 민서, 동훈이 "일정이 생겼어요" 로 취소 (seed)
+        var left = (java.util.List<MatchDtos.LeftParticipant>) service.detail(6, MINSEO).get("leftParticipants");
+        assertEquals(1, left.size());
+        assertEquals("동훈", left.get(0).nickname());
+        assertEquals("일정이 생겼어요", left.get(0).reason());
+        assertNotNull(left.get(0).leftAt());
+
+        assertFalse(service.detail(6, JEONGRAN).containsKey("leftParticipants"));   // 참여자
+        assertFalse(service.detail(6, DONGHUN).containsKey("leftParticipants"));    // 취소한 본인
+        assertFalse(service.detail(6, null).containsKey("leftParticipants"));       // 비로그인
+    }
+
+    @Test @SuppressWarnings("unchecked") void leftListExcludesKickedAndRejoined() {
+        // 1번 글: 동훈 취소 → 목록에 있음 → 다시 참여 → 빠짐. 2번 글: 승민은 KICKED 라 안 보임
+        jdbc.update("UPDATE matches SET meet_at = NOW() + INTERVAL 7 DAY WHERE match_id = 1");
+        service.leave(1, DONGHUN, null);
+        var left = (java.util.List<MatchDtos.LeftParticipant>) service.detail(1, MINSEO).get("leftParticipants");
+        assertEquals(1, left.size());
+        assertNull(left.get(0).reason());
+
+        service.join(1, DONGHUN);
+        assertEquals(0, ((java.util.List<?>) service.detail(1, MINSEO).get("leftParticipants")).size());
+        assertEquals(0, ((java.util.List<?>) service.detail(2, JEONGRAN).get("leftParticipants")).size());
+    }
 }

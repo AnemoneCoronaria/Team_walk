@@ -6,6 +6,7 @@ import Chip from '../components/Chip.jsx'
 import KakaoMap from '../components/KakaoMap.jsx'
 import LoginRequiredModal from '../components/LoginRequiredModal.jsx'
 import Modal from '../components/Modal.jsx'
+import ReportModal from '../components/ReportModal.jsx'
 import X1NotFound from './X1NotFound.jsx'
 import X2ServerError from './X2ServerError.jsx'
 import {
@@ -30,7 +31,7 @@ import {
   STYLE_LABELS,
   TARGET_LABELS,
 } from '../constants/labels.js'
-import { daysLeftLabel, formatKm, formatMeetAtLong, formatMeetAtShort } from '../utils/format.js'
+import { daysLeftLabel, formatKm, formatMeetAtLong, formatMeetAtShort, formatMonthDay } from '../utils/format.js'
 import './W2MatchDetail.css'
 
 // 참여할 수 없는 이유 (상세 응답의 reason → 버튼 아래 안내. Figma W2-2 · W4-1)
@@ -62,7 +63,7 @@ export default function W2MatchDetail() {
   const { data: m, error } = useAsync(() => getMatch(matchId), `${matchId}-${version}-${user?.userId}`)
   const reload = () => setVersion((v) => v + 1)
 
-  const [modal, setModal] = useState(null) // 'join' | 'leave' | 'close' | 'cancel' | 'login' | { kick: participant }
+  const [modal, setModal] = useState(null) // 'join' | 'leave' | 'close' | 'cancel' | 'login' | 'report' | { kick: participant }
 
   if (error?.status === 404) return <X1NotFound />
   if (error) return <X2ServerError onRetry={reload} />
@@ -78,7 +79,8 @@ export default function W2MatchDetail() {
 
   const open = m.status === 'OPEN'
   const joined = !m.isHost && m.myStatus === 'JOINED'
-  const editable = open || m.status === 'FULL' // 마감 · 취소 · 끝난 글은 수정 · 마감 불가
+  const closable = open || m.status === 'FULL' // 모집 마감은 모집 중 · 정원 참일 때만
+  const manageable = closable || m.status === 'CLOSED' // 글 수정 · 내보내기: 취소 · 끝난 글만 안 됨 (서버 규칙과 같음)
   const showComments = m.isHost || joined // 공지 · 댓글은 참여자와 모집자만
   const daysLeft = open || m.status === 'FULL' ? daysLeftLabel(m.meetAt) : null
   const emptySeats = Math.max(0, m.capacity - m.participants.length)
@@ -209,7 +211,7 @@ export default function W2MatchDetail() {
                     <p className="t-c12 c-muted nowrap">{p.languages.map((l) => LANGUAGE_LABELS[l]).join(' · ')}</p>
                   </div>
                 </div>
-                {m.isHost && !p.isHost && open && (
+                {m.isHost && !p.isHost && manageable && (
                   <button type="button" className="w2-text-btn t-c12b c-danger" onClick={() => setModal({ kick: p })}>
                     내보내기
                   </button>
@@ -222,12 +224,23 @@ export default function W2MatchDetail() {
                 <p className="t-b14 c-muted">빈 자리</p>
               </div>
             ))}
+            {/* 참여 취소한 사람 · 사유 (모집자에게만 서버가 보내 줌) */}
+            {m.leftParticipants?.length > 0 && (
+              <div className="col g4 fill w2-left">
+                <p className="t-c12b c-muted">참여 취소 {m.leftParticipants.length}명</p>
+                {m.leftParticipants.map((p) => (
+                  <p key={p.userId} className="t-c12 c-body">
+                    {p.nickname} · {p.reason ?? '사유 없음'} · {formatMonthDay(p.leftAt)}
+                  </p>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 주요 버튼 */}
           {m.isHost ? (
             <div className="row g8 fill">
-              {editable ? (
+              {manageable ? (
                 <Button variant="secondary" className="grow" to={`/matches/${m.matchId}/edit`}>
                   글 수정
                 </Button>
@@ -236,7 +249,7 @@ export default function W2MatchDetail() {
                   글 수정
                 </Button>
               )}
-              <Button className="grow" disabled={!editable} onClick={() => setModal('close')}>
+              <Button className="grow" disabled={!closable} onClick={() => setModal('close')}>
                 {m.status === 'CLOSED' ? '마감했어요' : '모집 마감'}
               </Button>
             </div>
@@ -282,8 +295,7 @@ export default function W2MatchDetail() {
                 모집 취소
               </Button>
             ) : (
-              // 신고 모달(W6)은 승민 담당 — 3주차에 연결
-              <Button variant="danger" onClick={() => showToast('신고는 준비 중이에요', 'info')}>
+              <Button variant="danger" onClick={() => setModal(user ? 'report' : 'login')}>
                 신고
               </Button>
             )}
@@ -335,6 +347,13 @@ export default function W2MatchDetail() {
         onConfirm={() => run(() => kickParticipant(m.matchId, openModal.kick.userId), '참여자를 내보냈어요')}
       />
       <LoginRequiredModal open={openModal === 'login'} onClose={closeModal} />
+      <ReportModal
+        open={openModal === 'report'}
+        onClose={closeModal}
+        targetType="MATCH"
+        targetId={m.matchId}
+        targetLabel={`${m.host.nickname}님의 모집 글 · ${m.title}`}
+      />
     </main>
   )
 }
@@ -462,7 +481,7 @@ function ConfirmModal({ open, title, desc, okLabel, danger = false, onClose, onC
   )
 }
 
-// W4 공지 · 댓글 (참여자 · 모집자만). 댓글 API 는 민서 일정상 3주차 → 서버에 없으면 안내만
+// W4 공지 · 댓글 (참여자 · 모집자만)
 function Comments({ matchId, isHost }) {
   const [version, setVersion] = useState(0)
   const { data, error } = useAsync(() => getComments(matchId), `${matchId}-${version}`)

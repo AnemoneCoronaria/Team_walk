@@ -183,6 +183,11 @@ export const PARTICIPANT_STATUS = {
   '6-5': 'LEFT',
 }
 
+// 참여 취소한 사람과 사유 (seed 의 match_participants 중 LEFT, 모집자 화면용)
+export const MATCH_LEFT = {
+  6: [{ userId: 5, nickname: '동훈', avatar: 'dog', reason: '일정이 생겼어요', leftAt: daysFromToday(-6, '12:00:00') }],
+}
+
 // 댓글 (seed 의 match_comments)
 export const MATCH_COMMENTS = {
   1: [

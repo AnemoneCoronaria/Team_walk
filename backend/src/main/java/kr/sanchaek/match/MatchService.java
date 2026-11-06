@@ -54,6 +54,7 @@ public class MatchService {
      * 상세 + 보는 사람 기준 정보.
      * isHost(내가 모집자인지), myStatus(JOINED · LEFT · KICKED · null),
      * joinable / reason (참여 버튼을 켤지, 끌 때 이유. Figma W2-2) — 참여하기와 같은 검사를 써서 화면과 서버 판단이 같음
+     * leftParticipants (참여를 취소한 사람과 사유) — 모집자에게만 있는 칸
      * 로그인 안 했으면 조건(연령대 · MBTI · 언어)은 검사하지 않음 → 참여 누르면 프론트가 로그인 모달(G1)
      */
     @Transactional(readOnly = true)
@@ -66,6 +67,9 @@ public class MatchService {
         match.put("myStatus", myStatus);
         match.put("joinable", reason == null);
         match.put("reason", reason);
+        if (userId != null && userId == state.hostId()) {
+            match.put("leftParticipants", repo.findLeftParticipants(matchId));   // 취소 사유는 모집자만 (W5 "모집자에게 전달")
+        }
         return match;
     }
 
@@ -311,7 +315,7 @@ public class MatchService {
 
     private void checkCourse(long courseId, long userId) {
         if (!repo.isCourseSelectable(courseId, userId)) {
-            throw ApiException.badRequest("고를 수 없는 코스예요.");
+            throw ApiException.badRequest("고를 수 없는 코스예요. 나만 보기 코스는 공개 범위를 바꾼 뒤 골라 주세요.");
         }
     }
 

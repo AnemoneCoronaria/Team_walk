@@ -1,4 +1,4 @@
-// 신고 API (백엔드 담당: 정란, 3주차 · 아직 없음 → 가짜 데이터) — W6 신고하기 · C2-1 코스 신고
+// 신고 API (백엔드 담당: 정란) — W6 신고하기 · C2-1 코스 신고
 //   POST /api/reports  body: { targetType: MATCH | USER | REVIEW | COURSE, targetId, reason, detail? }
 //   reason 코드는 constants/labels.js 의 REPORT_REASON_LABELS (코스는 COURSE_REPORT_REASON_LABELS)
 //   같은 사람이 같은 대상을 두 번 신고하면 409 DUPLICATE (db/schema.sql reports 의 uk_reports_once)

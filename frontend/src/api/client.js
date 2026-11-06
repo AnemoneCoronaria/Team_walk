@@ -1,15 +1,20 @@
 // 백엔드 호출 공통 코드
 //
 // 가짜 데이터 / 실제 서버 바꾸기
-//   기본은 가짜 데이터(src/mocks)입니다. 백엔드를 켜 놓고 실제 API로 보려면
-//   frontend/.env.local 에 VITE_USE_MOCK=false 를 넣고 npm run dev 를 다시 실행하세요.
+//   npm run dev       실제 API (백엔드를 켜 놓고)
+//   npm run dev:mock  가짜 데이터 src/mocks (백엔드 없이). 화면 구석에 MOCK 배지가 보입니다
+//   배포 빌드(npm run build)에서는 설정과 상관없이 가짜 데이터가 켜지지 않습니다
 //
 // 응답 형식 (API 명세 공통 규칙)
 //   성공 { success: true, data }  → data 만 돌려줌
 //   실패 { success: false, error: { code, message } } → ApiError 를 던짐
 //   body 에 FormData 를 넣으면 multipart/form-data 로 보냄 (GPX 업로드, 모집 글 쓰기)
 
-export const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'
+export const USE_MOCK = import.meta.env.DEV && import.meta.env.VITE_USE_MOCK === 'true'
+
+if (USE_MOCK) {
+  console.warn('[MOCK MODE] 가짜 데이터로 보는 중이에요. 로그인해도 민서로 들어가요. 실제 API는 npm run dev')
+}
 
 export class ApiError extends Error {
   constructor(status, code, message) {

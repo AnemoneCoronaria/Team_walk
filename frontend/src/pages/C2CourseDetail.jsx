@@ -1,9 +1,12 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import KakaoMap from '../components/KakaoMap.jsx'
+import LoginRequiredModal from '../components/LoginRequiredModal.jsx'
+import ReportModal from '../components/ReportModal.jsx'
 import X1NotFound from './X1NotFound.jsx'
 import { courseGpxUrl, getCourse, getCourseReviews } from '../api/courseApi.js'
 import { getMatches } from '../api/matchApi.js'
+import { useAuth } from '../auth/authContext.js'
 import { useAsync } from '../utils/useAsync.js'
 import { FACILITY_LABELS, LEVEL_LABELS, TARGET_LABELS, avatarSrc } from '../constants/labels.js'
 import { formatDate, formatDuration, formatKm, formatMeetAt, formatMonthDay, formatStars } from '../utils/format.js'
@@ -23,6 +26,8 @@ const FACILITY_ROWS = [
  */
 export default function C2CourseDetail() {
   const { courseId } = useParams()
+  const { user } = useAuth()
+  const [modal, setModal] = useState(null) // 'report' | 'login'
   const course = useAsync(() => getCourse(courseId), `course-${courseId}`)
   const reviews = useAsync(() => getCourseReviews(courseId, { size: 3 }), `reviews-${courseId}`)
   const matches = useAsync(() => getMatches({ courseId, size: 3 }), `matches-${courseId}`)
@@ -53,8 +58,7 @@ export default function C2CourseDetail() {
         <div className="c2-main">
           <div className="c2-toprow t-b14m c-muted">
             <Link to="/courses">← 코스 찾기</Link>
-            {/* 코스 신고 모달(C2-1)은 승민 담당 — 3주차에 연결 */}
-            <button type="button" className="c2-link" onClick={() => window.alert('코스 신고는 준비 중이에요.')}>
+            <button type="button" className="c2-link" onClick={() => setModal(user ? 'report' : 'login')}>
               🚩 코스 신고
             </button>
           </div>
@@ -175,6 +179,14 @@ export default function C2CourseDetail() {
           ))}
         </div>
       </div>
+      <LoginRequiredModal open={modal === 'login'} onClose={() => setModal(null)} />
+      <ReportModal
+        open={modal === 'report'}
+        onClose={() => setModal(null)}
+        targetType="COURSE"
+        targetId={c.courseId}
+        targetLabel={c.name}
+      />
     </main>
   )
 }

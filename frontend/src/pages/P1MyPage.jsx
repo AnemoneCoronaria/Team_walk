@@ -23,7 +23,7 @@ const EMPTY = {
 
 // P1 마이페이지 · 내 동행 (/mypage) — 왼쪽 프로필 · 메뉴는 components/MyPageLayout.jsx
 // API: GET /api/users/me (통계: 함께 걸은 동행 · 올린 코스 · 총 거리), GET /api/users/me/stamps (랜드마크 n / 8),
-//      GET /api/users/me/matches?tab= (탭 3개 · 민서 3주차 → 지금은 가짜 데이터)
+//      GET /api/users/me/matches?tab= (탭 3개 · 민서)
 // 참여 취소(W5)는 동행 상세(W2)에 있어서 상세로 보냄. 지난 동행의 출석 확인 · 설문(P1-1)은 2순위
 export default function P1MyPage() {
   const { user } = useAuth()
@@ -70,10 +70,10 @@ function Stat({ value, label }) {
 }
 
 // 동행 한 줄 — 모집자면 "글 수정", 참여자면 "참여 취소", 지난 동행이면 "후기 쓰기"(R1)
-// "내가 모집한 글" 탭에는 마감 · 끝난 글도 옴 → 글 수정은 W2 처럼 모집 중 · 정원 참일 때만 (그 밖은 서버가 409)
+// "내가 모집한 글" 탭에는 끝난 글도 옴 → 글 수정은 W2 처럼 취소 · 끝난 글만 막음 (그 글은 서버가 409)
 function MyMatchRow({ match: m, past }) {
   const isHost = m.role === 'HOST'
-  const editable = m.status === 'OPEN' || m.status === 'FULL'
+  const editable = ['OPEN', 'FULL', 'CLOSED'].includes(m.status)
   const state =
     past || m.status === 'DONE'
       ? '끝난 동행'
@@ -109,7 +109,7 @@ function MyMatchRow({ match: m, past }) {
                 글 수정
               </Button>
             ) : (
-              <Button variant="ghost" disabled title="마감했거나 끝난 동행은 고칠 수 없어요">
+              <Button variant="ghost" disabled title="취소했거나 끝난 동행은 고칠 수 없어요">
                 글 수정
               </Button>
             )

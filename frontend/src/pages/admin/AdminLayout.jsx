@@ -28,7 +28,7 @@ export default function AdminLayout() {
     <main className="wrap admin">
       <div className="row ai-c jc-b">
         <h1 className="t-h24 c-strong">관리자</h1>
-        <p className="t-c12 c-muted">{USE_MOCK ? '가짜 데이터로 보는 중 (VITE_USE_MOCK)' : `${user.nickname} 계정으로 로그인`}</p>
+        <p className="t-c12 c-muted">{USE_MOCK ? '가짜 데이터로 보는 중 (npm run dev:mock)' : `${user.nickname} 계정으로 로그인`}</p>
       </div>
       <nav className="admin-menu">
         {MENU.map((item) =>

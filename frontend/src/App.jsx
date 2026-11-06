@@ -31,7 +31,7 @@ import R2StampTour from './pages/R2StampTour.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/:id/edit, /matches/new
-//   승민: /login, /signup, /mypage, /500, 없는 주소(*) … (/mypage 는 아직 자리만)
+//   승민: /login, /signup, /mypage, /stamps, /500, 없는 주소(*) …
 //   정란: /admin/reports (AD1), /admin/users (AD2), /admin/courses (AD4) · 민서: /admin/matches (AD3)
 export default function App() {
   return (

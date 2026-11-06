@@ -128,12 +128,14 @@ function WriteForm({ user, existing }) {
   const [tried, setTried] = useState(false)
   const [saving, setSaving] = useState(false)
 
-  // 코스 고르기: 전체 공개 코스 + 내가 올린 코스
+  // 코스 고르기: 전체 공개 코스 + 내가 올린 코스. 나만 보기(PRIVATE) 코스는 참여자가 볼 수 없어 뺌 (서버도 400)
+  // 수정 중이면 지금 글의 코스는 그대로 둠 (글을 쓴 뒤에 나만 보기로 바뀌었을 수 있음)
   const courses = useAsync(
     () =>
       Promise.all([getCourses({ size: 50 }), getMyCourses().catch(() => ({ items: [] }))]).then(([all, mine]) => {
         const byId = new Map()
-        ;[...mine.items, ...all.items].forEach((c) => byId.set(c.courseId, { ...c, mine: mine.items.some((x) => x.courseId === c.courseId) }))
+        const usable = mine.items.filter((c) => c.visibility !== 'PRIVATE' || c.courseId === existing?.course.courseId)
+        ;[...usable, ...all.items].forEach((c) => byId.set(c.courseId, { ...c, mine: mine.items.some((x) => x.courseId === c.courseId) }))
         return [...byId.values()]
       }),
     'w3-courses',

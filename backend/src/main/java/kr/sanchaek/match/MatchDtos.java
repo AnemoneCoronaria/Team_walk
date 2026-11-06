@@ -17,6 +17,10 @@ public final class MatchDtos {
     public record Author(long userId, String nickname, String avatar) {
     }
 
+    /** 참여를 취소한 사람 (W4, 모집자에게만 보임). reason 은 W5 에서 고른 사유, 안 고르면 null */
+    public record LeftParticipant(long userId, String nickname, String avatar, String reason, LocalDateTime leftAt) {
+    }
+
     // ----- 댓글 · 공지 -----
 
     /** POST /api/matches/{id}/comments. isNotice 는 모집자만 true 로 보낼 수 있음 (비우면 일반 댓글) */
