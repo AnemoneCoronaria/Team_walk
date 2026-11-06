@@ -81,6 +81,10 @@ public final class AdminDtos {
     public record UserStatusResult(long userId, String status, LocalDateTime suspendedUntil) {
     }
 
+    /** POST /api/admin/users/{id}/temp-password 응답. 임시 비밀번호는 이 응답에서 한 번만 볼 수 있음 */
+    public record TempPasswordResult(long userId, String temporaryPassword) {
+    }
+
     // ---------- AD4 코스 관리 ----------
 
     /** GET /api/admin/courses 한 줄 */

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -17,6 +18,7 @@ import kr.sanchaek.user.AdminDtos.CourseVisibilityResult;
 import kr.sanchaek.user.AdminDtos.ReportItem;
 import kr.sanchaek.user.AdminDtos.ReportProcessRequest;
 import kr.sanchaek.user.AdminDtos.ReportProcessResult;
+import kr.sanchaek.user.AdminDtos.TempPasswordResult;
 import kr.sanchaek.user.AdminDtos.UserItem;
 import kr.sanchaek.user.AdminDtos.UserStatusRequest;
 import kr.sanchaek.user.AdminDtos.UserStatusResult;
@@ -68,6 +70,12 @@ public class AdminController {
     public ApiResponse<UserStatusResult> changeUserStatus(@PathVariable("id") long userId,
             @Valid @RequestBody UserStatusRequest req, @LoginUser Long adminId) {
         return ApiResponse.ok(adminService.changeUserStatus(userId, req.status(), adminId));
+    }
+
+    // AD2 임시 비밀번호 발급 (회원이 비밀번호를 잊었을 때). 응답에서 한 번만 볼 수 있음
+    @PostMapping("/api/admin/users/{id}/temp-password")
+    public ApiResponse<TempPasswordResult> issueTempPassword(@PathVariable("id") long userId) {
+        return ApiResponse.ok(adminService.issueTempPassword(userId));
     }
 
     // AD4 코스 목록 · 검색 (탭: 전체 ALL · 검토 필요 REVIEW)
