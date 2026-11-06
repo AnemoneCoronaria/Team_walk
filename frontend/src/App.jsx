@@ -12,6 +12,9 @@ import A1Login from './pages/A1Login.jsx'
 import Signup from './pages/Signup.jsx'
 import X1NotFound from './pages/X1NotFound.jsx'
 import X2ServerError from './pages/X2ServerError.jsx'
+import P2ProfileEdit from './pages/P2ProfileEdit.jsx'
+import MyPageLayout from './components/MyPageLayout.jsx'
+import P1MyPage from './pages/P1MyPage.jsx'
 
 // 화면 주소 (라우터) — 공용 파일이라 고치기 전에 팀에 알리기 (README "꼭 지킬 것")
 //   동훈: /, /courses, /courses/:id, /courses/new, /matches, /matches/:id, /matches/new
@@ -39,7 +42,10 @@ export default function App() {
         {/* 계정 · 마이페이지 (승민) */}
         <Route path="/login" element={<A1Login />} />
         <Route path="/signup" element={<Signup />} />
-        <Route path="/mypage" element={<Placeholder id="P1" title="마이페이지" owner="승민" />} />
+        <Route path="/mypage" element={<MyPageLayout />}>
+          <Route index element={<P1MyPage />} />
+        </Route>
+        <Route path="/mypage/profile" element={<P2ProfileEdit />} />
 
         {/* 오류 화면 (승민): X2 500 은 확인 · 시연용 주소, 없는 주소 → X1 404 */}
         <Route path="/500" element={<X2ServerError />} />

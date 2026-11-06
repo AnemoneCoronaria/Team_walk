@@ -58,7 +58,8 @@ VITE_KAKAO_JS_KEY=카카오_JavaScript_키
 | `/matches/:id`, `/matches/new` | W2 · W4, W3 (2주차, 자리만) | 동훈 |
 | `/login` | A1 로그인 (실패하면 A2 오류 상태). 가짜 데이터에서는 `db/seed.sql` 테스트 계정 + `test1234!` | 승민 |
 | `/signup` | A3 계정 정보 → A4 프로필 · 태그 → A5 완료 (한 주소에서 단계만 바뀜) | 승민 |
-| `/mypage` | P1 마이페이지 (2주차, 자리만) | 승민 |
+| `/mypage` | P1 마이페이지 · 내 동행 (참여 예정 · 내가 모집한 글 · 지난 동행). 왼쪽 프로필 · 메뉴 · 로그아웃은 `MyPageLayout` | 승민 |
+| `/mypage/profile` | P2 프로필 · 태그 수정 (로그인 필요, 저장하면 P1 으로) | 승민 |
 | `/500` | X2 서버 오류 (확인 · 시연용. 화면에서 API 5xx 일 때 `<X2ServerError />` 를 보여 주면 됨) | 승민 |
 | 그 밖의 주소 | X1 404 (상세 화면에서 API 404 일 때도 `<X1NotFound />`) | 승민 |
 | `/health` | 환경 확인 | - |
