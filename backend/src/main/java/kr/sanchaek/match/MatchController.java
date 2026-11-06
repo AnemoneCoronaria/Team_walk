@@ -30,6 +30,8 @@ import kr.sanchaek.common.ApiResponse;
 import kr.sanchaek.common.FileStore;
 import kr.sanchaek.common.LoginUser;
 import kr.sanchaek.common.PageResult;
+import kr.sanchaek.match.MatchDtos.CommentItem;
+import kr.sanchaek.match.MatchDtos.CommentRequest;
 
 @RestController                     // web api endpoint 
 public class MatchController { 
@@ -184,5 +186,25 @@ public class MatchController {
             @LoginUser Long userId) {
         service.kick(id, userId, targetUserId);
         return ApiResponse.ok();
+    }
+
+
+    // ----- 3주차: 댓글 · 공지 (W4) — 모집자와 참여 중인 사람만 -----
+
+    // 댓글 목록 (쓴 순서)
+    @GetMapping("/api/matches/{id}/comments")
+    public ApiResponse<PageResult<CommentItem>> comments(@PathVariable("id") Long id, @LoginUser Long userId,
+            @RequestParam(value = "page", defaultValue = "1") int page,
+            @RequestParam(value = "size", defaultValue = "20") int size) {
+        PageResult.validate(page, size);
+        return ApiResponse.ok(service.comments(id, userId, page, size));
+    }
+
+    // 댓글 쓰기. 본문 { "content": "...", "isNotice": false } → 201 { commentId }
+    @PostMapping("/api/matches/{id}/comments")
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<Map<String, Long>> addComment(@PathVariable("id") Long id, @LoginUser Long userId,
+            @Valid @RequestBody CommentRequest request) {
+        return ApiResponse.ok(Map.of("commentId", service.addComment(id, userId, request)));
     }
 }

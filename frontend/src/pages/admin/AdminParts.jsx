@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Button from '../../components/Button.jsx'
 import Chip from '../../components/Chip.jsx'
 
-// 관리자 화면 3개(AD1 · AD2 · AD4)가 같이 쓰는 작은 부품
+// 관리자 화면(AD1 · AD2 · AD3 · AD4)이 같이 쓰는 작은 부품
 
 // 탭 줄 — tabs: [{ value, label }]
 //   <AdminTabs tabs={TABS} value={status} onChange={setStatus} />

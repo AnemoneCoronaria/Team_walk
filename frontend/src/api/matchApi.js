@@ -145,8 +145,7 @@ export function updateMatch(matchId, form) {
 
 /**
  * 댓글 · 공지 — GET · POST /api/matches/{id}/comments (참여자와 모집자만, 그 외 403)
- * 쓰기: { content, isNotice } (isNotice 는 모집자만)
- * ※ 민서 일정상 3주차 API. 지금은 가짜 데이터로만 동작
+ * 쓰기: { content(500자까지), isNotice } (isNotice 는 모집자만, 아니면 403) → 201 { commentId }
  */
 export function getComments(matchId) {
   if (USE_MOCK) {

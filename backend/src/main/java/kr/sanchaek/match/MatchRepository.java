@@ -20,6 +20,10 @@ import tools.jackson.databind.json.JsonMapper;
 
 import kr.sanchaek.common.ApiException;
 import kr.sanchaek.common.PageResult;
+import kr.sanchaek.match.MatchDtos.AdminMatchCounts;
+import kr.sanchaek.match.MatchDtos.AdminMatchItem;
+import kr.sanchaek.match.MatchDtos.Author;
+import kr.sanchaek.match.MatchDtos.CommentItem;
 
 @Repository         // 여기는 DB 건드는 곳...
 public class MatchRepository {
@@ -501,5 +505,117 @@ public class MatchRepository {
     public void updateParticipantStatus(long matchId, long userId, String status, String leaveReason) {
         jdbc.update("UPDATE match_participants SET status = ?, leave_reason = ? WHERE match_id = ? AND user_id = ?",
                 status, leaveReason, matchId, userId);
+    }
+
+
+    // ---------------------------------------------------------------------
+    // 3주차: 댓글 · 공지 (W4)
+    // ---------------------------------------------------------------------
+
+    /** 댓글 목록 (쓴 순서) */
+    public PageResult<CommentItem> findComments(long matchId, int page, int size) {
+        Long total = jdbc.queryForObject("SELECT COUNT(*) FROM match_comments WHERE match_id = ?", Long.class, matchId);
+        List<CommentItem> items = jdbc.query("""
+            SELECT mc.comment_id, mc.content, mc.is_notice, mc.created_at,
+                   u.user_id, u.nickname, u.avatar, u.status AS user_status
+            FROM match_comments mc
+            JOIN users u ON u.user_id = mc.user_id
+            WHERE mc.match_id = ?
+            ORDER BY mc.created_at, mc.comment_id
+            LIMIT ? OFFSET ?
+            """, (rs, i) -> new CommentItem(
+                rs.getLong("comment_id"),
+                toAuthor(rs),
+                rs.getString("content"),
+                rs.getBoolean("is_notice"),
+                rs.getObject("created_at", LocalDateTime.class)), matchId, size, PageResult.offset(page, size));
+        return new PageResult<>(items, page, size, total == null ? 0 : total);
+    }
+
+    /** 댓글 저장 → 새 comment_id */
+    public long insertComment(long matchId, long userId, String content, boolean notice) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbc.update(con -> {
+            PreparedStatement ps = con.prepareStatement(
+                    "INSERT INTO match_comments (match_id, user_id, content, is_notice) VALUES (?, ?, ?, ?)",
+                    Statement.RETURN_GENERATED_KEYS);
+            ps.setLong(1, matchId);
+            ps.setLong(2, userId);
+            ps.setString(3, content);
+            ps.setBoolean(4, notice);
+            return ps;
+        }, keyHolder);
+        return keyHolder.getKey().longValue();
+    }
+
+    private static Author toAuthor(ResultSet rs) throws SQLException {
+        return new Author(rs.getLong("user_id"), displayName(rs), rs.getString("avatar"));
+    }
+
+
+    // ---------------------------------------------------------------------
+    // 3주차: AD3 모집 글 관리 (관리자는 숨긴 글도 봄)
+    // ---------------------------------------------------------------------
+
+    // 탭 조건. 모집 중 = 아직 진행 중(정원 찬 글 포함), 마감 = 모집이 끝난 글(마감 · 취소 · 끝남), 숨김 = 상태와 상관없이 숨긴 글
+    private static final String ADMIN_OPEN = "(m.is_hidden = FALSE AND s.status IN ('OPEN', 'FULL'))";
+    private static final String ADMIN_CLOSED = "(m.is_hidden = FALSE AND s.status IN ('CLOSED', 'CANCELED', 'DONE'))";
+    private static final String ADMIN_HIDDEN = "(m.is_hidden = TRUE)";
+
+    /** 표 목록. tab: OPEN · CLOSED · HIDDEN (MatchService 에서 검사), q: 제목 · 모집자 · 코스. 최근에 올라온 글부터 */
+    public List<AdminMatchItem> findAdminMatches(String q, String tab, int size, int offset) {
+        List<Object> args = new ArrayList<>();
+        String where = " WHERE " + adminTab(tab) + adminSearch(q, args);
+        args.add(size);
+        args.add(offset);
+        return jdbc.query("SELECT " + SUMMARY_COLUMNS + ", m.is_hidden" + SUMMARY_FROM + where
+                + " ORDER BY m.match_id DESC LIMIT ? OFFSET ?", (rs, i) -> new AdminMatchItem(
+                rs.getLong("match_id"),
+                rs.getString("title"),
+                toAuthor(rs),
+                rs.getObject("meet_at", LocalDateTime.class),
+                rs.getString("target"),
+                rs.getInt("current_count"),
+                rs.getInt("capacity"),
+                rs.getString("status"),
+                rs.getBoolean("is_hidden")), args.toArray());
+    }
+
+    /** 탭별 개수 (같은 검색어 안에서) */
+    public AdminMatchCounts countAdminMatches(String q) {
+        List<Object> args = new ArrayList<>();
+        String where = " WHERE TRUE" + adminSearch(q, args);
+        return jdbc.queryForObject("SELECT COALESCE(SUM(" + ADMIN_OPEN + "), 0) AS open_count,"
+                + " COALESCE(SUM(" + ADMIN_CLOSED + "), 0) AS closed_count,"
+                + " COALESCE(SUM(" + ADMIN_HIDDEN + "), 0) AS hidden_count"
+                + SUMMARY_FROM + where, (rs, i) -> new AdminMatchCounts(
+                rs.getLong("open_count"), rs.getLong("closed_count"), rs.getLong("hidden_count")), args.toArray());
+    }
+
+    private static String adminTab(String tab) {
+        return switch (tab) {
+            case "CLOSED" -> ADMIN_CLOSED;
+            case "HIDDEN" -> ADMIN_HIDDEN;
+            default -> ADMIN_OPEN;
+        };
+    }
+
+    private static String adminSearch(String q, List<Object> args) {
+        if (q == null) {
+            return "";
+        }
+        String like = "%" + q + "%";
+        args.addAll(List.of(like, like, like));
+        return " AND (m.title LIKE ? OR u.nickname LIKE ? OR c.name LIKE ?)";
+    }
+
+    /** 숨김 · 복구. 없는 글이면 false */
+    public boolean updateHidden(long matchId, boolean hidden) {
+        Integer count = jdbc.queryForObject("SELECT COUNT(*) FROM matches WHERE match_id = ?", Integer.class, matchId);
+        if (count == null || count == 0) {
+            return false;
+        }
+        jdbc.update("UPDATE matches SET is_hidden = ? WHERE match_id = ?", hidden, matchId);
+        return true;
     }
 }

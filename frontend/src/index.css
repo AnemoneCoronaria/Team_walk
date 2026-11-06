@@ -212,5 +212,5 @@ button.chip { cursor: pointer; }
 .grow { flex: 1 0 0; min-width: 1px; }  /* row 안에서 남는 폭 차지하기 */
 .noshrink { flex-shrink: 0; }
 .g2 { gap: 2px; } .g4 { gap: 4px; } .g6 { gap: 6px; } .g8 { gap: 8px; } .g12 { gap: 12px; }
-.g16 { gap: 16px; } .g20 { gap: 20px; } .g24 { gap: 24px; } .g32 { gap: 32px; }
+.g10 { gap: 10px; } .g14 { gap: 14px; } .g16 { gap: 16px; } .g20 { gap: 20px; } .g24 { gap: 24px; } .g32 { gap: 32px; }
 .p16 { padding: 16px; } .p20 { padding: 20px; } .p24 { padding: 24px; }
