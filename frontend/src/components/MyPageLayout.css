@@ -22,3 +22,28 @@
 .mypage-menu-item.active { background: var(--brand-green-soft); color: var(--brand-green); }
 
 .mypage-main { display: flex; flex-direction: column; align-items: flex-start; gap: 20px; flex: 1 0 0; min-width: 1px; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1200px) {
+  .mypage-side { width: 280px; }
+}
+
+/* 태블릿 · 휴대폰: 프로필 위, 메뉴는 가로로 넘기는 탭, 내용 아래 */
+@media (max-width: 1024px) {
+  .mypage { flex-direction: column; align-items: stretch; gap: 20px; padding: 24px 0 48px; }
+  .mypage-side { width: 100%; }
+  /* 프로필 카드: 아바타 왼쪽, 이름 · 연령대 · 태그 오른쪽, 버튼은 맨 아래 */
+  .mypage-profile {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    align-items: center;
+    gap: 4px 20px;
+    padding: 20px;
+  }
+  .mypage-profile > .avatar { grid-row: span 3; }
+  .mypage-profile > .row { justify-content: flex-start; }
+  .mypage-profile > .btn { grid-column: 1 / -1; margin-top: 12px; }
+  .mypage-menu { flex-direction: row; overflow-x: auto; scrollbar-width: none; }
+  .mypage-menu-item { flex-shrink: 0; padding: 10px 14px; font-size: 14px; white-space: nowrap; }
+  .mypage-main { flex: none; }
+}

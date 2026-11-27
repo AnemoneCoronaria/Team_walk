@@ -96,7 +96,7 @@ export default function M1Main() {
               전체 보기 →
             </Link>
           </div>
-          <div className="row g8">
+          <div className="row fwrap g8">
             {QUICK_FILTERS.map((f, i) => (
               <button
                 key={f.label}

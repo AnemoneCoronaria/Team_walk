@@ -280,7 +280,7 @@ function WriteForm({ user, existing }) {
           </p>
         </div>
 
-        <div className="row g12 fill">
+        <div className="row g12 fill w3-when">
           <Input
             label="날짜"
             type="date"

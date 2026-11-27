@@ -30,3 +30,16 @@
 .w3-picker-item { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 10px 16px; border: 0; border-bottom: 1px solid var(--bg-subtle); background: none; text-align: left; cursor: pointer; }
 .w3-picker-item:hover { background: var(--brand-green-soft); }
 .w3-picker-empty { padding: 12px 16px; }
+
+/* ---------- 반응형 ---------- */
+/* 카드(760px)가 화면보다 넓으면 화면에 맞춤 */
+.w3 { padding-left: 20px; padding-right: 20px; }
+.w3-card { max-width: 100%; }
+
+@media (max-width: 640px) {
+  .w3 { padding: 24px 16px 48px; }
+  .w3-card { padding: 24px 20px; }
+  /* 날짜 · 시간 · 모집 인원: 한 줄에 하나씩 */
+  .w3-when { flex-direction: column; }
+  .w3-when > * { align-self: stretch; }
+}

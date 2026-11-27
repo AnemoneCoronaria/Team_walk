@@ -65,6 +65,8 @@ function dateLabel(date) {
  */
 export default function W1MatchList() {
   const [searchParams, setSearchParams] = useSearchParams()
+  // 좁은 화면(1024px 이하)에서는 필터를 접어 두고 '필터 펼치기' 버튼으로 엶 (PC 에서는 늘 보임)
+  const [filterOpen, setFilterOpen] = useState(false)
   const applied = readFilter(searchParams)
   const sort = searchParams.get('sort') ?? 'deadline'
   const page = Number(searchParams.get('page') ?? 1)
@@ -121,7 +123,7 @@ export default function W1MatchList() {
   return (
     <main>
       <section className="w1-top">
-        <div className="wrap row jc-b ai-c">
+        <div className="wrap row jc-b ai-c w1-head">
           <div className="col g4">
             <h1 className="t-h32 c-strong nowrap">동행 찾기</h1>
             <p className="t-b16 c-body nowrap">산책 스타일과 언어가 맞는 이웃의 모집 글에 참여해 보세요</p>
@@ -133,16 +135,28 @@ export default function W1MatchList() {
       </section>
 
       <section className="w1-body">
-        <div className="wrap row g24">
+        <div className="wrap row g24 w1-body-inner">
+          <button
+            type="button"
+            className="btn btn-secondary w1-filter-toggle"
+            aria-expanded={filterOpen}
+            onClick={() => setFilterOpen(!filterOpen)}
+          >
+            {filterOpen ? '필터 접기 ▴' : `필터 펼치기 ▾${chips.length ? ` (${chips.length})` : ''}`}
+          </button>
           {/* key: 주소의 필터가 바뀌면(✕로 지우기 등) 왼쪽 선택 상태도 새로 맞춤 */}
           <FilterPanel
             key={searchParams.toString()}
+            open={filterOpen}
             applied={applied}
-            onApply={(filter) => writeParams(filter)}
+            onApply={(filter) => {
+              writeParams(filter)
+              setFilterOpen(false)
+            }}
             onReset={() => setSearchParams({})}
           />
 
-          <div className="col g16 grow">
+          <div className="col g16 grow w1-list">
             <div className="row jc-b ai-c fill">
               <div className="row ai-c g6 fwrap">
                 <span className="t-b14m c-muted nowrap">적용된 필터</span>
@@ -164,7 +178,7 @@ export default function W1MatchList() {
               : items.map((m) => <MatchCard key={m.matchId} match={m} className="w1-card" />)}
 
             {!loading && (
-              <div className="row jc-c g8 fill">
+              <div className="row fwrap jc-c g8 fill">
                 <button
                   type="button"
                   className="chip chip-neutral"
@@ -201,7 +215,7 @@ export default function W1MatchList() {
 }
 
 // 왼쪽 필터 (적용을 누르기 전까지는 이 안에서만 바뀜)
-function FilterPanel({ applied, onApply, onReset }) {
+function FilterPanel({ open, applied, onApply, onReset }) {
   const [draft, setDraft] = useState(applied)
   const [pickDate, setPickDate] = useState(/^\d{4}/.test(applied.date))
 
@@ -220,7 +234,7 @@ function FilterPanel({ applied, onApply, onReset }) {
   }
 
   return (
-    <div className="panel col g24 w1-filter">
+    <div className={`panel col g24 w1-filter ${open ? 'is-open' : ''}`}>
       <p className="t-h20 c-strong">필터</p>
 
       <Group title="날짜">

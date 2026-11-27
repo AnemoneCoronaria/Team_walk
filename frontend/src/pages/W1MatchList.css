@@ -21,3 +21,25 @@ button.chip:disabled { opacity: 0.4; cursor: default; }
 
 /* E1 */
 .e1 { display: flex; flex-direction: column; align-items: center; gap: 16px; padding: 120px 120px 160px; }
+
+/* ---------- 반응형 ---------- */
+/* '필터 펼치기' 버튼은 좁은 화면에서만 보임 */
+.w1-filter-toggle { display: none; }
+
+@media (max-width: 1024px) {
+  /* 필터 위(접힘), 목록 아래 */
+  .w1-body-inner { flex-direction: column; align-items: stretch; gap: 16px; }
+  .w1-filter-toggle { display: flex; align-self: flex-start; }
+  .w1-filter { display: none; width: 100%; }
+  .w1-filter.is-open { display: flex; }
+  .w1-chips { margin-right: 0; }
+  .w1-list { flex: none; }
+}
+
+@media (max-width: 640px) {
+  .w1-top { padding: 24px 0 8px; }
+  .w1-head { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .w1-filter { padding: 20px; }
+  .w1-skel { height: 220px; }
+  .e1 { padding: 72px 16px 120px; text-align: center; }
+}

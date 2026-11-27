@@ -53,3 +53,21 @@
 .review-thumb { width: 88px; height: 88px; border-radius: 10px; object-fit: cover; }
 .review-report { padding: 0; border: 0; background: none; cursor: pointer; }
 .review-pager { display: flex; align-items: center; gap: 12px; align-self: center; }
+
+/* ---------- 반응형 ---------- */
+/* R1 카드(800px)가 화면보다 넓으면 화면에 맞춤 */
+.review-page { padding-left: 20px; padding-right: 20px; }
+.review-card { min-width: 0; max-width: 100%; }
+
+@media (max-width: 640px) {
+  .review-page { padding: 24px 16px 48px; }
+  .review-card { padding: 24px 20px; }
+  .review-photo { width: 80px; height: 80px; }
+  .review-list-page { padding: 24px 0 48px; }
+  .review-item { padding: 16px; }
+  .review-thumb { width: 72px; height: 72px; }
+
+  /* R1 랜드마크 인증 상자: 아이콘 위, 글 · 버튼 아래 (긴 버튼 글자는 줄바꿈) */
+  .review-landmark { flex-direction: column; gap: 12px; padding: 16px; }
+  .review-landmark .btn { white-space: normal; }
+}

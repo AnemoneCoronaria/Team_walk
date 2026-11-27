@@ -36,14 +36,14 @@ export default function P1MyPage() {
 
   return (
     <>
-      <div className="row g12 fill">
+      <div className="row g12 fill mypage-stats">
         <Stat value={user.matchCount} label="함께 걸은 동행" />
         <Stat value={user.courseCount} label="올린 코스" />
         <Stat value={formatKm(user.totalDistanceKm)} label="총 거리" />
         <Stat value={stamps.data ? `${stamps.data.stampCount} / ${stamps.data.totalLandmarks}` : '-'} label="랜드마크" />
       </div>
 
-      <div className="row g8">
+      <div className="row fwrap g8">
         {TABS.map(([key, label], i) => (
           <Chip key={key} tone="neutral" selected={tab === key} onClick={() => setTab(key)}>
             {label} {lists.data?.[i].total ?? ''}
@@ -88,7 +88,7 @@ function MyMatchRow({ match: m, past }) {
         <Chip tone={isHost ? 'green' : 'blue'}>{isHost ? '모집자' : '참여'}</Chip>
       </div>
       <p className="t-h20 c-strong">{m.title}</p>
-      <div className="row ai-c jc-b fill">
+      <div className="row ai-c jc-b fill mypage-row-foot">
         <p className="t-b14 c-body">
           {m.course.name} · {state}
         </p>

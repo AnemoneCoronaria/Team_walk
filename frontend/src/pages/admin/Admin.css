@@ -47,6 +47,7 @@
 
 /* 표 */
 .admin-table-box {
+  max-width: 100%; /* 화면보다 넓은 표는 상자 안에서 가로로 넘겨 봄 */
   overflow-x: auto;
 }
 
@@ -156,3 +157,15 @@
 /* AD2 임시 비밀번호 */
 .admin-temp-password { align-self: stretch; padding: 14px; border-radius: 10px; background: var(--bg-subtle); font-size: 20px; font-weight: 700; letter-spacing: 1px; text-align: center; user-select: all; }
 .admin-row-actions { justify-content: flex-end; flex-wrap: nowrap; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 640px) {
+  .admin { padding: 24px 0 48px; }
+
+  /* 메뉴 4개는 가로로 넘겨 봄 */
+  .admin-menu { overflow-x: auto; scrollbar-width: none; }
+  .admin-menu-item { flex-shrink: 0; margin-bottom: 0; padding: 10px 12px; font-size: 14px; white-space: nowrap; }
+
+  .admin-toolbar { flex-wrap: wrap; }
+  .admin-search { width: 100%; }
+}

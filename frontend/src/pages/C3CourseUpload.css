@@ -38,3 +38,18 @@
 .c3-stats { display: flex; gap: 12px; width: 100%; white-space: nowrap; }
 .c3-stat { flex: 1 0 0; display: flex; flex-direction: column; gap: 2px; padding: 16px; border: 1px solid var(--border-default); border-radius: 16px; background: var(--bg-surface); }
 .c3-buttons { display: flex; justify-content: flex-end; gap: 12px; width: 100%; }
+
+/* ---------- 반응형 ---------- */
+/* 카드(880px)가 화면보다 넓으면 화면에 맞춤. 지도는 카드 안쪽 폭을 꽉 채움 (PC 800px 그대로) */
+.c3 { padding-left: 20px; padding-right: 20px; }
+.c3-card { max-width: 100%; }
+.c3-map { width: 100%; }
+
+@media (max-width: 640px) {
+  .c3 { padding: 24px 16px 48px; }
+  .c3-steps { flex-wrap: wrap; justify-content: center; white-space: normal; }
+  .c3-card { padding: 24px 20px; }
+  .c3-drop { height: 200px; padding: 0 16px; text-align: center; }
+  .c3-map { height: 260px; }
+  .c3-stats { gap: 8px; }
+}

@@ -2,7 +2,7 @@
 
 /* 동행 카드 2열 (카드 588px) */
 .main-match-list { display: flex; flex-wrap: wrap; gap: 24px; width: 100%; }
-.main-match-list .match-card { width: 588px; }
+.main-match-list .match-card { width: calc((100% - 24px) / 2); } /* 1200px 에서 588px */
 
 /* ---------- M0 (로그인 전) ---------- */
 .m0-hero { display: flex; flex-direction: column; align-items: center; gap: 20px; padding: 96px 120px 80px; background: var(--bg-surface); }
@@ -19,8 +19,8 @@
 
 .m1-matches { padding: 56px 0; }
 .m1-courses { padding: 24px 0 56px; }
-.m1-course-list { display: flex; gap: 24px; }
-.m1-course-list .course-card { width: 384px; }
+.m1-course-list { display: flex; gap: 24px; width: 100%; }
+.m1-course-list .course-card { width: calc((100% - 48px) / 3); } /* 1200px 에서 384px */
 
 .m1-stamp { padding: 24px 0 64px; }
 .m1-stamp-banner { display: flex; align-items: center; justify-content: space-between; padding: 32px 40px; border-radius: 20px; background: var(--brand-green-soft); }
@@ -41,3 +41,45 @@
 
 /* 아직 인증하지 않은 스탬프 */
 .stamp-badge.is-locked { border-color: var(--border-default); background: var(--bg-subtle); opacity: 0.5; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1200px) {
+  /* 지도 폭이 줄어든 만큼 글자 쪽이 숨 쉴 자리를 남김 */
+  .m1-hero-inner { gap: 40px; }
+  .m1-map { width: min(560px, 48%); }
+}
+
+@media (max-width: 1024px) {
+  /* M1 히어로: 글 위, 지도 아래 */
+  .m1-hero { padding: 48px 0; }
+  .m1-hero-inner { flex-direction: column; align-items: stretch; gap: 32px; }
+  .m1-hero-desc { width: auto; max-width: 520px; }
+  .m1-map { width: 100%; height: 320px; }
+
+  /* 스탬프 배너: 글 위, 배지 아래 */
+  .m1-stamp-banner { flex-direction: column; align-items: flex-start; gap: 20px; }
+
+  .m0-hero { padding: 72px 40px 64px; }
+  .m0-steps .row { flex-wrap: wrap; }
+  .m0-steps .panel { flex-basis: calc((100% - 20px) / 2); }
+}
+
+@media (max-width: 640px) {
+  .main-match-list .match-card,
+  .m1-course-list .course-card { width: 100%; }
+  .m1-course-list { flex-direction: column; }
+
+  .m1-hero { padding: 32px 0 40px; }
+  .m1-map { height: 240px; }
+  .m1-hero-stats { gap: 24px; }
+  .m1-matches { padding: 40px 0; }
+  .m1-courses { padding: 16px 0 40px; }
+  .m1-stamp { padding: 16px 0 48px; }
+  .m1-stamp-banner { padding: 24px 20px; }
+  .stamp-badge { width: 48px; height: 48px; font-size: 20px; }
+
+  .m0-hero { padding: 48px 16px 40px; }
+  .m0-steps { padding: 40px 0 24px; }
+  .m0-steps .panel { flex-basis: 100%; }
+  .m0-preview { padding: 16px 0 56px; }
+}
