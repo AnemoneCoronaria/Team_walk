@@ -47,3 +47,24 @@
 .mypage-heart { border: 0; background: none; padding: 0 4px; font-size: 22px; line-height: 1; color: var(--status-danger); cursor: pointer; }
 .mypage-heart:disabled { opacity: 0.5; cursor: default; }
 .mypage-sort { border: 0; background: none; cursor: pointer; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 640px) {
+  /* P1 통계 4칸 → 2칸씩 두 줄 */
+  .mypage-stats { flex-wrap: wrap; }
+  .mypage-stat { flex: 1 0 calc(50% - 6px); padding: 16px; white-space: normal; }
+  .mypage-row { padding: 16px; }
+  /* P1 동행 한 줄의 코스 · 상태 글 + 버튼: 좁으면 버튼을 다음 줄 오른쪽으로 */
+  .mypage-row-foot { flex-wrap: wrap; gap: 8px; }
+  .mypage-row-foot > .row { margin-left: auto; }
+
+  /* P3 코스 한 줄: 버튼은 아래 줄로 */
+  .mypage-course { flex-wrap: wrap; }
+  .mypage-course-actions { width: 100%; justify-content: flex-end; }
+
+  /* P5 설정 */
+  .mypage-box { padding: 20px 16px; }
+  .mypage-setting { flex-wrap: wrap; gap: 8px; }
+  .mypage-setting-label { width: 80px; }
+  .mypage-danger { flex-direction: column; align-items: flex-start; gap: 12px; padding: 16px; }
+}

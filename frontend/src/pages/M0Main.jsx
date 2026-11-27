@@ -27,7 +27,7 @@ export default function M0Main() {
         <p className="t-b16 c-body tc nowrap">
           산책 스타일 · 언어 · 연령대 태그로 이웃을 만나고, 시흥의 바다 뷰 코스와 랜드마크를 함께 걸어요.
         </p>
-        <div className="row g12">
+        <div className="row fwrap jc-c g12">
           <Link className="btn btn-primary" to="/signup">
             3초 만에 시작하기
           </Link>

@@ -48,3 +48,74 @@
 .header-bell { padding: 0; border: 0; background: none; cursor: pointer; }
 .header-bell img { width: 24px; height: 24px; }
 .header-name { font-size: 16px; font-weight: 500; line-height: 1.5; color: var(--text-strong); white-space: nowrap; }
+
+/* ---------- 반응형 ---------- */
+/* ☰ 메뉴 버튼은 좁은 화면에서만 보임 */
+.header-menu-btn { display: none; }
+
+@media (max-width: 1200px) {
+  .header-left { gap: 32px; }
+  .header-nav { gap: 24px; }
+  .header-search { width: 220px; }
+}
+
+/* 태블릿 · 휴대폰: 로고 + 알림 · 프로필(또는 로그인 · 회원가입) + ☰ 한 줄,
+   메뉴 · 검색 · 언어는 ☰ 를 누르면 헤더 아래로 펼침 */
+@media (max-width: 1024px) {
+  .header { height: auto; }
+  .header-inner { flex-wrap: wrap; column-gap: 12px; min-height: 64px; }
+  .header-left,
+  .header-right { display: contents; }
+  .header-logo { margin-right: auto; }
+
+  .header-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: 10px;
+    background: var(--bg-subtle);
+    color: var(--text-strong);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .header-nav,
+  .header-search-form,
+  .header-lang { display: none; }
+
+  .header.is-menu-open .header-nav {
+    display: flex;
+    flex-direction: column;
+    flex-basis: 100%;
+    order: 1;
+    gap: 0;
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border-default);
+  }
+  .header-nav a { padding: 10px 4px; }
+
+  .header.is-menu-open .header-search-form { display: block; flex-basis: 100%; order: 2; padding: 8px 0; }
+  .header-search { width: 100%; height: 44px; }
+
+  .header.is-menu-open .header-lang { display: block; order: 3; margin: 4px 0 16px; }
+}
+
+@media (max-width: 640px) {
+  .header-logo { font-size: 20px; }
+  .header-name { display: none; }
+}
+
+/* 아주 좁은 휴대폰(320px 등): 로고 · 로그인 · 회원가입 · ☰ 가 한 줄에 들어가게 */
+@media (max-width: 400px) {
+  .header-inner { column-gap: 6px; }
+  .header-logo { font-size: 18px; }
+  .header-login,
+  .header-signup { padding: 6px 10px; font-size: 13px; }
+  .header-menu-btn { width: 36px; height: 36px; font-size: 18px; }
+}

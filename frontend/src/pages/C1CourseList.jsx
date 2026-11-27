@@ -111,7 +111,7 @@ export default function C1CourseList() {
 
       {/* 지도 + 결과 목록 */}
       <section className="c1-body">
-        <div className="wrap row g24">
+        <div className="wrap row g24 c1-body-inner">
           {/* 마커를 누르면 그 코스를 선택(말풍선)만 함. 상세는 목록 카드를 눌러서 */}
           <KakaoMap className="c1-map" markers={markers} selectedId={selectedId} fit />
 
@@ -165,7 +165,7 @@ function FilterGroup({ title, children }) {
   return (
     <div className="col g6">
       <p className="t-b14m c-strong nowrap">{title}</p>
-      <div className="row g6">{children}</div>
+      <div className="row fwrap g6">{children}</div>
     </div>
   )
 }
@@ -213,7 +213,7 @@ function EmptyResult({ q, dist, onReset }) {
       <p className="t-b16m c-strong nowrap">
         {where || range ? `${where}${range}코스가 없어요` : '조건에 맞는 코스가 없어요'}
       </p>
-      <p className="t-b14 c-body tc" style={{ width: 360 }}>
+      <p className="t-b14 c-body tc c1-empty-desc">
         거리 조건을 넓히거나, 직접 걸은 경로를 올려 첫 코스를 만들어 보세요
       </p>
       <div className="row g8">

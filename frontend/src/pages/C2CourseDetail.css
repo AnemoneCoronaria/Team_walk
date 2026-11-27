@@ -29,3 +29,26 @@
 
 .c2-side { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 16px; width: 400px; }
 .c2-match { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; padding: 16px; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1200px) {
+  .c2-side { width: 360px; }
+}
+
+@media (max-width: 1024px) {
+  /* 코스 정보 위, 버튼 · 등록한 사람 · 동행 아래 */
+  .c2-inner { flex-direction: column; align-items: stretch; }
+  .c2-main { flex: none; }
+  .c2-side { width: 100%; }
+  .c2-toprow { white-space: normal; }
+}
+
+@media (max-width: 640px) {
+  .c2 { padding: 24px 0 48px; }
+  .c2-stats { gap: 8px; }
+  .c2-stat { padding: 12px; }
+  .c2-map { height: 280px; }
+  .c2-legend { flex-wrap: wrap; }
+  .c2-box { padding: 20px 16px; }
+  .c2-key { width: 96px; }
+}

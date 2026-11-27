@@ -27,3 +27,11 @@
 
 /* 창 안의 안내 목록 (· 로 시작하는 줄) */
 .modal-notes { margin: 0; padding: 14px 16px 14px 32px; border-radius: 10px; background: var(--bg-subtle); color: var(--text-body); font-size: 14px; line-height: 1.7; }
+
+/* 좁은 화면: 창 폭(width prop)이 화면보다 넓으면 화면에 맞춤, 너무 길면 창 안에서 스크롤 */
+.modal-backdrop { padding: 16px; }
+.modal { max-width: 100%; max-height: 100%; overflow-y: auto; }
+
+@media (max-width: 640px) {
+  .modal { padding: 24px 20px; }
+}

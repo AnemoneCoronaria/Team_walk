@@ -72,7 +72,7 @@ export default function P3MyCourses() {
               ★ {c.reviewCount ? c.rating.toFixed(1) : '-'} · 후기 {c.reviewCount}개
             </p>
           </div>
-          <div className="row ai-c g8 noshrink">
+          <div className="row ai-c g8 noshrink mypage-course-actions">
             <Button variant="ghost" onClick={() => setEditing(c)}>
               수정
             </Button>

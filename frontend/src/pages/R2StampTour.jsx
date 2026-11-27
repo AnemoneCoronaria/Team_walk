@@ -88,7 +88,7 @@ export default function R2StampTour() {
         </div>
       </section>
 
-      <div className="row ai-c jc-b fill">
+      <div className="row ai-c jc-b fill stamp-foot">
         <p className="t-c12 c-muted">※ 앱 안의 스탬프 · 배지로 제공 · 만보시루 포인트 연계는 시흥시에 향후 제안</p>
         <Button variant="secondary" to="/courses">
           랜드마크 지나는 코스 찾기 →

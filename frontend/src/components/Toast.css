@@ -47,3 +47,9 @@
 
 .toast-error .toast-icon { color: var(--status-danger); }
 .toast-info .toast-icon { color: var(--brand-blue); }
+
+/* 휴대폰: 긴 알림은 줄바꿈 */
+@media (max-width: 640px) {
+  .toast-list { bottom: 24px; width: calc(100% - 32px); }
+  .toast { max-width: 100%; white-space: normal; }
+}

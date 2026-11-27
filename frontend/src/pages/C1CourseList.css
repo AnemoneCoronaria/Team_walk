@@ -27,3 +27,30 @@
 .c1-skel { display: flex; gap: 16px; width: 100%; padding: 16px; border: 1px solid var(--border-default); border-radius: 16px; background: var(--bg-surface); }
 
 .c1-empty { flex: 1 0 0; display: flex; flex-direction: column; align-items: center; gap: 12px; min-width: 1px; padding-top: 120px; }
+.c1-empty-desc { width: 360px; max-width: 100%; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1200px) {
+  /* 목록이 너무 좁아지지 않게 지도를 줄임 (1200px 에서는 760px 그대로) */
+  .c1-map { width: min(760px, 100% - 440px); }
+}
+
+@media (max-width: 1024px) {
+  .c1-top { padding: 32px 0 20px; }
+  .c1-filters { flex-wrap: wrap; align-items: flex-start; gap: 16px 24px; }
+  .c1-search { width: 100%; }
+
+  /* 지도 위, 목록 아래 */
+  .c1-body-inner { flex-direction: column; align-items: stretch; }
+  .c1-map { width: 100%; height: 360px; }
+  .c1-empty { padding-top: 40px; }
+}
+
+@media (max-width: 640px) {
+  .c1-map { height: 280px; }
+  /* 목록 한 줄: 작은 지도 + 글, 별점 칩은 글 아래 줄로 */
+  .c1-item { flex-wrap: wrap; gap: 8px 12px; }
+  .c1-item-thumb { width: 80px; height: 64px; }
+  .c1-item-text { flex-basis: calc(100% - 92px); white-space: normal; }
+  .c1-item > .chip { margin-left: 92px; }
+}

@@ -40,7 +40,7 @@ export default function P4MyReviews() {
 
   return (
     <>
-      <div className="row g8">
+      <div className="row fwrap g8">
         <Chip tone="neutral" selected>
           내가 쓴 후기 {data?.total ?? ''}
         </Chip>
@@ -55,8 +55,8 @@ export default function P4MyReviews() {
       )}
       {data?.items.map((r) => (
         <div key={r.reviewId} className="panel mypage-row col g8 fill">
-          <div className="row ai-c jc-b fill">
-            <div className="row ai-c g8">
+          <div className="row ai-c jc-b g8 fill">
+            <div className="row fwrap ai-c g8">
               <Link className="t-b16m c-strong" to={`/courses/${r.course.courseId}`}>
                 {r.course.name}
               </Link>

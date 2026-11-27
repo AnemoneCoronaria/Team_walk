@@ -75,7 +75,7 @@ export default function C4CourseReviews() {
         <Button onClick={onWrite}>후기 쓰기</Button>
       </div>
 
-      <div className="row g8">
+      <div className="row fwrap g8">
         {SORTS.map(([key, label]) => (
           <Chip key={key} tone="neutral" selected={sort === key} onClick={() => onSort(key)}>
             {label}

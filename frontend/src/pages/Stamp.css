@@ -3,7 +3,7 @@
 .stamp-page { display: flex; flex-direction: column; align-items: flex-start; gap: 24px; padding: 40px 0 64px; }
 
 .stamp-hero { display: flex; align-items: flex-end; gap: 32px; align-self: stretch; padding: 32px; }
-.stamp-progress { width: 480px; height: 10px; border-radius: 5px; background: var(--bg-subtle); overflow: hidden; }
+.stamp-progress { width: 480px; max-width: 100%; height: 10px; border-radius: 5px; background: var(--bg-subtle); overflow: hidden; }
 .stamp-progress span { display: block; height: 100%; border-radius: 5px; background: var(--brand-green); }
 
 .stamp-body { display: flex; gap: 24px; align-self: stretch; }
@@ -19,3 +19,25 @@
 .stamp-badge-card { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 20px 12px; text-align: center; }
 .stamp-badge-card.is-locked { opacity: 0.45; }
 .stamp-badge-icon { font-size: 32px; line-height: 1.2; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1200px) {
+  .stamp-map { width: 46%; }
+}
+
+@media (max-width: 1024px) {
+  /* 지도 위, 랜드마크 목록 아래 */
+  .stamp-body { flex-direction: column; }
+  .stamp-map { width: 100%; height: 320px; }
+  .stamp-list { flex: none; }
+  .stamp-badges { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .stamp-page { padding: 24px 0 48px; }
+  .stamp-hero { flex-direction: column; align-items: stretch; gap: 20px; padding: 20px; }
+  .stamp-map { height: 260px; }
+  .stamp-list { grid-template-columns: 1fr; }
+  .stamp-badges { grid-template-columns: repeat(2, 1fr); }
+  .stamp-foot { flex-direction: column; align-items: flex-start; gap: 12px; }
+}

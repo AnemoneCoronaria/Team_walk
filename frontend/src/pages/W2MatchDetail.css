@@ -27,3 +27,23 @@
 
 /* 왼쪽 정렬 모달 (W5) */
 .w2-modal-left { align-items: flex-start; text-align: left; }
+
+/* ---------- 반응형 ---------- */
+@media (max-width: 1200px) {
+  .w2-side { width: 360px; }
+  .w2-map { width: 100%; max-width: 720px; }
+}
+
+@media (max-width: 1024px) {
+  /* 글 내용 위, 모집자 · 참여자 · 버튼 아래 */
+  .w2-inner { flex-direction: column; align-items: stretch; }
+  .w2-main { flex: none; }
+  .w2-side { width: 100%; }
+  .w2-map { max-width: none; }
+}
+
+@media (max-width: 640px) {
+  .w2 { padding: 24px 0 48px; }
+  .w2-info-key { width: 80px; }
+  .w2-map { height: 220px; }
+}

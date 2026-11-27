@@ -120,11 +120,11 @@ export default function W2MatchDetail() {
     <main className="w2">
       <div className="wrap w2-inner">
         {/* 왼쪽: 모집 글 내용 */}
-        <div className="col g20 grow">
+        <div className="col g20 grow w2-main">
           <Link className="t-b14m c-muted nowrap" to="/matches">
             ← 동행 목록
           </Link>
-          <div className="row g8">
+          <div className="row fwrap g8">
             <Chip tone={open ? 'green' : m.status === 'CANCELED' ? 'danger' : 'neutral'}>
               {MATCH_STATUS_LABELS[m.status]} {m.current}/{m.capacity}
             </Chip>
@@ -372,7 +372,7 @@ function InfoRow({ label, children }) {
   return (
     <div className="w2-info-row">
       <p className="w2-info-key">{label}</p>
-      <div className="row ai-c g12 t-b16 c-strong">{children}</div>
+      <div className="row fwrap ai-c g12 t-b16 c-strong">{children}</div>
     </div>
   )
 }

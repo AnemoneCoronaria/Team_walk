@@ -60,3 +60,15 @@
   font-size: 14px;
   line-height: 1.5;
 }
+
+/* ---------- 반응형 ---------- */
+/* 카드 폭(480 · 560 · 640px)이 화면보다 넓으면 화면에 맞춤 */
+.account-page { padding-left: 20px; padding-right: 20px; }
+.account-card { max-width: 100%; }
+
+@media (max-width: 640px) {
+  .account-page { padding: 32px 16px 48px; }
+  .account-card { padding: 28px 20px; }
+  .signup-steps { flex-wrap: wrap; justify-content: center; }
+  .signup-steps-line { width: 16px; }
+}
